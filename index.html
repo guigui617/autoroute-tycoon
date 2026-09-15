@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Complète</title>
+    <title>Autoroute Tycoon - Édition Flottes & Exploitation Avancée</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -24,14 +24,14 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Barre latérale gauche (Navigation principale) */
+        /* Barre latérale gauche */
         .sidebar { width: 68px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 6px; z-index: 20; flex-shrink: 0; }
         .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.6rem; color: var(--text-muted); cursor: pointer; padding: 8px 4px; border-radius: 8px; width: 56px; transition: 0.2s; text-align: center; }
         .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
         .nav-item.active { background: var(--primary); color: white; }
         .nav-item span.icon { font-size: 1.15rem; margin-bottom: 3px; }
 
-        /* Structure générale : Panneau gauche et Carte droite */
+        /* Structure générale */
         .app-layout { flex: 1; display: flex; height: 100vh; overflow: hidden; position: relative; }
         .left-content { width: 48%; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 20px 24px; padding-bottom: 60px; background: var(--bg-main); border-right: 1px solid var(--border); }
         .right-map-panel { width: 52%; background: var(--bg-panel); height: 100vh; position: relative; }
@@ -51,48 +51,33 @@
         button.primary-btn { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
         button.primary-btn:hover { background: var(--primary-hover); }
 
-        /* Barres de progression des étapes */
         .project-progress-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; font-size: 0.8rem; }
         .progress-bar-container { width: 100%; background: var(--border); border-radius: 4px; height: 8px; margin: 8px 0; overflow: hidden; }
         .progress-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.4s ease; }
-
-        /* Siège Social & R&D */
-        .sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg-panel); padding: 6px; border-radius: 8px; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
-        .sub-tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-        .sub-tab-btn.active { background: var(--bg-card); color: white; border: 1px solid var(--border); }
-        .siege-subview { display: none; }
-        .siege-subview.active { display: block; }
-
-        .director-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; font-size: 0.8rem; }
 
         /* Notifications Toast */
         #toast-container { position: fixed; bottom: 45px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
         .toast { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        /* Éléments de Haute Navigation (Compte & Outils en haut à droite) */
+        /* En-tête Google & Outils */
         .auth-floating-panel { position: fixed; top: 20px; right: 380px; z-index: 10000; display: flex; gap: 8px; background: var(--bg-panel); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); align-items: center; font-size: 0.8rem; }
-        .auth-btn { background: var(--primary); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: 600; }
-        .auth-btn:hover { background: var(--primary-hover); }
-        .auth-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; }
-        .auth-modal-content { background: var(--bg-panel); border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 340px; color: var(--text-main); }
-        .auth-modal-content h3 { margin-bottom: 12px; font-size: 1rem; }
-
-        /* Bandeau d'actualités en bas */
-        #news-ticker-bar { position: fixed; bottom: 0; left: 68px; right: 0; height: 32px; background: rgba(17, 28, 48, 0.95); border-top: 1px solid var(--border); display: flex; align-items: center; overflow: hidden; z-index: 999; font-size: 0.75rem; color: var(--text-muted); }
-        .ticker-badge { background: var(--primary); color: white; padding: 0 12px; height: 100%; display: flex; align-items: center; font-weight: bold; flex-shrink: 0; }
-        .ticker-content { white-space: nowrap; animation: tickerScroll 30s linear infinite; padding-left: 20px; color: white; }
-        @keyframes tickerScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        .google-signin-btn { background: #ffffff; color: #374151; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; font-size: 0.75rem; }
+        .google-signin-btn:hover { background: #f3f4f6; }
 
         .extra-tools-panel { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; gap: 6px; }
         .tool-btn { background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .tool-btn:hover { background: var(--primary); }
 
-        /* Mode Photo */
-        body.photo-mode .sidebar, body.photo-mode .left-content, body.photo-mode .auth-floating-panel, body.photo-mode #news-ticker-bar, body.photo-mode .extra-tools-panel { display: none !important; }
-        body.photo-mode .right-map-panel { width: 100% !important; height: 100vh !important; border: none !important; }
-        .exit-photo-btn { display: none; position: fixed; top: 20px; right: 20px; z-index: 99999; background: var(--danger); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        body.photo-mode .exit-photo-btn { display: block; }
+        /* Écran de Sélection d'Entreprise Initial */
+        #company-setup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 17, 32, 0.96); z-index: 99999; display: flex; justify-content: center; align-items: center; }
+        .setup-card { background: var(--bg-panel); border: 1px solid var(--border); padding: 30px; border-radius: 12px; width: 450px; text-align: center; }
+        .setup-card h2 { margin-bottom: 15px; color: white; font-size: 1.2rem; }
+
+        /* Bandeau bas */
+        #news-ticker-bar { position: fixed; bottom: 0; left: 68px; right: 0; height: 32px; background: rgba(17, 28, 48, 0.95); border-top: 1px solid var(--border); display: flex; align-items: center; overflow: hidden; z-index: 999; font-size: 0.75rem; color: var(--text-muted); }
+        .ticker-badge { background: var(--primary); color: white; padding: 0 12px; height: 100%; display: flex; align-items: center; font-weight: bold; flex-shrink: 0; }
+        .ticker-content { white-space: nowrap; animation: tickerScroll 35s linear infinite; padding-left: 20px; color: white; }
+        @keyframes tickerScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
         .extra-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; }
         .extra-modal-content { background: var(--bg-panel); border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 450px; max-height: 85vh; overflow-y: auto; color: var(--text-main); }
@@ -101,48 +86,52 @@
 </head>
 <body>
 
+    <!-- Écran de Sélection de l'Entreprise (Création ou Prédéfinie) -->
+    <div id="company-setup-overlay">
+        <div class="setup-card">
+            <h2>🏢 Lancement de votre Concession</h2>
+            <label>Choisissez une société existante ou créez la vôtre :</label>
+            <select id="preset-company" onchange="onPresetChange()">
+                <option value="custom">-- Créer ma propre entreprise --</option>
+                <option value="SAPR">SAPR (Société des Autoroutes de Paris-Rhin)</option>
+                <option value="SANEF">SANEF (Nord et Est de la France)</option>
+                <option value="APRR">APRR (Autoroutes Paris-Rhin-Rhône)</option>
+                <option value="VINCI">Vinci Autoroutes (Grand Réseau)</option>
+            </select>
+            <label style="margin-top:10px;">Nom de l'entreprise</label>
+            <input type="text" id="setup-company-name" placeholder="Ex: Autoroutes Express de France">
+            <label>Votre nom de PDG</label>
+            <input type="text" id="setup-ceo-name" placeholder="Guillaume Watlet">
+            <button class="primary-btn" style="margin-top:15px;" onclick="initializeGameSession()">Commencer l'Aventure</button>
+        </div>
+    </div>
+
     <!-- Barre latérale -->
     <div class="sidebar">
         <div class="nav-item active" onclick="switchTab('dashboard', this)"><span class="icon">🏠</span>Accueil</div>
         <div class="nav-item" onclick="switchTab('lignes', this)"><span class="icon">🛣️</span>Lignes</div>
-        <div class="nav-item" onclick="switchTab('aires', this)"><span class="icon">⛽</span>Aires</div>
-        <div class="nav-item" onclick="switchTab('tech', this)"><span class="icon">🔬</span>R&D</div>
+        <div class="nav-item" onclick="switchTab('exploitation', this)"><span class="icon">🛠️</span>Exploit.</div>
         <div class="nav-item" onclick="switchTab('siege', this)"><span class="icon">🏢</span>Siège</div>
+        <div class="nav-item" onclick="switchTab('tech', this)"><span class="icon">🔬</span>R&D</div>
     </div>
 
-    <!-- Contrôles en haut à droite -->
-    <div class="auth-floating-panel">
-        👤 <span id="current-username" style="color:var(--text-muted);">Invité</span>
-        <button class="auth-btn" onclick="openAuthModal()">Compte</button>
+    <!-- Compte Google en haut à droite -->
+    <div class="auth-floating-panel" id="auth-panel">
+        <button class="google-signin-btn" onclick="loginWithGoogle()">
+            <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.19v3.15C3.18 21.32 7.27 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.19C.43 8.1 0 9.99 0 12s.43 3.9 1.19 5.42l4.09-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.27 0 3.18 2.68 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+            Connexion Google
+        </button>
     </div>
 
     <div class="extra-tools-panel">
-        <button class="tool-btn" onclick="togglePhotoMode()">📷 Photo</button>
         <button class="tool-btn" onclick="openModal('bank-modal')">🏦 Banque</button>
-        <button class="tool-btn" onclick="openModal('trophies-modal')">🏆 Trophées</button>
         <button class="tool-btn" onclick="openModal('stats-modal')">📊 Stats</button>
     </div>
 
-    <button class="exit-photo-btn" onclick="togglePhotoMode()">❌ Quitter le Mode Photo</button>
-
-    <!-- Bandeau d'actualités en bas -->
+    <!-- Bandeau bas d'actualités -->
     <div id="news-ticker-bar">
         <div class="ticker-badge">DIRECT INFO</div>
-        <div class="ticker-content" id="ticker-text">Bienvenue sur Autoroute Tycoon. Le réseau national s'étend progressivement...</div>
-    </div>
-
-    <!-- Modale Compte -->
-    <div id="auth-modal" class="auth-modal">
-        <div class="auth-modal-content">
-            <h3>Mon Compte & Sauvegarde</h3>
-            <label>Nom d'utilisateur</label>
-            <input type="text" id="auth-username-input" placeholder="Ex: PDG Autoroute">
-            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                <button class="auth-btn" style="flex:1;" onclick="saveAccountName()">Définir</button>
-                <button class="auth-btn" style="flex:1; background:var(--success);" onclick="triggerManualSave()">Sauvegarder</button>
-            </div>
-            <button class="auth-btn" style="width:100%; background:var(--danger); margin-top:10px;" onclick="closeAuthModal()">Fermer</button>
-        </div>
+        <div class="ticker-content" id="ticker-text">Bienvenue sur Autoroute Tycoon. Gérez vos flottes spécialisées, vos employés et construisez votre réseau à grande vitesse !</div>
     </div>
 
     <!-- Modale Banque -->
@@ -150,59 +139,40 @@
         <div class="extra-modal-content">
             <h3>🏦 Emprunts Bancaires</h3>
             <div class="badge-item">
-                <div><strong>Petit Prêt</strong><br>50 000 000 $US</div>
-                <button class="auth-btn" onclick="takeLoan(50000000, 1500000)">Emprunter</button>
+                <div><strong>Prêt Concession (50M $)</strong></div>
+                <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="takeLoan(50000000)">Emprunter</button>
             </div>
-            <div id="active-loan-info" style="font-size:0.8rem; margin:10px 0; color:var(--warning);">Aucun emprunt en cours.</div>
-            <button class="auth-btn" style="width:100%; background:var(--danger); margin-top:12px;" onclick="closeModal('bank-modal')">Fermer</button>
+            <button class="primary-btn" style="background:var(--danger); margin-top:12px;" onclick="closeModal('bank-modal')">Fermer</button>
         </div>
     </div>
 
-    <!-- Modale Trophées -->
-    <div id="trophies-modal" class="extra-modal">
-        <div class="extra-modal-content">
-            <h3>🏆 Trophées & Succès</h3>
-            <div id="trophies-list-container"></div>
-            <button class="auth-btn" style="width:100%; background:var(--danger); margin-top:12px;" onclick="closeModal('trophies-modal')">Fermer</button>
-        </div>
-    </div>
-
-    <!-- Modale Statistiques -->
+    <!-- Modale Stats -->
     <div id="stats-modal" class="extra-modal">
         <div class="extra-modal-content">
-            <h3>📊 Livre des Records & Statistiques</h3>
+            <h3>📊 Statistiques Globales</h3>
             <div id="stats-content-box" style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px;"></div>
-            <button class="auth-btn" style="width:100%; background:var(--danger); margin-top:16px;" onclick="closeModal('stats-modal')">Fermer</button>
-        </div>
-    </div>
-
-    <!-- Modale Gestion de Crise -->
-    <div id="crisis-modal" class="extra-modal">
-        <div class="extra-modal-content" style="border-left: 4px solid var(--danger);">
-            <h3 id="crisis-title" style="color:var(--danger);">⚠️ Incident sur le réseau !</h3>
-            <p id="crisis-desc" style="font-size: 0.85rem; margin-bottom: 16px;"></p>
-            <button class="auth-btn" style="width:100%; background:var(--success);" onclick="resolveCrisis()">Rétablir le trafic</button>
+            <button class="primary-btn" style="background:var(--danger); margin-top:16px;" onclick="closeModal('stats-modal')">Fermer</button>
         </div>
     </div>
 
     <div class="app-layout">
-        <!-- Panneau de Gauche (Interface du jeu) -->
+        <!-- Panneau de Gauche -->
         <div class="left-content">
             
-            <!-- Barre d'infos supérieure (comme sur l'image 1) -->
+            <!-- Barre d'infos supérieure -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; background: var(--bg-panel); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);">
-                <div style="font-size: 0.75rem; color: var(--text-muted);">🗓️ Date : <span id="game-date" style="color:white; font-weight:bold;">7 Mars 2026</span></div>
-                <div style="display: flex; gap: 12px; font-size: 0.75rem; align-items: center;">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">🗓️ <span id="game-date" style="color:white; font-weight:bold;">7 Mars 2026</span></div>
+                <div style="display: flex; gap: 10px; font-size: 0.75rem; align-items: center;">
                     <div>🌤️ <span id="weather-status" style="color:var(--primary); font-weight:bold;">Grand Soleil</span></div>
-                    <div>💰 <span id="top-budget" style="color:var(--success); font-weight:bold;">88 624 399 519 $US</span></div>
+                    <div>💰 <span id="top-budget" style="color:var(--success); font-weight:bold;">1 500 000 000 $US</span></div>
                 </div>
             </div>
 
             <!-- VUE : ACCUEIL -->
             <div id="view-dashboard" class="app-view active">
                 <div class="welcome-header">
-                    <div class="welcome-title">Tableau de bord Général</div>
-                    <div class="company-subtitle">Pilotez votre réseau national d'autoroutes sur le long terme.</div>
+                    <div class="welcome-title" id="display-company-title">Tableau de bord</div>
+                    <div class="company-subtitle">PDG : <span id="display-ceo-name">Guillaume Watlet</span></div>
                 </div>
                 <div class="panel-box">
                     <h3>📊 Indicateurs Clés & Économie</h3>
@@ -212,7 +182,7 @@
                             <div id="stat-routes-count" style="font-size:1.1rem; font-weight:bold; color:white;">0</div>
                         </div>
                         <div style="background:var(--bg-card); padding:10px; border-radius:6px; border:1px solid var(--border);">
-                            <div style="font-size:0.75rem; color:var(--text-muted);">Revenus par minute réelle</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Revenus nets / min</div>
                             <div id="stat-revenue-rate" style="font-size:1.1rem; font-weight:bold; color:var(--success);">+0 $US</div>
                         </div>
                     </div>
@@ -222,41 +192,96 @@
             <!-- VUE : LIGNES -->
             <div id="view-lignes" class="app-view">
                 <div class="welcome-header">
-                    <div class="welcome-title">Tracé des Autoroutes (5 Étapes)</div>
-                    <div class="company-subtitle">Développez les axes routiers majeurs du territoire.</div>
+                    <div class="welcome-title">Tracé des Autoroutes (Accéléré)</div>
+                    <div class="company-subtitle">Créez de nouvelles liaisons rapides.</div>
                 </div>
                 <div class="panel-box">
-                    <h3>🛣️ Lancer un Nouveau Projet</h3>
+                    <h3>🛣️ Nouveau Tronçon (1 Ligne)</h3>
                     <label>Départ</label><select id="city-a" class="city-select"></select>
                     <label>Arrivée</label><select id="city-b" class="city-select"></select>
-                    <div id="route-estimate-box" style="background:var(--bg-card); padding:10px; border-radius:6px; border:1px solid var(--border); margin: 10px 0; font-size: 0.8rem;">
+                    <div style="background:var(--bg-card); padding:10px; border-radius:6px; border:1px solid var(--border); margin: 10px 0; font-size: 0.8rem;">
                         <div>Distance : <strong id="est-distance">0 km</strong></div>
-                        <div>Coût : <strong id="est-cost" style="color:var(--warning);">0 $US</strong></div>
+                        <div>Coût d'investissement : <strong id="est-cost" style="color:var(--warning);">0 $US</strong></div>
                     </div>
-                    <button class="primary-btn" onclick="launchHighwayProject()">Lancer les Études (Étape 1/5)</button>
+                    <button class="primary-btn" onclick="launchHighwayProject()">Lancer les 5 étapes rapides</button>
                 </div>
                 <div class="panel-box">
                     <h3>🏗️ Chantiers en cours</h3>
-                    <div id="active-projects-container"><p style="font-size:0.8rem; color:var(--text-muted);">Aucun projet.</p></div>
+                    <div id="active-projects-container"><p style="font-size:0.8rem; color:var(--text-muted);">Aucun projet en cours.</p></div>
                 </div>
             </div>
 
-            <!-- VUE : AIRES -->
-            <div id="view-aires" class="app-view">
-                <div class="welcome-header"><div class="welcome-title">Aires de Repos</div></div>
-                <div class="panel-box"><p style="font-size:0.8rem; color:var(--text-muted);">Construisez des liaisons pour gérer les aires.</p></div>
+            <!-- VUE : EXPLOITATION & FLOTTES -->
+            <div id="view-exploitation" class="app-view">
+                <div class="welcome-header">
+                    <div class="welcome-title">Exploitation & Flottes Spécialisées</div>
+                    <div class="company-subtitle">Gérez vos véhicules et les interventions réseau.</div>
+                </div>
+                <div class="panel-box">
+                    <h3>🚨 Flotte d'Intervention Rapide</h3>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Fourgons jaunes : Balisage, retrait d'obstacles et assistance en panne.</p>
+                    <div class="badge-item">
+                        <span>Véhicules actifs : <strong id="flotte-interv">2</strong></span>
+                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyVehicle('interv', 500000)">Acquérir (500k $)</button>
+                    </div>
+                </div>
+                <div class="panel-box">
+                    <h3>❄️ Viabilité Hivernale</h3>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Camions chasse-neige & Saleuses : Déneigement et salage préventif.</p>
+                    <div class="badge-item">
+                        <span>Véhicules actifs : <strong id="flotte-neige">1</strong></span>
+                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyVehicle('neige', 1200000)">Acquérir (1.2M $)</button>
+                    </div>
+                </div>
+                <div class="panel-box">
+                    <h3>🏗️ Engins de Chantier & Entretien Courant</h3>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Fraiseuses, enrobeuses, balayeuses, hydrocureurs et camions FLR.</p>
+                    <div class="badge-item">
+                        <span>Engins lourds & FLR : <strong id="flotte-chantier">2</strong></span>
+                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyVehicle('chantier', 2000000)">Acquérir (2M $)</button>
+                    </div>
+                </div>
+                <div class="panel-box">
+                    <h3>🛠️ État des Chaussées</h3>
+                    <div id="maintenance-routes-container"><p style="font-size:0.8rem; color:var(--text-muted);">Aucun tronçon en service.</p></div>
+                </div>
+            </div>
+
+            <!-- VUE : SIÈGE & EMPLOYÉS -->
+            <div id="view-siege" class="app-view">
+                <div class="welcome-header">
+                    <div class="welcome-title">Siège Social & Employés</div>
+                    <div class="company-subtitle">Gestion du personnel et administration.</div>
+                </div>
+                <div class="panel-box">
+                    <h3>👥 Recrutement du Personnel</h3>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Agents de péage, patrouilleurs et techniciens d'entretien.</p>
+                    <div class="badge-item">
+                        <div><strong>Employés actuels</strong><br><span id="staff-count">15</span> collaborateurs</div>
+                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="hireStaff()">Recruter (+5 staff, 100k$)</button>
+                    </div>
+                </div>
             </div>
 
             <!-- VUE : R&D -->
             <div id="view-tech" class="app-view">
-                <div class="welcome-header"><div class="welcome-title">Recherche & Développement</div></div>
-                <div class="panel-box"><p style="font-size:0.8rem; color:var(--text-muted);">Innovations en cours de développement.</p></div>
-            </div>
-
-            <!-- VUE : SIÈGE -->
-            <div id="view-siege" class="app-view">
-                <div class="welcome-header"><div class="welcome-title">Siège social</div></div>
-                <div class="panel-box"><p style="font-size:0.8rem; color:var(--text-muted);">Gestion des équipes et de l'administration.</p></div>
+                <div class="welcome-header">
+                    <div class="welcome-title">Arbre Technologique</div>
+                    <div class="company-subtitle">Innovations autoroutières pour améliorer le rendement.</div>
+                </div>
+                <div class="panel-box">
+                    <h3>🔬 Innovations en cours</h3>
+                    <div id="tech-tree-container">
+                        <div class="badge-item">
+                            <div><strong>Péage sans arrêt (Free-Flow)</strong><br>Augmente les revenus de +15%</div>
+                            <button class="primary-btn" style="width:auto; padding:5px 10px;" id="tech-btn-1" onclick="unlockTech(1, 15000000)">Rechercher (15M $)</button>
+                        </div>
+                        <div class="badge-item">
+                            <div><strong>Enrobés phoniques & durables</strong><br>Réduit l'usure de la chaussée de 30%</div>
+                            <button class="primary-btn" style="width:auto; padding:5px 10px;" id="tech-btn-2" onclick="unlockTech(2, 25000000)">Rechercher (25M $)</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -272,6 +297,15 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        let gameData = {
+            companyName: "Autoroutes de France",
+            ceoName: "Guillaume Watlet",
+            budget: 1500000000, // 1.5 Milliard $ équilibré
+            staff: 15,
+            vehicles: { interv: 2, neige: 1, chantier: 2 },
+            techs: { freeFlow: false, durableRoads: false }
+        };
+
         let gameTime = { day: 7, month: 3, year: 2026 };
         const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -282,10 +316,10 @@
             'Rouen': [49.4432, 1.0999], 'Douai': [50.3667, 3.0833], 'Reims': [49.2583, 4.0317]
         };
 
-        let budget = 88624399519;
         let constructedRoutes = [];
         let activeProjects = [];
-        let isCrisisActive = false;
+        let currentWeather = "Grand Soleil";
+        let weatherList = ["Grand Soleil", "Pluie battante", "Neige hivernale", "Brouillard dense"];
 
         const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
@@ -296,6 +330,26 @@
              .addTo(mapFullscreen).bindPopup(`<b>${cityName}</b>`);
         });
 
+        function onPresetChange() {
+            let val = document.getElementById('preset-company').value;
+            if(val !== 'custom') {
+                document.getElementById('setup-company-name').value = val;
+            }
+        }
+
+        function initializeGameSession() {
+            let cName = document.getElementById('setup-company-name').value;
+            let cCeo = document.getElementById('setup-ceo-name').value;
+            if(cName) gameData.companyName = cName;
+            if(cCeo) gameData.ceoName = cCeo;
+
+            document.getElementById('display-company-title').innerText = gameData.companyName;
+            document.getElementById('display-ceo-name').innerText = gameData.ceoName;
+            document.getElementById('company-setup-overlay').style.display = 'none';
+            updateBudgetDisplay();
+            showToast(`Bienvenue, ${gameData.ceoName} à la tête de ${gameData.companyName} !`);
+        }
+
         function showToast(message) {
             const container = document.getElementById('toast-container');
             if(!container) return;
@@ -304,6 +358,10 @@
             toast.innerText = message;
             container.appendChild(toast);
             setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        function updateBudgetDisplay() {
+            document.getElementById('top-budget').innerText = gameData.budget.toLocaleString() + ' $US';
         }
 
         function populateCitySelectors() {
@@ -330,7 +388,7 @@
                 if(data.routes && data.routes.length > 0) {
                     const dist = Math.round(data.routes[0].distance / 1000);
                     document.getElementById('est-distance').innerText = dist + ' km';
-                    document.getElementById('est-cost').innerText = (dist * 180000).toLocaleString() + ' $US';
+                    document.getElementById('est-cost').innerText = (dist * 150000).toLocaleString() + ' $US';
                 }
             } catch(e) {}
         }
@@ -343,6 +401,7 @@
             document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
             setTimeout(() => { mapFullscreen.invalidateSize(); }, 150);
+            if(tabName === 'exploitation') renderMaintenancePanel();
         }
 
         async function launchHighwayProject() {
@@ -353,23 +412,25 @@
             const data = await res.json();
             if(data.routes && data.routes.length > 0) {
                 const dist = Math.round(data.routes[0].distance / 1000);
-                const cost = dist * 180000;
-                if(budget < cost) return alert('Fonds insuffisants.');
-                budget -= cost;
-                document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+                const cost = dist * 150000;
+                if(gameData.budget < cost) return alert('Fonds insuffisants.');
+                gameData.budget -= cost;
+                updateBudgetDisplay();
+                
+                // Vitesse accélérée des étapes (durée totale très courte)
                 activeProjects.push({
                     from: cA, to: cB, distance: dist, coords: data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]),
-                    step: 1, stepName: "1. Études d'impact & Tracé", progress: 0, durationTotal: Math.max(365, dist * 4)
+                    step: 1, stepName: "1. Études & Tracé", progress: 0, durationTotal: Math.max(10, dist * 0.5)
                 });
                 renderActiveProjects();
-                showToast(`Projet ${cA} - ${cB} lancé.`);
+                showToast(`Chantier accéléré ${cA} - ${cB} lancé.`);
             }
         }
 
         function renderActiveProjects() {
             const container = document.getElementById('active-projects-container');
             if(!container) return;
-            if(activeProjects.length === 0) { container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Aucun projet.</p>'; return; }
+            if(activeProjects.length === 0) { container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Aucun projet en cours.</p>'; return; }
             container.innerHTML = '';
             activeProjects.forEach(proj => {
                 let pct = Math.round((proj.progress / proj.durationTotal) * 100);
@@ -382,15 +443,101 @@
             });
         }
 
-        // Boucle du temps de jeu
+        function renderMaintenancePanel() {
+            const container = document.getElementById('maintenance-routes-container');
+            if(!container) return;
+            if(constructedRoutes.length === 0) { container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Aucun tronçon en service.</p>'; return; }
+            container.innerHTML = '';
+            constructedRoutes.forEach((route, idx) => {
+                container.innerHTML += `
+                    <div class="badge-item">
+                        <div><strong>${route.from} ⇄ ${route.to}</strong><br>Usure chaussée: ${Math.round(route.wear)}%</div>
+                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="resurfaceRoute(${idx})">Resurfacer (2M$)</button>
+                    </div>`;
+            });
+        }
+
+        function resurfaceRoute(idx) {
+            let cost = 2000000;
+            if(gameData.budget < cost) return alert('Fonds insuffisants.');
+            gameData.budget -= cost;
+            constructedRoutes[idx].wear = 0;
+            updateBudgetDisplay();
+            showToast('Réfection lourde de la chaussée effectuée.');
+            renderMaintenancePanel();
+        }
+
+        function buyVehicle(type, cost) {
+            if(gameData.budget < cost) return alert('Fonds insuffisants.');
+            gameData.budget -= cost;
+            gameData.vehicles[type]++;
+            updateBudgetDisplay();
+            document.getElementById('flotte-interv').innerText = gameData.vehicles.interv;
+            document.getElementById('flotte-neige').innerText = gameData.vehicles.neige;
+            document.getElementById('flotte-chantier').innerText = gameData.vehicles.chantier;
+            showToast('Nouveau véhicule spécialisé acquis.');
+        }
+
+        function hireStaff() {
+            let cost = 100000;
+            if(gameData.budget < cost) return alert('Fonds insuffisants.');
+            gameData.budget -= cost;
+            gameData.staff += 5;
+            updateBudgetDisplay();
+            document.getElementById('staff-count').innerText = gameData.staff;
+            showToast('Nouveaux collaborateurs recrutés.');
+        }
+
+        function unlockTech(id, cost) {
+            if(gameData.budget < cost) return alert('Fonds insuffisants.');
+            gameData.budget -= cost;
+            updateBudgetDisplay();
+            if(id === 1) {
+                gameData.techs.freeFlow = true;
+                document.getElementById('tech-btn-1').innerText = "Débloqué ✔";
+                document.getElementById('tech-btn-1').disabled = true;
+                showToast('Technologie Free-Flow débloquée !');
+            } else if(id === 2) {
+                gameData.techs.durableRoads = true;
+                document.getElementById('tech-btn-2').innerText = "Débloqué ✔";
+                document.getElementById('tech-btn-2').disabled = true;
+                showToast('Enrobés durables adoptés !');
+            }
+        }
+
+        // Boucle du temps de jeu (Accélérée)
         setInterval(() => {
             gameTime.day++;
-            if(gameTime.day > 30) { gameTime.day = 1; gameTime.month++; if(gameTime.month > 12) { gameTime.month = 1; gameTime.year++; } }
+            if(gameTime.day > 30) { 
+                gameTime.day = 1; 
+                gameTime.month++; 
+                if(gameTime.month > 12) { gameTime.month = 1; gameTime.year++; }
+                currentWeather = weatherList[Math.floor(Math.random() * weatherList.length)];
+                document.getElementById('weather-status').innerText = currentWeather;
+            }
             document.getElementById('game-date').innerText = `${gameTime.day} ${monthNames[gameTime.month - 1]} ${gameTime.year}`;
 
-            let speed = isCrisisActive ? 0.3 : 1;
+            // Calcul des revenus
+            let totalRevenue = 0;
+            let wearMultiplier = gameData.techs.durableRoads ? 0.02 : 0.05;
+            let revMultiplier = gameData.techs.freeFlow ? 1.15 : 1.0;
+
+            constructedRoutes.forEach(route => {
+                route.wear += wearMultiplier;
+                if(route.wear > 100) route.wear = 100;
+                let efficiency = (100 - (route.wear * 0.4));
+                totalRevenue += Math.round(65000 * (efficiency / 100) * revMultiplier);
+            });
+
+            if(constructedRoutes.length > 0) {
+                gameData.budget += totalRevenue;
+                updateBudgetDisplay();
+                document.getElementById('stat-revenue-rate').innerText = `+${totalRevenue.toLocaleString()} $US / min`;
+            }
+
+            // Avancement ultra rapide des chantiers (5 étapes)
             activeProjects.forEach((proj, idx) => {
-                proj.progress += speed;
+                proj.progress += 2; // Vitesse augmentée
                 if(proj.progress >= proj.durationTotal) {
                     proj.step++; proj.progress = 0;
                     if(proj.step === 2) proj.stepName = "2. Enquête Publique & DUP";
@@ -398,44 +545,38 @@
                     else if(proj.step === 4) proj.stepName = "4. Gros œuvre & Terrassement";
                     else if(proj.step === 5) proj.stepName = "5. Enrobés & Péages";
                     else if(proj.step > 5) {
+                        proj.wear = 0;
                         constructedRoutes.push(proj);
                         L.polyline(proj.coords, { color: '#3b82f6', weight: 5 }).addTo(mapFullscreen);
-                        showToast(`Inauguration de ${proj.from} - ${proj.to} !`);
+                        showToast(`Inauguration rapide de l'autoroute ${proj.from} - ${proj.to} !`);
                         activeProjects.splice(idx, 1);
-                        updateDashboardStats();
+                        document.getElementById('stat-routes-count').innerText = constructedRoutes.length;
                     }
                 }
             });
             renderActiveProjects();
-        }, 3288);
+        }, 1500);
 
-        function updateDashboardStats() {
-            document.getElementById('stat-routes-count').innerText = constructedRoutes.length;
-            document.getElementById('stat-revenue-rate').innerText = `+${(constructedRoutes.length * 45000).toLocaleString()} $US / min`;
+        // Connexion Google Simulée
+        function loginWithGoogle() {
+            let userName = prompt("Entrez votre nom pour la session Google :", gameData.ceoName);
+            if(userName) {
+                gameData.ceoName = userName;
+                document.getElementById('display-ceo-name').innerText = userName;
+                document.getElementById('auth-panel').innerHTML = `👤 <span style="color:white; font-weight:bold;">${userName}</span> <span style="color:var(--success);">(Google)</span>`;
+                showToast(`Connecté avec succès en tant que ${userName}.`);
+            }
         }
 
-        // Modales et outils
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id==='stats-modal') renderStats(); if(id==='trophies-modal') renderTrophies(); }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id==='stats-modal') renderStats(); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function togglePhotoMode() { document.body.classList.toggle('photo-mode'); setTimeout(() => mapFullscreen.invalidateSize(), 200); }
-        function openAuthModal() { document.getElementById('auth-modal').style.display = 'flex'; }
-        function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
-        function saveAccountName() {
-            let n = document.getElementById('auth-username-input').value;
-            if(n) { document.getElementById('current-username').innerText = n; closeAuthModal(); showToast('Compte enregistré.'); }
-        }
-        function triggerManualSave() { showToast('Partie sauvegardée.'); closeAuthModal(); }
-
+        function takeLoan(amt) { gameData.budget += amt; updateBudgetDisplay(); closeModal('bank-modal'); showToast('Emprunt accordé.'); }
         function renderStats() {
-            document.getElementById('stats-content-box').innerHTML = `<div class="badge-item"><span>Routes construites :</span> <strong>${constructedRoutes.length}</strong></div>`;
-        }
-        function renderTrophies() {
-            document.getElementById('trophies-list-container').innerHTML = `<div class="badge-item"><span>Premier Bitume</span> <strong>${constructedRoutes.length > 0 ? '✔' : '🔒'}</strong></div>`;
-        }
-        function takeLoan(amt, pmt) {
-            budget += amt; document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
-            document.getElementById('active-loan-info').innerText = `Emprunt en cours : ${amt.toLocaleString()} $US`;
-            closeModal('bank-modal');
+            document.getElementById('stats-content-box').innerHTML = `
+                <div class="badge-item"><span>Entreprise :</span> <strong>${gameData.companyName}</strong></div>
+                <div class="badge-item"><span>Routes en service :</span> <strong>${constructedRoutes.length}</strong></div>
+                <div class="badge-item"><span>Employés :</span> <strong>${gameData.staff}</strong></div>
+                <div class="badge-item"><span>Flotte totale :</span> <strong>${gameData.vehicles.interv + gameData.vehicles.neige + gameData.vehicles.chantier} véhicules</strong></div>`;
         }
 
         window.onload = () => { populateCitySelectors(); setTimeout(() => mapFullscreen.invalidateSize(), 200); };
