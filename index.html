@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Autoroute Tycoon - Gestion du Réseau</title>
-    <!-- Leaflet CSS pour la carte -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,28 +18,26 @@
             --text-muted: #94a3b8;
             --border: #334155;
             --success: #22c55e;
+            --warning: #f59e0b;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
-        /* Barre de navigation latérale */
         sidebar { width: 80px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 20px; }
         .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: var(--text-muted); cursor: pointer; padding: 10px; border-radius: 8px; width: 60px; transition: 0.2s; }
         .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
         .nav-item span { font-size: 1.5rem; margin-bottom: 4px; }
 
-        /* Contenu principal */
         .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; }
         header { height: 60px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
         .top-stats { display: flex; gap: 20px; font-size: 0.9rem; font-weight: 600; }
         .stat-badge { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); padding: 5px 12px; border-radius: 20px; color: var(--primary); }
 
         .content-body { flex: 1; display: flex; overflow: hidden; }
-        .left-panel { width: 450px; background: var(--bg-dark); border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; }
+        .left-panel { width: 480px; background: var(--bg-dark); border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; }
         .right-map { flex: 1; position: relative; }
         #map { width: 100%; height: 100%; background: #111; }
 
-        /* Composants UI */
         .card-panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 20px; }
         .card-panel h3 { font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         
@@ -50,32 +48,34 @@
 
         .item-list { display: flex; flex-direction: column; gap: 10px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; border: 1px solid var(--border); }
+        
+        /* Style des barres de progression des chantiers */
+        .project-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .progress-bar-bg { width: 100%; background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { background: var(--success); height: 100%; transition: width 0.4s ease; }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
     <sidebar>
         <div class="nav-item active" onclick="switchMainView('dashboard', this)"><span>📊</span>Chantiers</div>
         <div class="nav-item" onclick="switchMainView('hq', this)"><span>🏢</span>Siège</div>
         <div class="nav-item" onclick="switchMainView('hr', this)"><span>👥</span>RH</div>
     </sidebar>
 
-    <!-- MAIN CONTAINER -->
     <div class="main-container">
         <header>
             <div style="font-weight: bold; font-size: 1.1rem;">🚗 Autoroute Tycoon</div>
             <div class="top-stats">
                 <div class="stat-badge" id="stat-budget">Trésorerie : 0 €</div>
-                <div class="stat-badge" style="border-color: var(--success); color: var(--success);">Statut : Simulation active</div>
+                <div class="stat-badge" style="border-color: var(--success); color: var(--success);">Simulation active</div>
             </div>
         </header>
 
         <div class="content-body">
-            <!-- PANNEAU LATÉRAL DYNAMIQUE -->
             <div class="left-panel">
                 
-                <!-- VUE CHANTIERS -->
+                <!-- VUE CHANTIERS & PROCÉDURES -->
                 <div id="view-dashboard" class="dashboard-view">
                     <div class="card-panel">
                         <h3>🏗️ Lancer un nouveau tracé</h3>
@@ -99,12 +99,12 @@
                             <option value="Nantes">Nantes</option>
                             <option value="Toulouse">Toulouse</option>
                         </select>
-                        <button onclick="launchProject()">Lancer les Études & Phase 1 (DUP)</button>
+                        <button onclick="launchProject()">Lancer les Études Préliminaires (500k €)</button>
                     </div>
 
                     <div class="card-panel">
-                        <h3>🚧 Suivi des Chantiers en Cours</h3>
-                        <div id="projects-container" style="font-size: 0.85rem; color: var(--text-muted);">Chargement...</div>
+                        <h3>🚧 Suivi détaillé des Procédures & Travaux</h3>
+                        <div id="projects-container" style="font-size: 0.85rem; color: var(--text-muted);">Chargement des chantiers...</div>
                     </div>
                 </div>
 
@@ -116,15 +116,15 @@
                         
                         <div class="item-list">
                             <div class="item-row">
-                                <div><strong>Département R&D</strong><br><small style="color:var(--text-muted)">Accélère les technologies</small></div>
+                                <div><strong>Département R&D</strong><br><small style="color:var(--text-muted)">Accélération globale</small></div>
                                 <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('rd')">Améliorer (1.5M €)</button>
                             </div>
                             <div class="item-row">
-                                <div><strong>Service Juridique</strong><br><small style="color:var(--text-muted)">Fluidifie les procédures</small></div>
+                                <div><strong>Service Juridique</strong><br><small style="color:var(--text-muted)">Accélère les Phases DUP & Enquêtes</small></div>
                                 <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('legal')">Améliorer (1.5M €)</button>
                             </div>
                             <div class="item-row">
-                                <div><strong>Centre des Opérations</strong><br><small style="color:var(--text-muted)">Améliore la maintenance</small></div>
+                                <div><strong>Centre des Opérations</strong><br><small style="color:var(--text-muted)">Optimise l'entretien du réseau</small></div>
                                 <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('ops')">Améliorer (1.5M €)</button>
                             </div>
                         </div>
@@ -135,14 +135,13 @@
                 <div id="view-hr" class="dashboard-view" style="display:none;">
                     <div class="card-panel">
                         <h3>👥 Gestion du Personnel</h3>
-                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Embauchez des spécialistes pour booster vos performances.</div>
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Vos juristes accélèrent les procédures, vos ingénieurs accélèrent les chantiers.</div>
                         <div id="hr-departments-list" class="item-list"></div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- CARTE INTERACTIVE -->
             <div class="right-map">
                 <div id="map"></div>
             </div>
@@ -152,12 +151,10 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // CONFIGURATION SUPABASE (Remplace par tes clés)
         const SUPABASE_URL = 'VOTRE_SUPABASE_URL';
         const SUPABASE_ANON_KEY = 'VOTRE_SUPABASE_ANON_KEY';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Initialisation de la carte Leaflet centrée sur la France
         const map = L.map('map').setView([46.6033, 1.8883], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 18,
@@ -175,7 +172,14 @@
             'Toulouse': [43.6047, 1.4442]
         };
 
-        // Navigation entre onglets
+        const phaseNames = {
+            1: "⚖️ Phase 1 : Études d'impact & DUP",
+            2: "🏛️ Phase 2 : Enquêtes publiques & Expropriations",
+            3: "🚜 Phase 3 : Terrassement & Gavage des sols",
+            4: "🛣️ Phase 4 : Pose des enrobés & Signalisation",
+            5: "✨ Phase 5 : Finitions & Inspections de sécurité"
+        };
+
         function switchMainView(viewName, element) {
             document.querySelectorAll('.dashboard-view').forEach(el => el.style.display = 'none');
             document.getElementById(`view-${viewName}`).style.display = 'block';
@@ -183,7 +187,6 @@
             if(element) element.classList.add('active');
         }
 
-        // Chargement de l'état global du jeu
         async function loadGameState() {
             const { data } = await supabaseClient.from('game_state').select('*').eq('id', 1).single();
             if (data) {
@@ -195,14 +198,13 @@
         }
 
         async function loadMapHighways() {
-            // Affichage des autoroutes sur la carte
             const { data: highways } = await supabaseClient.from('highways').select('*');
             if (highways) {
                 highways.forEach(hw => {
                     if (cityCoords[hw.city_a] && cityCoords[hw.city_b]) {
                         L.polyline([cityCoords[hw.city_a], cityCoords[hw.city_b]], {color: '#3b82f6', weight: 4, opacity: 0.8})
                          .addTo(map)
-                         .bindPopup(`<b>${hw.name}</b><br>État : ${hw.condition_pct.toFixed(1)}%`);
+                         .bindPopup(`<b>${hw.name}</b><br>État chaussée : ${hw.condition_pct.toFixed(1)}%`);
                     }
                 });
             }
@@ -212,16 +214,22 @@
             const { data } = await supabaseClient.from('construction_projects').select('*');
             const container = document.getElementById('projects-container');
             if (!data || data.length === 0) {
-                container.innerHTML = 'Aucun chantier en cours.';
+                container.innerHTML = '<span style="color:var(--text-muted)">Aucun chantier ou procédure en cours.</span>';
                 return;
             }
             container.innerHTML = '';
             data.forEach(p => {
+                const phaseText = phaseNames[p.current_phase] || `Phase ${p.current_phase}`;
                 container.innerHTML += `
-                    <div class="item-row" style="margin-bottom:8px;">
-                        <div>
-                            <strong>${p.highway_name}</strong><br>
-                            <small>Phase ${p.current_phase}/5 — Avancée : ${p.phase_progress}%</small>
+                    <div class="project-card">
+                        <div style="font-weight: 600; margin-bottom: 4px; color: white;">${p.highway_name}</div>
+                        <div style="font-size: 0.8rem; color: var(--warning); margin-bottom: 6px;">${phaseText}</div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                            <span>Progression de l'étape</span>
+                            <span>${p.phase_progress}%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${p.phase_progress}%;"></div>
                         </div>
                     </div>
                 `;
@@ -282,13 +290,12 @@
             loadGameState();
         }
 
-        // Boucle de simulation automatique (Toutes les 4 secondes)
+        // Boucle de simulation automatique toutes les 4 secondes
         setInterval(async () => {
             await supabaseClient.rpc('process_game_tick');
             loadGameState();
         }, 4000);
 
-        // Chargement initial au démarrage de la page
         window.onload = () => {
             loadGameState();
         };
