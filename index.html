@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon</title>
+    <title>Autoroute Tycoon - Édition Intégrale</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Supabase Client -->
@@ -21,12 +21,13 @@
             --success: #22c55e;
             --warning: #f59e0b;
             --danger: #ef4444;
+            --purple: #8b5cf6;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Barre latérale type Airline Tycoon */
+        /* Barre latérale */
         .sidebar { width: 75px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 4px; z-index: 20; flex-shrink: 0; }
         .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; color: var(--text-muted); cursor: pointer; padding: 10px 4px; border-radius: 8px; width: 62px; transition: 0.2s; text-align: center; font-weight: 500; text-decoration: none; }
         .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
@@ -38,7 +39,6 @@
         /* Conteneur principal */
         .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; background: var(--bg-dark); padding: 24px 32px; }
 
-        /* En-tête d'accueil */
         .welcome-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
         .welcome-title { font-size: 1.6rem; font-weight: 700; color: white; margin-bottom: 4px; }
         .company-subtitle { font-size: 0.9rem; color: var(--text-muted); }
@@ -47,36 +47,31 @@
         .btn-action { background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
         .btn-action:hover { background: var(--border); }
 
-        /* Grille de statistiques du Dashboard */
+        /* Grille de stats */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
         .stat-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; position: relative; }
         .stat-card-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
         .stat-card-value { font-size: 1.35rem; font-weight: 700; color: white; display: flex; align-items: baseline; gap: 8px; }
         .stat-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
-        /* Bannière d'alerte */
         .alert-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; color: #fbbf24; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
         .alert-banner:hover { background: rgba(245, 158, 11, 0.15); }
 
-        /* Section Événements mondiaux */
         .section-title { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 12px; }
         .events-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
         .event-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
         .event-info { display: flex; align-items: center; gap: 10px; }
         .event-time { color: var(--text-muted); font-size: 0.75rem; }
 
-        /* Vues dynamiques */
         .app-view { display: none; }
         .app-view.active { display: block; }
 
-        /* Styles workspace & cartes */
         .workspace-layout { display: flex; gap: 20px; height: calc(100vh - 140px); }
         .left-control-panel { width: 420px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
         .right-map-container { flex: 1; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }
         .map-leaflet { width: 100%; height: 100%; background: #0b1120; }
 
-        /* Formulaires & Cartes internes */
-        .panel-box { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+        .panel-box { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
         .panel-box h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: white; display: flex; align-items: center; gap: 8px; }
         label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 500; }
         select, input { width: 100%; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; outline: none; }
@@ -97,6 +92,7 @@
         <div class="nav-item active" onclick="switchTab('dashboard', this)"><span class="icon">🏠</span>Accueil</div>
         <div class="nav-item" onclick="switchTab('chantiers', this)"><span class="icon">🏗️</span>Chantiers</div>
         <div class="nav-item badge-parent" onclick="switchTab('carte', this)"><span class="icon">🗺️</span>Carte<span class="nav-badge">1</span></div>
+        <div class="nav-item" onclick="switchTab('aires', this)"><span class="icon">⛽</span>Aires & B2B</div>
         <div class="nav-item" onclick="switchTab('finance', this)"><span class="icon">🏦</span>Finance</div>
         <div class="nav-item badge-parent" onclick="switchTab('siege', this)"><span class="icon">🏢</span>Siège & RH<span class="nav-badge">1</span></div>
         <div class="nav-item" onclick="switchTab('aide', this)"><span class="icon">❓</span>Aide</div>
@@ -124,10 +120,10 @@
                 <div class="stat-card">
                     <div class="stat-card-title">🔥 Trafic en Continu</div>
                     <div class="stat-card-value" id="stat-traffic">4 280 <span style="font-size: 0.8rem; color: var(--text-muted);">véh./h</span></div>
-                    <div class="stat-card-sub">Record : 12 450 véh./h</div>
+                    <div class="stat-card-sub">Record : 14 250 véh./h</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-title">☀️ Activité Aujourd'hui</div>
+                    <div class="stat-card-title">☀️ Péages & Aires Aujourd'hui</div>
                     <div class="stat-card-value">
                         <span style="font-size: 1.1rem; color: var(--primary);">🛣️</span> 
                         <span id="stat-daily-toll">--</span>
@@ -147,24 +143,24 @@
                 <div class="stat-card">
                     <div class="stat-card-title">⭐ Satisfaction Usagers</div>
                     <div class="stat-card-value">98 / 100</div>
-                    <div class="stat-card-sub">Basé sur l'état des chaussées</div>
+                    <div class="stat-card-sub">État des chaussées & sécurité</div>
                 </div>
             </div>
 
             <div class="alert-banner" onclick="switchTab('chantiers', document.querySelectorAll('.nav-item')[1])">
-                <span>⚠️ Des tronçons nécessitent une maintenance préventive ou des travaux de sécurisation — vérifiez vos chantiers !</span>
+                <span>⚠️ Des incidents ou travaux préventifs nécessitent l'intervention de vos patrouilleurs — vérifiez la flotte !</span>
                 <span>➔</span>
             </div>
 
             <div class="section-title">ÉVÉNEMENTS & TRAFIC ROUTIER</div>
             <div class="events-container">
                 <div class="event-card">
-                    <div class="event-info"><span>🌧️</span><div><strong>Intempéries (A6)</strong> — Ralentissements modérés sur l'axe Paris-Lyon</div></div>
-                    <div class="event-time">16 min</div>
+                    <div class="event-info"><span>🌧️</span><div><strong>Intempéries (A6)</strong> — Ralentissements et risque de verglas sur l'axe Paris-Lyon</div></div>
+                    <div class="event-time">En direct</div>
                 </div>
                 <div class="event-card">
-                    <div class="event-info"><span>📈</span><div><strong>Pic de départ en vacances</strong> — Forte hausse du trafic sur les barrières de péage</div></div>
-                    <div class="event-time">2 h 12</div>
+                    <div class="event-info"><span>🚨</span><div><strong>Panne de camion (A1)</strong> — Intervention des patrouilleurs en cours</div></div>
+                    <div class="event-time">Il y a 5 min</div>
                 </div>
             </div>
         </div>
@@ -173,8 +169,8 @@
         <div id="view-chantiers" class="app-view">
             <div class="welcome-header">
                 <div>
-                    <div class="welcome-title">Gestion des Chantiers & Tracés</div>
-                    <div class="company-subtitle">Planifiez et suivez la construction de vos nouvelles autoroutes concédées.</div>
+                    <div class="welcome-title">Gestion des Chantiers & Concessions</div>
+                    <div class="company-subtitle">Reliez toutes les villes de France et gérez vos appels d'offres d'État.</div>
                 </div>
             </div>
 
@@ -183,31 +179,20 @@
                     <div class="panel-box">
                         <h3>🗺️ Lancer un nouveau tracé</h3>
                         <label>Ville de départ</label>
-                        <select id="city-a">
-                            <option value="Paris">Paris</option>
-                            <option value="Lyon">Lyon</option>
-                            <option value="Marseille">Marseille</option>
-                            <option value="Bordeaux">Bordeaux</option>
-                            <option value="Lille">Lille</option>
-                            <option value="Strasbourg">Strasbourg</option>
-                            <option value="Nantes">Nantes</option>
-                        </select>
+                        <select id="city-a"><!-- Rempli par script (Toutes les villes) --></select>
                         <label>Ville d'arrivée</label>
-                        <select id="city-b">
-                            <option value="Lyon">Lyon</option>
-                            <option value="Marseille">Marseille</option>
-                            <option value="Bordeaux">Bordeaux</option>
-                            <option value="Lille">Lille</option>
-                            <option value="Strasbourg">Strasbourg</option>
-                            <option value="Nantes">Nantes</option>
-                            <option value="Toulouse">Toulouse</option>
-                        </select>
-                        <button class="primary-btn" onclick="launchProject()">Lancer les Études Préliminaires (500k €)</button>
+                        <select id="city-b"><!-- Rempli par script (Toutes les villes) --></select>
+                        <button class="primary-btn" onclick="launchProject()">Lancer les Études (1.2M €)</button>
+                    </div>
+
+                    <div class="panel-box">
+                        <h3>📜 Appels d'offres de l'État</h3>
+                        <div id="tenders-container" style="font-size: 0.85rem; color: var(--text-muted);">Chargement des lots...</div>
                     </div>
 
                     <div class="panel-box" style="flex: 1;">
-                        <h3>🚧 Suivi détaillé des Procédures & Travaux</h3>
-                        <div id="projects-container" style="font-size: 0.85rem; color: var(--text-muted);">Chargement des chantiers...</div>
+                        <h3>🚧 Suivi des Travaux en Cours</h3>
+                        <div id="projects-container" style="font-size: 0.85rem; color: var(--text-muted);">Chargement...</div>
                     </div>
                 </div>
                 <div class="right-map-container">
@@ -220,8 +205,8 @@
         <div id="view-carte" class="app-view">
             <div class="welcome-header">
                 <div>
-                    <div class="welcome-title">Carte Globale du Réseau</div>
-                    <div class="company-subtitle">Visualisez l'ensemble de vos concessions autoroutières en temps réel.</div>
+                    <div class="welcome-title">Carte Globale du Réseau Français</div>
+                    <div class="company-subtitle">Visualisez l'ensemble de vos concessions et incidents en temps réel.</div>
                 </div>
             </div>
             <div style="height: calc(100vh - 140px); background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative;">
@@ -229,70 +214,115 @@
             </div>
         </div>
 
-        <!-- 4. VUE FINANCE -->
-        <div id="view-finance" class="app-view">
+        <!-- 4. VUE AIRES DE SERVICES & B2B -->
+        <div id="view-aires" class="app-view">
             <div class="welcome-header">
                 <div>
-                    <div class="welcome-title">Gestion Bancaire & Finances</div>
-                    <div class="company-subtitle">Ajustez vos tarifs kilométriques et consultez la santé financière de votre groupe.</div>
-                </div>
-            </div>
-            <div class="panel-box" style="max-width: 600px;">
-                <h3>🏦 Compte Bancaire & Péages</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Les péages sont prélevés automatiquement à chaque cycle de simulation selon le trafic.</p>
-                <div style="font-size: 0.9rem; color: white; line-height: 1.6;">
-                    • Tarif actuel des péages : <strong>0.08 € / km</strong><br>
-                    • Subventions d'État : Actives<br>
-                    • Emprunts bancaires : Disponibles
-                </div>
-            </div>
-        </div>
-
-        <!-- 5. VUE SIÈGE & RH -->
-        <div id="view-siege" class="app-view">
-            <div class="welcome-header">
-                <div>
-                    <div class="welcome-title">Direction, Siège & Ressources Humaines</div>
-                    <div class="company-subtitle">Améliorez les départements de votre siège et recrutez du personnel qualifié.</div>
+                    <div class="welcome-title">Partenariats & Aires de Services (B2B)</div>
+                    <div class="company-subtitle">Installez des stations-service, restaurants et bornes pour booster vos revenus annexes.</div>
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div class="panel-box">
-                    <h3>🏢 Siège Social & Départements</h3>
-                    <div id="hq-status-info" style="font-size:0.85rem; margin-bottom:15px; color:var(--text-muted)">Chargement...</div>
+                    <h3>⛽ Implanter une Franchise</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Chaque enseigne rapporte un chiffre d'affaires fixe par cycle selon le trafic de votre réseau.</p>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <div class="item-row">
-                            <div><strong>Département R&D</strong><br><small style="color:var(--text-muted)">Accélération globale</small></div>
-                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('rd')">Améliorer (1.5M €)</button>
+                            <div><strong>Station TotalEnergies</strong><br><small style="color:var(--text-muted)">Coût: 5M € | +12k €/cycle</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="buildAmenity('total')">Implanter</button>
                         </div>
                         <div class="item-row">
-                            <div><strong>Service Juridique</strong><br><small style="color:var(--text-muted)">Accélère les Phases DUP</small></div>
-                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('legal')">Améliorer (1.5M €)</button>
+                            <div><strong>Restauration McDonald's</strong><br><small style="color:var(--text-muted)">Coût: 3.5M € | +8.5k €/cycle</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="buildAmenity('mcdonalds')">Implanter</button>
                         </div>
                         <div class="item-row">
-                            <div><strong>Centre des Opérations</strong><br><small style="color:var(--text-muted)">Optimise l'entretien</small></div>
-                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('ops')">Améliorer (1.5M €)</button>
+                            <div><strong>Bornes Tesla Supercharger</strong><br><small style="color:var(--text-muted)">Coût: 4M € | +10k €/cycle</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="buildAmenity('tesla')">Implanter</button>
                         </div>
                     </div>
                 </div>
                 <div class="panel-box">
-                    <h3>👥 Recrutement du Personnel</h3>
-                    <div id="hr-departments-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                    <h3>📊 Vos Franchises Actives</h3>
+                    <div id="amenities-list" style="font-size: 0.85rem; color: var(--text-muted);">Aucune franchise installée pour le moment.</div>
                 </div>
             </div>
         </div>
 
-        <!-- 6. VUE AIDE -->
+        <!-- 5. VUE FINANCE -->
+        <div id="view-finance" class="app-view">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Banque, Emprunts & Tarifs</div>
+                    <div class="company-subtitle">Gérez vos emprunts obligataires et ajustez les tarifs de péage kilométrique.</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="panel-box">
+                    <h3>🏦 Emprunts Bancaires</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Le levier financier indispensable pour financer l'expansion de votre réseau.</p>
+                    <button class="primary-btn" onclick="takeLoan()" style="margin-bottom:15px;">Emprunter 20 000 000 € (Taux 3.5%)</button>
+                    <div id="loan-status" style="font-size: 0.85rem; color: white;">Emprunts en cours : Aucun</div>
+                </div>
+                <div class="panel-box">
+                    <h3>💶 Paramètres des Péages</h3>
+                    <label>Tarif au kilomètre</label>
+                    <input type="number" id="toll-rate" value="0.08" step="0.01" min="0.02" max="0.20">
+                    <button class="primary-btn" onclick="updateTollRate()">Mettre à jour le tarif</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. VUE SIÈGE & RH -->
+        <div id="view-siege" class="app-view">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Siège Social & Flotte d'Intervention</div>
+                    <div class="company-subtitle">Recrutez des patrouilleurs, achetez des saleuses et améliorez vos départements.</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="panel-box">
+                    <h3>🏢 Siège Social & R&D</h3>
+                    <div id="hq-status-info" style="font-size:0.85rem; margin-bottom:15px; color:var(--text-muted)">Chargement...</div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="item-row">
+                            <div><strong>Centre R&D Enrobés</strong><br><small style="color:var(--text-muted)">Réduit l'usure des routes</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('rd')">Améliorer (2.5M €)</button>
+                        </div>
+                        <div class="item-row">
+                            <div><strong>Service Juridique & DUP</strong><br><small style="color:var(--text-muted)">Accélère les procédures</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('legal')">Améliorer (2.5M €)</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-box">
+                    <h3>🚨 Flotte Sécurité & Hivernale</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="item-row">
+                            <div><strong>Flotte Patrouilleurs</strong><br><small style="color:var(--text-muted)">Sécurité & gestion d'accidents</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="buyVehicle('patrol')">Acheter (350k €)</button>
+                        </div>
+                        <div class="item-row">
+                            <div><strong>Chasse-neige / Saleuses</strong><br><small style="color:var(--text-muted)">Indispensable en hiver</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="buyVehicle('plow')">Acheter (600k €)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. VUE AIDE -->
         <div id="view-aide" class="app-view">
             <div class="welcome-header">
                 <div>
-                    <div class="welcome-title">Centre d'Aide & Guide du Concessionnaire</div>
-                    <div class="company-subtitle">Apprenez à gérer vos projets autoroutiers de A à Z.</div>
+                    <div class="welcome-title">Guide du Concessionnaire</div>
+                    <div class="company-subtitle">Astuces pour bâtir l'empire autoroutier ultime en France.</div>
                 </div>
             </div>
             <div class="panel-box" style="max-width: 700px; font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
-                <strong style="color:white; font-size:1rem;">1. Traçage réel :</strong> Les autoroutes utilisent désormais le routage OpenStreetMap gratuit pour suivre exactement les tracés routiers réels entre les villes.<br><br>
-                <strong style="color:white; font-size:1rem;">2. Suivi des phases :</strong> Chaque chantier passe par 5 étapes avant de devenir une autoroute active rapportant des péages.
+                <strong style="color:white; font-size:1rem;">1. Maillage national :</strong> Reliez les grandes métropoles françaises pour maximiser le flux de véhicules.<br><br>
+                <strong style="color:white; font-size:1rem;">2. Aires de services :</strong> Installez des stations TotalEnergies ou Tesla sur vos axes pour doubler vos revenus grâce au B2B.<br><br>
+                <strong style="color:white; font-size:1rem;">3. Gestion des incidents :</strong> Maintenez une flotte de patrouilleurs pour parer aux pannes et intempéries.
             </div>
         </div>
 
@@ -305,7 +335,6 @@
         const SUPABASE_ANON_KEY = 'VOTRE_SUPABASE_ANON_KEY';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Initialisation des cartes Leaflet avec fond CartoDB Dark (100% gratuit, OpenStreetMap basé)
         const tileLayerUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
         const tileLayerAttrib = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
@@ -317,174 +346,214 @@
         L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
         L.tileLayer(tileLayerUrl, { maxZoom: 18, attribution: tileLayerAttrib }).addTo(mapFullscreen);
 
+        // Liste exhaustive de TOUTES les principales villes de France avec leurs coordonnées GPS
         const cityCoords = {
-            'Paris': [48.8566, 2.3522],
-            'Lyon': [45.7640, 4.8357],
-            'Marseille': [43.2965, 5.3698],
-            'Bordeaux': [44.8378, -0.5792],
-            'Lille': [50.6292, 3.0573],
-            'Strasbourg': [48.5734, 7.7521],
-            'Nantes': [47.2184, -1.5536],
-            'Toulouse': [43.6047, 1.4442]
-        };
+            'Paris': [48.8566, 2.3522], 'Lyon': [45.7640, 4.8357], 'Marseille': [43.2965, 5.3698],
+            'Bordeaux': [44.8378, -0.5792], 'Lille': [50.6292, 3.0573], 'Strasbourg': [48.5734, 7.7521],
+            'Nantes': [47.2184, -1.5536], 'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620],
+            'Rennes': [48.1173, -1.6778], 'Reims': [49.2583, 4.0317], 'Le Havre': [49.4944, 0.1079],
+            'Saint-Étienne': [45.4397, 4.3872], 'Toulon': [43.1242, 5.9280], 'Grenoble': [45.1885, 5.7245],
+            'Dijon': [47.3220, 5.0415], 'Angers': [47.478C'est parti ! On intègre **toutes les propositions** (les aires de services avec des marques partenaires, la gestion des accidents et des patrouilleurs/saleuses, les emprunts et appels d'offres de l'État, les évolutions du siège social et les sons d'ambiance), **sauf** les waypoints intermédiaires. 
 
-        const phaseNames = {
-            1: "⚖️ Phase 1 : Études d'impact & DUP",
-            2: "🏛️ Phase 2 : Enquêtes publiques & Expropriations",
-            3: "🚜 Phase 3 : Terrassement & Gavage des sols",
-            4: "🛣️ Phase 4 : Pose des enrobés & Signalisation",
-            5: "✨ Phase 5 : Finitions & Inspections de sécurité"
-        };
+Et surtout, on intègre une **liste géante de toutes les grandes villes de France** (plus de 40 villes réparties sur tout le territoire) pour que tu puisses mailler l'intégralité du pays !
 
-        function switchTab(tabName, element) {
-            document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${tabName}`).classList.add('active');
-            
-            document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
-            if(element) element.classList.add('active');
+Voici le code complet mis à jour avec toutes ces nouveautés :
 
-            setTimeout(() => {
-                mapChantiers.invalidateSize();
-                mapFullscreen.invalidateSize();
-            }, 150);
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autoroute Tycoon - Édition Intégrale</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.css](https://unpkg.com/leaflet@1.9.4/dist/leaflet.css)" />
+    <!-- Supabase Client -->
+    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
+    <style>
+        :root {
+            --bg-dark: #0b1120;
+            --bg-panel: #111c30;
+            --bg-card: #152238;
+            --border: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
 
-        async function loadGameState() {
-            const { data } = await supabaseClient.from('game_state').select('*').eq('id', 1).single();
-            if (data) {
-                document.getElementById('stat-budget').innerText = `${Number(data.budget).toLocaleString()} €`;
-                document.getElementById('stat-daily-toll').innerText = `+${Number(data.budget * 0.005 || 125000).toLocaleString()} € aujourd'hui`;
-                document.getElementById('stat-users-count').innerText = `${Math.floor(data.budget / 1200 + 14500).toLocaleString()} usagers transportés aujourd'hui`;
-            }
-            
-            const { data: highways } = await supabaseClient.from('highways').select('*');
-            if (highways) {
-                document.getElementById('stat-active-highways').innerText = highways.length;
-                renderRealHighways(highways, mapChantiers);
-                renderRealHighways(highways, mapFullscreen);
-            }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-            loadProjects();
-            loadHqAndHr();
-        }
+        /* Barre latérale */
+        .sidebar { width: 75px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 4px; z-index: 20; flex-shrink: 0; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; color: var(--text-muted); cursor: pointer; padding: 10px 4px; border-radius: 8px; width: 62px; transition: 0.2s; text-align: center; font-weight: 500; text-decoration: none; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+        .nav-item.active { background: var(--primary); color: white; }
+        .nav-item span.icon { font-size: 1.25rem; margin-bottom: 4px; }
+        .nav-item.badge-parent { position: relative; }
+        .nav-badge { position: absolute; top: 6px; right: 8px; background: var(--danger); color: white; font-size: 0.6rem; padding: 1px 5px; border-radius: 10px; font-weight: bold; }
 
-        // Fonction pour récupérer le tracé routier réel via OSRM (API gratuite OpenStreetMap)
-        async function renderRealHighways(highways, targetMap) {
-            highways.forEach(async hw => {
-                const coordA = cityCoords[hw.city_a];
-                const coordB = cityCoords[hw.city_b];
+        /* Conteneur principal */
+        .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; background: var(--bg-dark); padding: 24px 32px; }
 
-                if (coordA && coordB) {
-                    try {
-                        // Appel à l'API publique OSRM (Open Source Routing Machine) pour suivre les vraies routes
-                        const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordA[1]},${coordA[0]};${coordB[1]},${coordB[0]}?overview=full&geometries=geojson`);
-                        const json = await response.json();
+        .welcome-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .welcome-title { font-size: 1.6rem; font-weight: 700; color: white; margin-bottom: 4px; }
+        .company-subtitle { font-size: 0.9rem; color: var(--text-muted); }
+        .company-subtitle span { color: var(--primary); font-weight: 600; }
+        
+        .btn-action { background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-action:hover { background: var(--border); }
 
-                        if (json.routes && json.routes.length > 0) {
-                            // Inverser les coordonnées de [lon, lat] (OSRM) vers [lat, lon] (Leaflet)
-                            const routeCoords = json.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        /* Grille de stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .stat-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; position: relative; }
+        .stat-card-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+        .stat-card-value { font-size: 1.35rem; font-weight: 700; color: white; display: flex; align-items: baseline; gap: 8px; }
+        .stat-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
-                            L.polyline(routeCoords, { color: '#3b82f6', weight: 4, opacity: 0.85 })
-                             .addTo(targetMap)
-                             .bindPopup(`<b>${hw.name}</b><br>État chaussée : ${hw.condition_pct ? hw.condition_pct.toFixed(1) : 100}%`);
-                        } else {
-                            // Fallback ligne droite si l'API échoue
-                            L.polyline([coordA, coordB], { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(targetMap);
-                        }
-                    } catch (e) {
-                        // Fallback ligne droite en cas de coupure réseau
-                        L.polyline([coordA, coordB], { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(targetMap);
-                    }
-                }
-            });
-        }
+        .alert-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; color: #fbbf24; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+        .alert-banner:hover { background: rgba(245, 158, 11, 0.15); }
 
-        async function loadProjects() {
-            const { data } = await supabaseClient.from('construction_projects').select('*');
-            const container = document.getElementById('projects-container');
-            if (!data || data.length === 0) {
-                container.innerHTML = '<span style="color:var(--text-muted)">Aucun chantier ou procédure en cours.</span>';
-                return;
-            }
-            container.innerHTML = '';
-            data.forEach(p => {
-                const phaseText = phaseNames[p.current_phase] || `Phase ${p.current_phase}`;
-                container.innerHTML += `
-                    <div class="project-item">
-                        <div style="font-weight: 600; margin-bottom: 4px; color: white;">${p.highway_name}</div>
-                        <div style="font-size: 0.75rem; color: var(--warning); margin-bottom: 6px;">${phaseText}</div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
-                            <span>Progression de l'étape</span>
-                            <span>${p.phase_progress}%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${p.phase_progress}%;"></div>
-                        </div>
+        .section-title { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 12px; }
+        .events-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+        .event-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+        .event-info { display: flex; align-items: center; gap: 10px; }
+        .event-time { color: var(--text-muted); font-size: 0.75rem; }
+
+        .app-view { display: none; }
+        .app-view.active { display: block; }
+
+        .workspace-layout { display: flex; gap: 20px; height: calc(100vh - 140px); }
+        .left-control-panel { width: 420px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
+        .right-map-container { flex: 1; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }
+        .map-leaflet { width: 100%; height: 100%; background: #0b1120; }
+
+        .panel-box { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+        .panel-box h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: white; display: flex; align-items: center; gap: 8px; }
+        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 500; }
+        select, input { width: 100%; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; outline: none; }
+        select:focus, input:focus { border-color: var(--primary); }
+        button.primary-btn { width: 100%; padding: 9px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        button.primary-btn:hover { background: var(--primary-hover); }
+
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; }
+        .project-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .progress-bar-bg { width: 100%; background: var(--border); height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { background: var(--success); height: 100%; transition: width 0.4s ease; }
+    </style>
+</head>
+<body>
+
+    <!-- Barre latérale -->
+    <div class="sidebar">
+        <div class="nav-item active" onclick="switchTab('dashboard', this)"><span class="icon">🏠</span>Accueil</div>
+        <div class="nav-item" onclick="switchTab('chantiers', this)"><span class="icon">🏗️</span>Chantiers</div>
+        <div class="nav-item badge-parent" onclick="switchTab('carte', this)"><span class="icon">🗺️</span>Carte<span class="nav-badge">1</span></div>
+        <div class="nav-item" onclick="switchTab('aires', this)"><span class="icon">⛽</span>Aires</div>
+        <div class="nav-item" onclick="switchTab('finance', this)"><span class="icon">🏦</span>Finances</div>
+        <div class="nav-item badge-parent" onclick="switchTab('siege', this)"><span class="icon">🏢</span>Siège<span class="nav-badge">1</span></div>
+        <div class="nav-item" onclick="switchTab('aide', this)"><span class="icon">❓</span>Aide</div>
+    </div>
+
+    <!-- Conteneur Principal -->
+    <div class="main-container">
+
+        <!-- 1. ACCUEIL -->
+        <div id="view-dashboard" class="app-view active">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Content de te revoir, guigui.</div>
+                    <div class="company-subtitle">Sanef Autoroutes · <span>Réseau Concessionnaire France</span></div>
+                </div>
+                <button class="btn-action" onclick="loadGameState()">🔄 Actualiser</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-title">🏆 Rang Réseau National</div>
+                    <div class="stat-card-value">#1 <span style="font-size: 0.9rem; color: var(--success);">▲ 0</span></div>
+                    <div class="stat-card-sub">Sur 42 concessionnaires</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">🔥 Trafic en Continu</div>
+                    <div class="stat-card-value" id="stat-traffic">4 280 <span style="font-size: 0.8rem; color: var(--text-muted);">véh./h</span></div>
+                    <div class="stat-card-sub">Incidents actifs : <span id="stat-incidents" style="color:var(--danger)">0</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">☀️ Péages du Jour</div>
+                    <div class="stat-card-value"><span style="font-size: 1.1rem; color: var(--primary);">🛣️</span> <span id="stat-daily-toll">--</span></div>
+                    <div class="stat-card-sub" id="stat-users-count">0 usagers transportés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">💰 Trésorerie</div>
+                    <div class="stat-card-value" id="stat-budget">--</div>
+                    <div class="stat-card-sub">Fonds disponibles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">🛣️ Autoroutes Actives</div>
+                    <div class="stat-card-value" id="stat-active-highways">0</div>
+                    <div class="stat-card-sub">Tronçons en service</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">⭐ Satisfaction Usagers</div>
+                    <div class="stat-card-value">98 / 100</div>
+                    <div class="stat-card-sub">Basé sur la fluidité et les services</div>
+                </div>
+            </div>
+
+            <div class="alert-banner" onclick="switchTab('chantiers', document.querySelectorAll('.nav-item')[1])">
+                <span>⚠️ Des incidents ou des chantiers requièrent votre attention immédiate — cliquez pour gérer !</span>
+                <span>➔</span>
+            </div>
+
+            <div class="section-title">INCIDENTS & ÉVÉNEMENTS ROUTIERS EN DIRECT</div>
+            <div class="events-container" id="events-live-box">
+                <div class="event-card">
+                    <div class="event-info"><span>🌧️</span><div><strong>Vigilance Météo (A6)</strong> — Risque de pluie verglacée, saleuses déployées.</div></div>
+                    <div class="event-time">En direct</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. CHANTIERS & CARTE DE TRAÇAGE -->
+        <div id="view-chantiers" class="app-view">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Chantiers & Appels d'Offres Étatiques</div>
+                    <div class="company-subtitle">Reliez les métropoles françaises et gérez les interventions d'urgence.</div>
+                </div>
+            </div>
+
+            <div class="workspace-layout">
+                <div class="left-control-panel">
+                    <div class="panel-box">
+                        <h3>🗺️ Nouveau Tracé Autoroutier</h3>
+                        <label>Ville de départ</label>
+                        <select id="city-a" class="city-select"></select>
+                        <label>Ville d'arrivée</label>
+                        <select id="city-b" class="city-select"></select>
+                        <button class="primary-btn" onclick="launchProject()">Lancer les travaux (1.2M €)</button>
                     </div>
-                `;
-            });
-        }
 
-        async function loadHqAndHr() {
-            const { data: hq } = await supabaseClient.from('headquarters').select('*').eq('id', 1).single();
-            if (hq) {
-                document.getElementById('hq-status-info').innerHTML = `
-                    <strong>${hq.hq_name}</strong><br>
-                    • R&D : Niv. ${hq.rd_level} | Juridique : Niv. ${hq.legal_level} | Opérations : Niv. ${hq.ops_level}
-                `;
-            }
+                    <div class="panel-box">
+                        <h3>🚨 Gestion des Secours & Interventions</h3>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Déployez des équipes d'intervention rapide pour traiter les pannes et accidents.</p>
+                        <button class="primary-btn" style="background:var(--warning);" onclick="dispatchEmergencyUnits()">Envoyer patrouilleurs & dépanneuses (50k €)</button>
+                    </div>
 
-            const { data: depts } = await supabaseClient.from('employee_departments').select('*');
-            const hrContainer = document.getElementById('hr-departments-list');
-            hrContainer.innerHTML = '';
-            if (depts) {
-                depts.forEach(d => {
-                    hrContainer.innerHTML += `
-                        <div class="item-row">
-                            <div>
-                                <strong style="font-size:0.85rem;">${d.name}</strong><br>
-                                <small style="color:var(--text-muted)">Effectif : ${d.staff_count} | ${d.monthly_salary} €/m</small>
-                            </div>
-                            <button class="primary-btn" style="width:auto; padding:5px 10px; font-size:0.75rem;" onclick="hireStaff('${d.dept_key}')">+5</button>
-                        </div>
-                    `;
-                });
-            }
-        }
+                    <div class="panel-box" style="flex: 1;">
+                        <h3>🚧 Suivi des Tracés en Cours</h3>
+                        <div id="projects-container" style="font-size: 0.85rem; color: var(--text-muted);">Chargement...</div>
+                    </div>
+                </div>
+                <div class="right-map-container">
+                    <div id="map-chantiers" class="map-leaflet"></div>
+                </div>
+            </div>
+        </div>
 
-        async function launchProject() {
-            const cityA = document.getElementById('city-a').value;
-            const cityB = document.getElementById('city-b').value;
-            if (cityA === cityB) return alert('La ville de départ et d’arrivée doivent être différentes.');
-
-            const { data, error } = await supabaseClient.rpc('start_highway_project', { p_city_a: cityA, p_city_b: cityB, p_is_toll: true });
-            if (error || !data.success) return alert(error ? error.message : data.message);
-            alert(data.message);
-            loadGameState();
-        }
-
-        async function upgradeHq(dept) {
-            const { data, error } = await supabaseClient.rpc('upgrade_hq_department', { p_dept: dept });
-            if (error || !data.success) return alert(error ? error.message : data.message);
-            alert(data.message);
-            loadGameState();
-        }
-
-        async function hireStaff(deptKey) {
-            const { data, error } = await supabaseClient.rpc('hire_employees', { p_dept_key: deptKey, p_amount: 5 });
-            if (error || !data.success) return alert(error ? error.message : data.message);
-            alert(data.message);
-            loadGameState();
-        }
-
-        setInterval(async () => {
-            await supabaseClient.rpc('process_game_tick');
-            loadGameState();
-        }, 4000);
-
-        window.onload = () => { 
-            loadGameState();
-        };
-    </script>
-</body>
-</html>
+        <!-- 3. CARTE INTERACTIVE PLEINE PAGE -->
