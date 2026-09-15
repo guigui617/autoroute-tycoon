@@ -20,81 +20,199 @@
             --text-muted: #94a3b8;
             --success: #22c55e;
             --warning: #f59e0b;
+            --danger: #ef4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Barre latérale corrigée en DIV */
-        .sidebar { width: 80px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 8px; z-index: 10; flex-shrink: 0; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: var(--text-muted); cursor: pointer; padding: 8px 4px; border-radius: 8px; width: 66px; transition: 0.2s; text-align: center; font-weight: 500; }
+        /* Barre latérale type Airline Tycoon */
+        .sidebar { width: 75px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 4px; z-index: 20; flex-shrink: 0; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; color: var(--text-muted); cursor: pointer; padding: 10px 4px; border-radius: 8px; width: 62px; transition: 0.2s; text-align: center; font-weight: 500; text-decoration: none; }
         .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
         .nav-item.active { background: var(--primary); color: white; }
-        .nav-item span { font-size: 1.3rem; margin-bottom: 3px; }
+        .nav-item span.icon { font-size: 1.25rem; margin-bottom: 4px; }
+        .nav-item.badge-parent { position: relative; }
+        .nav-badge { position: absolute; top: 6px; right: 8px; background: var(--danger); color: white; font-size: 0.6rem; padding: 1px 5px; border-radius: 10px; font-weight: bold; }
 
         /* Conteneur principal */
-        .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Barre du haut */
-        header { height: 60px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; }
-        .brand-title { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; color: white; }
-        .top-stats { display: flex; gap: 15px; align-items: center; }
-        .stat-badge { background: var(--bg-card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: var(--primary); }
+        .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; background: var(--bg-dark); padding: 24px 32px; }
 
-        /* Corps de la page */
-        .content-body { flex: 1; display: flex; overflow: hidden; position: relative; }
-        .left-panel { width: 450px; background: var(--bg-dark); border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; flex-shrink: 0; z-index: 5; }
-        .right-map { flex: 1; height: 100%; position: relative; }
+        /* En-tête d'accueil */
+        .welcome-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .welcome-title { font-size: 1.6rem; font-weight: 700; color: white; margin-bottom: 4px; }
+        .company-subtitle { font-size: 0.9rem; color: var(--text-muted); }
+        .company-subtitle span { color: var(--primary); font-weight: 600; }
+        
+        .btn-action { background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-action:hover { background: var(--border); }
+
+        /* Grille de statistiques du Dashboard */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .stat-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; position: relative; }
+        .stat-card-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+        .stat-card-value { font-size: 1.35rem; font-weight: 700; color: white; display: flex; align-items: baseline; gap: 8px; }
+        .stat-card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+        .trend-up { color: var(--success); font-size: 0.85rem; font-weight: 600; }
+
+        /* Bannière d'alerte style jeu */
+        .alert-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; color: #fbbf24; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+        .alert-banner:hover { background: rgba(245, 158, 11, 0.15); }
+
+        /* Section Événements mondiaux */
+        .section-title { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 12px; }
+        .events-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+        .event-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+        .event-info { display: flex; align-items: center; gap: 10px; }
+        .event-time { color: var(--text-muted); font-size: 0.75rem; }
+
+        /* Vues dynamiques (onglets cachés/affichés) */
+        .app-view { display: none; }
+        .app-view.active { display: block; }
+
+        /* Styles spécifiques pour la vue Carte & Chantiers */
+        .workspace-layout { display: flex; gap: 20px; height: calc(100vh - 140px); }
+        .left-control-panel { width: 420px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
+        .right-map-container { flex: 1; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }
         #map { width: 100%; height: 100%; background: #0b1120; }
 
-        /* Cartes de style "Dashboard" */
-        .card-panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
-        .card-panel h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: white; }
-
-        /* Formulaires & Boutons */
-        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
-        select, input { width: 100%; padding: 9px 12px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 14px; font-size: 0.9rem; outline: none; transition: 0.2s; }
+        /* Formulaires & Cartes internes */
+        .panel-box { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+        .panel-box h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: white; display: flex; align-items: center; gap: 8px; }
+        label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 500; }
+        select, input { width: 100%; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; outline: none; }
         select:focus, input:focus { border-color: var(--primary); }
-        
-        button { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
-        button:hover { background: var(--primary-hover); }
+        button.primary-btn { width: 100%; padding: 9px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        button.primary-btn:hover { background: var(--primary-hover); }
 
-        /* Listes et éléments */
-        .item-list { display: flex; flex-direction: column; gap: 10px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
-        
-        /* Projets chantiers */
-        .project-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
-        .progress-bar-bg { width: 100%; background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; }
+        .project-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .progress-bar-bg { width: 100%; background: var(--border); height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px; }
         .progress-bar-fill { background: var(--success); height: 100%; transition: width 0.4s ease; }
     </style>
 </head>
 <body>
 
-    <!-- BARRE LATÉRALE CORRIGÉE -->
+    <!-- Barre latérale -->
     <div class="sidebar">
-        <div class="nav-item active" onclick="switchMainView('dashboard', this)"><span>🏗️</span>Chantiers</div>
-        <div class="nav-item" onclick="switchMainView('hq-hr', this)"><span>🏢</span>Siège & RH</div>
-        <div class="nav-item" onclick="switchMainView('bank', this)"><span>🏦</span>Banque</div>
+        <div class="nav-item active" onclick="switchTab('dashboard', this)">
+            <span class="icon">🏠</span>Accueil
+        </div>
+        <div class="nav-item" onclick="switchTab('chantiers', this)">
+            <span class="icon">🏗️</span>Chantiers
+        </div>
+        <div class="nav-item badge-parent" onclick="switchTab('carte', this)">
+            <span class="icon">🗺️</span>Carte
+            <span class="nav-badge">1</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('finance', this)">
+            <span class="icon">🏦</span>Finance
+        </div>
+        <div class="nav-item badge-parent" onclick="switchTab('siege', this)">
+            <span class="icon">🏢</span>Siège & RH
+            <span class="nav-badge">1</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('aide', this)">
+            <span class="icon">❓</span>Aide
+        </div>
     </div>
 
+    <!-- Conteneur Principal -->
     <div class="main-container">
-        <!-- HEADER -->
-        <header>
-            <div class="brand-title">🚗 Autoroute Tycoon</div>
-            <div class="top-stats">
-                <div class="stat-badge" id="stat-budget">Trésorerie : 0 €</div>
-                <div class="stat-badge" style="border-color: rgba(34, 197, 94, 0.3); color: var(--success);">Simulation active</div>
-            </div>
-        </header>
 
-        <!-- CONTENU -->
-        <div class="content-body">
-            <div class="left-panel">
-                
-                <!-- 1. VUE CHANTIERS -->
-                <div id="view-dashboard" class="dashboard-view">
-                    <div class="card-panel">
+        <!-- 1. VUE ACCUEIL -->
+        <div id="view-dashboard" class="app-view active">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Content de te revoir, guigui.</div>
+                    <div class="company-subtitle">Sanef Autoroutes · <span>Réseau Concessionnaire France</span></div>
+                </div>
+                <button class="btn-action" onclick="loadGameState()">🔄 Actualiser les données</button>
+            </div>
+
+            <!-- Grille de stats style Airline Tycoon -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-title">🏆 Rang Réseau National</div>
+                    <div class="stat-card-value">#1 <span style="font-size: 0.9rem; color: var(--success);">▲ 0</span></div>
+                    <div class="stat-card-sub">Sur 42 concessionnaires</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">🔥 Trafic en Continu</div>
+                    <div class="stat-card-value" id="stat-traffic">4 280 <span style="font-size: 0.8rem; color: var(--text-muted);">véh./h</span></div>
+                    <div class="stat-card-sub">Record : 12 450 véh./h</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">☀️ Activité Aujourd'hui</div>
+                    <div class="stat-card-value">
+                        <span style="font-size: 1.1rem; color: var(--primary);">🛣️</span> 
+                        <span id="stat-daily-toll">--</span>
+                    </div>
+                    <div class="stat-card-sub" id="stat-users-count">0 usagers transportés aujourd'hui</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-title">💰 Trésorerie</div>
+                    <div class="stat-card-value" id="stat-budget">--</div>
+                    <div class="stat-card-sub">Trésorerie disponible</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">🛣️ Autoroutes Actives</div>
+                    <div class="stat-card-value" id="stat-active-highways">0</div>
+                    <div class="stat-card-sub">Tronçons en service</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">⭐ Satisfaction Usagers</div>
+                    <div class="stat-card-value">98 / 100</div>
+                    <div class="stat-card-sub">Basé sur l'état des chaussées</div>
+                </div>
+            </div>
+
+            <!-- Alerte style jeu -->
+            <div class="alert-banner" onclick="switchTab('chantiers', document.querySelectorAll('.nav-item')[1])">
+                <span>⚠️ Des tronçons nécessitent une maintenance préventive ou des travaux de sécurisation — vérifiez vos chantiers !</span>
+                <span>➔</span>
+            </div>
+
+            <!-- Événements mondiaux / Trafic -->
+            <div class="section-title">ÉVÉNEMENTS & TRAFIC ROUTIER</div>
+            <div class="events-container">
+                <div class="event-card">
+                    <div class="event-info">
+                        <span>🌧️</span>
+                        <div><strong>Intempéries (A6)</strong> — Ralentissements modérés sur l'axe Paris-Lyon</div>
+                    </div>
+                    <div class="event-time">16 min</div>
+                </div>
+                <div class="event-card">
+                    <div class="event-info">
+                        <span>📈</span>
+                        <div><strong>Pic de départ en vacances</strong> — Forte hausse du trafic sur les barrières de péage</div>
+                    </div>
+                    <div class="event-time">2 h 12</div>
+                </div>
+                <div class="event-card">
+                    <div class="event-info">
+                        <span>🚧</span>
+                        <div><strong>Manifestation agricole</strong> — Ralentissements signalés vers Bordeaux</div>
+                    </div>
+                    <div class="event-time">16 min</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. VUE CHANTIERS & CARTE WORKSPACE -->
+        <div id="view-chantiers" class="app-view">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Gestion des Chantiers & Tracés</div>
+                    <div class="company-subtitle">Planifiez et suivez la construction de vos nouvelles autoroutes concédées.</div>
+                </div>
+            </div>
+
+            <div class="workspace-layout">
+                <div class="left-control-panel">
+                    <div class="panel-box">
                         <h3>🗺️ Lancer un nouveau tracé</h3>
                         <label>Ville de départ</label>
                         <select id="city-a">
@@ -116,62 +234,101 @@
                             <option value="Nantes">Nantes</option>
                             <option value="Toulouse">Toulouse</option>
                         </select>
-                        <button onclick="launchProject()">Lancer les Études Préliminaires (500k €)</button>
+                        <button class="primary-btn" onclick="launchProject()">Lancer les Études Préliminaires (500k €)</button>
                     </div>
 
-                    <div class="card-panel">
+                    <div class="panel-box" style="flex: 1;">
                         <h3>🚧 Suivi détaillé des Procédures & Travaux</h3>
                         <div id="projects-container" style="font-size: 0.85rem; color: var(--text-muted);">Chargement des chantiers...</div>
                     </div>
                 </div>
-
-                <!-- 2. VUE SIÈGE & RH -->
-                <div id="view-hq-hr" class="dashboard-view" style="display:none;">
-                    <div class="card-panel">
-                        <h3>🏢 Direction & Siège Social</h3>
-                        <div id="hq-status-info" style="font-size:0.85rem; margin-bottom:15px; color:var(--text-muted)">Chargement...</div>
-                        
-                        <div class="item-list">
-                            <div class="item-row">
-                                <div><strong>Département R&D</strong><br><small style="color:var(--text-muted)">Accélération globale</small></div>
-                                <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('rd')">Améliorer (1.5M €)</button>
-                            </div>
-                            <div class="item-row">
-                                <div><strong>Service Juridique</strong><br><small style="color:var(--text-muted)">Accélère les Phases DUP</small></div>
-                                <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('legal')">Améliorer (1.5M €)</button>
-                            </div>
-                            <div class="item-row">
-                                <div><strong>Centre des Opérations</strong><br><small style="color:var(--text-muted)">Optimise l'entretien</small></div>
-                                <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('ops')">Améliorer (1.5M €)</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-panel">
-                        <h3>👥 Gestion du Personnel & Recrutement</h3>
-                        <div id="hr-departments-list" class="item-list"></div>
-                    </div>
+                <div class="right-map-container">
+                    <div id="map-chantiers"></div>
                 </div>
-
-                <!-- 3. VUE BANQUE -->
-                <div id="view-bank" class="dashboard-view" style="display:none;">
-                    <div class="card-panel">
-                        <h3>🏦 Gestion Bancaire & Finances</h3>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Gérez les tarifs de péage et consultez la santé financière.</p>
-                        <div id="bank-info" style="font-size: 0.85rem; color: white;">
-                            • Tarif actuel des péages : <strong>0.08 € / km</strong><br>
-                            • Emprunts et subventions bientôt disponibles.
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- CARTE INTERACTIVE -->
-            <div class="right-map">
-                <div id="map"></div>
             </div>
         </div>
+
+        <!-- 3. VUE CARTE INTERACTIVE PLEINE PAGE -->
+        <div id="view-carte" class="app-view">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Carte Globale du Réseau</div>
+                    <div class="company-subtitle">Visualisez l'ensemble de vos concessions autoroutières en temps réel.</div>
+                </div>
+            </div>
+            <div style="height: calc(100vh - 140px); background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative;">
+                <div id="map-fullscreen" style="width: 100%; height: 100%; background: #0b1120;"></div>
+            </div>
+        </div>
+
+        <!-- 4. VUE FINANCE -->
+        <div id="view-finance" class="app-view">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Gestion Bancaire & Finances</div>
+                    <div class="company-subtitle">Ajustez vos tarifs kilométriques et consultez la santé financière de votre groupe.</div>
+                </div>
+            </div>
+            <div class="panel-box" style="max-width: 600px;">
+                <h3>🏦 Compte Bancaire & Péages</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Les péages sont prélevés automatiquement à chaque cycle de simulation selon le trafic.</p>
+                <div id="bank-info" style="font-size: 0.9rem; color: white; line-height: 1.6;">
+                    • Tarif actuel des péages : <strong>0.08 € / km</strong><br>
+                    • Subventions d'État : Actives<br>
+                    • Emprunts bancaires : Disponibles
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. VUE SIÈGE & RH -->
+        <div id="view-siege" class="app-view">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Direction, Siège & Ressources Humaines</div>
+                    <div class="company-subtitle">Améliorez les départements de votre siège et recrutez du personnel qualifié.</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="panel-box">
+                    <h3>🏢 Siège Social & Départements</h3>
+                    <div id="hq-status-info" style="font-size:0.85rem; margin-bottom:15px; color:var(--text-muted)">Chargement...</div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="item-row">
+                            <div><strong>Département R&D</strong><br><small style="color:var(--text-muted)">Accélération globale</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('rd')">Améliorer (1.5M €)</button>
+                        </div>
+                        <div class="item-row">
+                            <div><strong>Service Juridique</strong><br><small style="color:var(--text-muted)">Accélère les Phases DUP</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('legal')">Améliorer (1.5M €)</button>
+                        </div>
+                        <div class="item-row">
+                            <div><strong>Centre des Opérations</strong><br><small style="color:var(--text-muted)">Optimise l'entretien</small></div>
+                            <button class="primary-btn" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('ops')">Améliorer (1.5M €)</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-box">
+                    <h3>👥 Recrutement du Personnel</h3>
+                    <div id="hr-departments-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. VUE AIDE -->
+        <div id="view-aide" class="app-view">
+            <div class="welcome-header">
+                <div>
+                    <div class="welcome-title">Centre d'Aide & Guide du Concessionnaire</div>
+                    <div class="company-subtitle">Apprenez à gérer vos projets autoroutiers de A à Z.</div>
+                </div>
+            </div>
+            <div class="panel-box" style="max-width: 700px; font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
+                <strong style="color:white; font-size:1rem;">1. Lancer un tracé :</strong> Rendez-vous dans l'onglet <em>Chantiers</em>, choisissez deux villes et lancez les études préliminaires.<br><br>
+                <strong style="color:white; font-size:1rem;">2. Suivi des phases :</strong> Chaque chantier passe par 5 étapes (Études d'impact, Enquêtes publiques, Terrassement, Enrobés, Finitions) avant de devenir une autoroute active rapportant des péages.<br><br>
+                <strong style="color:white; font-size:1rem;">3. Gestion du Siège :</strong> Améliorez vos départements pour réduire les délais et recrutez des équipes pour maintenir votre réseau en parfait état.
+            </div>
+        </div>
+
     </div>
 
     <!-- Leaflet JS -->
@@ -181,13 +338,14 @@
         const SUPABASE_ANON_KEY = 'VOTRE_SUPABASE_ANON_KEY';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const map = L.map('map', { zoomControl: false }).setView([46.6033, 1.8883], 6);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        // Initialisation des cartes Leaflet
+        const mapChantiers = L.map('map-chantiers', { zoomControl: false }).setView([46.6033, 1.8883], 5);
+        L.control.zoom({ position: 'bottomright' }).addTo(mapChantiers);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18, attribution: '© CARTO' }).addTo(mapChantiers);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 18,
-            attribution: '© OpenStreetMap, © CARTO'
-        }).addTo(map);
+        const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
+        L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18, attribution: '© CARTO' }).addTo(mapFullscreen);
 
         const cityCoords = {
             'Paris': [48.8566, 2.3522],
@@ -208,35 +366,47 @@
             5: "✨ Phase 5 : Finitions & Inspections de sécurité"
         };
 
-        function switchMainView(viewName, element) {
-            document.querySelectorAll('.dashboard-view').forEach(el => el.style.display = 'none');
-            document.getElementById(`view-${viewName}`).style.display = 'block';
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${tabName}`).classList.add('active');
+            
             document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
-            setTimeout(() => { map.invalidateSize(); }, 100);
+
+            // Redimensionnement indispensable pour les cartes Leaflet
+            setTimeout(() => {
+                mapChantiers.invalidateSize();
+                mapFullscreen.invalidateSize();
+            }, 150);
         }
 
         async function loadGameState() {
             const { data } = await supabaseClient.from('game_state').select('*').eq('id', 1).single();
             if (data) {
-                document.getElementById('stat-budget').innerText = `Trésorerie : ${Number(data.budget).toLocaleString()} €`;
+                document.getElementById('stat-budget').innerText = `${Number(data.budget).toLocaleString()} €`;
+                document.getElementById('stat-daily-toll').innerText = `+${Number(data.budget * 0.005 || 125000).toLocaleString()} € aujourd'hui`;
+                document.getElementById('stat-users-count').innerText = `${Math.floor(data.budget / 1200 + 14500).toLocaleString()} usagers transportés aujourd'hui`;
             }
-            loadProjects();
-            loadHqAndHr();
-            loadMapHighways();
-        }
-
-        async function loadMapHighways() {
+            
             const { data: highways } = await supabaseClient.from('highways').select('*');
             if (highways) {
-                highways.forEach(hw => {
-                    if (cityCoords[hw.city_a] && cityCoords[hw.city_b]) {
-                        L.polyline([cityCoords[hw.city_a], cityCoords[hw.city_b]], {color: '#3b82f6', weight: 4, opacity: 0.8})
-                         .addTo(map)
-                         .bindPopup(`<b>${hw.name}</b><br>État chaussée : ${hw.condition_pct.toFixed(1)}%`);
-                    }
-                });
+                document.getElementById('stat-active-highways').innerText = highways.length;
+                renderHighwaysOnMap(highways, mapChantiers);
+                renderHighwaysOnMap(highways, mapFullscreen);
             }
+
+            loadProjects();
+            loadHqAndHr();
+        }
+
+        function renderHighwaysOnMap(highways, targetMap) {
+            highways.forEach(hw => {
+                if (cityCoords[hw.city_a] && cityCoords[hw.city_b]) {
+                    L.polyline([cityCoords[hw.city_a], cityCoords[hw.city_b]], {color: '#3b82f6', weight: 4, opacity: 0.8})
+                     .addTo(targetMap)
+                     .bindPopup(`<b>${hw.name}</b><br>État chaussée : ${hw.condition_pct ? hw.condition_pct.toFixed(1) : 100}%`);
+                }
+            });
         }
 
         async function loadProjects() {
@@ -250,7 +420,7 @@
             data.forEach(p => {
                 const phaseText = phaseNames[p.current_phase] || `Phase ${p.current_phase}`;
                 container.innerHTML += `
-                    <div class="project-card">
+                    <div class="project-item">
                         <div style="font-weight: 600; margin-bottom: 4px; color: white;">${p.highway_name}</div>
                         <div style="font-size: 0.75rem; color: var(--warning); margin-bottom: 6px;">${phaseText}</div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
@@ -285,7 +455,7 @@
                                 <strong style="font-size:0.85rem;">${d.name}</strong><br>
                                 <small style="color:var(--text-muted)">Effectif : ${d.staff_count} | ${d.monthly_salary} €/m</small>
                             </div>
-                            <button style="width:auto; padding:5px 10px; font-size:0.75rem;" onclick="hireStaff('${d.dept_key}')">+5</button>
+                            <button class="primary-btn" style="width:auto; padding:5px 10px; font-size:0.75rem;" onclick="hireStaff('${d.dept_key}')">+5</button>
                         </div>
                     `;
                 });
@@ -317,12 +487,15 @@
             loadGameState();
         }
 
+        // Boucle de simulation temps réel (toutes les 4 secondes)
         setInterval(async () => {
             await supabaseClient.rpc('process_game_tick');
             loadGameState();
         }, 4000);
 
-        window.onload = () => { loadGameState(); };
+        window.onload = () => { 
+            loadGameState();
+        };
     </script>
 </body>
 </html>
