@@ -6,7 +6,7 @@
     <title>Autoroute Tycoon</title>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Leaflet CSS & JS (Carte OpenStreetMap) -->
+    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -129,12 +129,49 @@
             border: 1px solid var(--border);
         }
 
+        .badge-toll {
+            background-color: #16a34a;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .badge-free {
+            background-color: #0284c7;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
         .ticker {
             background-color: #0284c7;
             color: #fff;
             padding: 10px;
             border-radius: 6px;
             font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .live-indicator {
+            background-color: #22c55e;
+            color: #000;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
         }
 
         .leaflet-tooltip.city-label {
@@ -154,7 +191,10 @@
 <div class="container">
     <header>
         <h1>🛣️ Autoroute Tycoon - Réseau France</h1>
-        <div id="ticker" class="ticker">Chargement de la concession...</div>
+        <div class="ticker">
+            <span id="ticker">Connexion au réseau en temps réel...</span>
+            <span class="live-indicator">● EN DIRECT</span>
+        </div>
         
         <div class="stats-bar">
             <div class="stat-card">
@@ -170,13 +210,14 @@
                 <div class="stat-value" id="satisfaction">-%</div>
             </div>
             <div class="stat-card">
-                <button onclick="triggerGameTick()">⏩ Passer un mois</button>
+                <div>Statut</div>
+                <div class="stat-value" style="font-size: 1.1rem; color: var(--accent-success);">Actif (Temps réel)</div>
             </div>
         </div>
     </header>
 
     <div class="card">
-        <h2>🗺️ Carte Interactive OpenStreetMap (Réseau Autoroutier Français)</h2>
+        <h2>🗺️ Carte Réseau (🟢 Payant | 🔵 Gratuit)</h2>
         <div id="map"></div>
     </div>
 
@@ -186,8 +227,16 @@
             <div>
                 <label>Ville de départ</label>
                 <select id="city-a"></select>
+                
                 <label>Ville d'arrivée</label>
                 <select id="city-b"></select>
+
+                <label>Type de tronçon</label>
+                <select id="is-toll">
+                    <option value="true">🟢 Payant (Péage)</option>
+                    <option value="false">🔵 Gratuit (Trafic & Satisfaction ++)</option>
+                </select>
+
                 <button onclick="buildHighway()">Lancer le chantier</button>
             </div>
 
@@ -211,7 +260,6 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_8h4cupw2ZGpslNlJ4BZ7Rg_UtPH5CPc';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Principales villes de France métropolitaine
     const CITIES_COORDS = {
         'Paris': [48.8566, 2.3522],
         'Marseille': [43.2965, 5.3698],
@@ -257,20 +305,21 @@
         loadCities();
         loadHighways();
         loadFleet();
+
+        // Lancement de la boucle automatique en temps réel (toutes les 5 secondes)
+        setInterval(autoGameTick, 5000);
     });
 
     function initMap() {
-        // Fond de carte OpenStreetMap officiel centré sur la France
         map = L.map('map').setView([46.603354, 1.888334], 6);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            attribution: '&copy; OpenStreetMap',
             maxZoom: 19
         }).addTo(map);
 
         highwaysLayerGroup = L.layerGroup().addTo(map);
 
-        // Affichage des villes françaises
         Object.keys(CITIES_COORDS).forEach(cityName => {
             const coords = CITIES_COORDS[cityName];
             L.circleMarker(coords, {
@@ -290,7 +339,7 @@
         document.getElementById('budget').innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.budget);
         document.getElementById('toll-rate').innerText = `${data.toll_rate} €`;
         document.getElementById('satisfaction').innerText = `${data.satisfaction} %`;
-        document.getElementById('ticker').innerText = data.ticker_message;
+        document.getElementById('ticker').innerText = data.ticker_message || "Réseau autoroutier en service.";
     }
 
     async function loadCities() {
@@ -298,7 +347,6 @@
         const selectB = document.getElementById('city-b');
         selectA.innerHTML = ''; selectB.innerHTML = '';
 
-        // Charger les villes triées alphabétiquement
         const sortedCities = Object.keys(CITIES_COORDS).sort();
         sortedCities.forEach(city => {
             selectA.add(new Option(city, city));
@@ -315,10 +363,13 @@
         highwaysLayerGroup.clearLayers();
 
         data.forEach(async (hw) => {
+            const isToll = hw.is_toll !== false;
+            const badge = isToll ? '<span class="badge-toll">PÉAGE</span>' : '<span class="badge-free">GRATUIT</span>';
+
             container.innerHTML += `
                 <div class="item-row">
                     <div>
-                        <strong>${hw.name}</strong><br>
+                        <strong>${hw.name}</strong> ${badge}<br>
                         <small style="color:var(--text-muted)">${hw.distance_km} km | Trafic: ${hw.traffic} véh/j</small>
                     </div>
                 </div>
@@ -335,7 +386,6 @@
                 }
             }
 
-            // Tracé d'itinéraire réel via OSRM (OpenStreetMap Routing Service)
             if (CITIES_COORDS[cityA] && CITIES_COORDS[cityB]) {
                 const coordsA = CITIES_COORDS[cityA];
                 const coordsB = CITIES_COORDS[cityB];
@@ -352,19 +402,23 @@
                             geometry: routeData.routes[0].geometry
                         };
 
+                        const routeColor = isToll ? '#16a34a' : '#0284c7';
+
                         const routeLayer = L.geoJSON(geojsonRoute, {
                             style: {
-                                color: '#16a34a', // Vert autoroutier
+                                color: routeColor,
                                 weight: 5,
                                 opacity: 0.85
                             }
                         }).addTo(highwaysLayerGroup);
 
-                        routeLayer.bindPopup(`<b>${hw.name}</b><br>${hw.distance_km} km<br>Trafic: ${hw.traffic} véh/j`);
+                        const typeText = isToll ? 'Payante' : 'Gratuite';
+                        routeLayer.bindPopup(`<b>${hw.name}</b> (${typeText})<br>${hw.distance_km} km<br>Trafic: ${hw.traffic} véh/j`);
                     }
                 } catch (e) {
-                    console.error("Erreur de récupération du tracé OSRM:", e);
-                    L.polyline([coordsA, coordsB], { color: '#16a34a', weight: 4 }).addTo(highwaysLayerGroup);
+                    console.error("Erreur OSRM:", e);
+                    const routeColor = isToll ? '#16a34a' : '#0284c7';
+                    L.polyline([coordsA, coordsB], { color: routeColor, weight: 4 }).addTo(highwaysLayerGroup);
                 }
             }
         });
@@ -413,16 +467,30 @@
     async function buildHighway() {
         const cityA = document.getElementById('city-a').value;
         const cityB = document.getElementById('city-b').value;
+        const isToll = document.getElementById('is-toll').value === 'true';
 
         if (cityA === cityB) {
             alert("Veuillez choisir deux villes différentes.");
             return;
         }
 
-        const { data, error } = await supabaseClient.rpc('create_highway', { p_city_a: cityA, p_city_b: cityB });
-        if (error) return alert("Erreur lors de la construction.");
+        const { data, error } = await supabaseClient.rpc('create_highway', { 
+            p_city_a: cityA, 
+            p_city_b: cityB,
+            p_is_toll: isToll 
+        });
         
-        alert(data.message);
+        if (error) {
+            const { data: fallbackData, error: fallbackError } = await supabaseClient.rpc('create_highway', { 
+                p_city_a: cityA, 
+                p_city_b: cityB 
+            });
+            if (fallbackError) return alert("Erreur lors de la construction.");
+            alert(fallbackData.message);
+        } else {
+            alert(data.message);
+        }
+
         loadGameState();
         loadHighways();
     }
@@ -431,18 +499,16 @@
         const { data, error } = await supabaseClient.rpc('buy_vehicle', { p_vehicle_key: key });
         if (error) return alert("Erreur d'achat.");
 
-        alert(data.message);
         loadGameState();
         loadFleet();
     }
 
-    async function triggerGameTick() {
-        const { data, error } = await supabaseClient.rpc('process_game_tick');
-        if (error) return alert("Erreur de simulation.");
-
-        const income = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.net_balance);
-        alert(`Bilan du mois : ${income}`);
-        loadGameState();
+    // Exécution automatique de la simulation en temps réel en arrière-plan
+    async function autoGameTick() {
+        const { error } = await supabaseClient.rpc('process_game_tick');
+        if (!error) {
+            loadGameState();
+        }
     }
 </script>
 
