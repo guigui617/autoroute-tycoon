@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Pro 0.2 </title>
+    <title>Autoroute Tycoon - Connexion & Édition Pro</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -30,10 +30,76 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             height: 100vh;
-            display: grid;
+            overflow: hidden;
+        }
+
+        /* --- PAGE DE CONNEXION / INSCRIPTION --- */
+        #auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(11, 15, 25, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .auth-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 12px;
+            width: 380px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .auth-card h2 {
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border: none;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .auth-tab.active {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        /* --- INTERFACE DU JEU (Cachée au départ) --- */
+        #game-container {
+            display: none;
+            height: 100vh;
             grid-template-rows: 60px 1fr;
             grid-template-columns: 360px 1fr;
-            overflow: hidden;
         }
 
         header {
@@ -212,7 +278,6 @@
             margin-bottom: 8px;
         }
 
-        /* Alerte météo display */
         .weather-banner {
             background: rgba(239, 68, 68, 0.15);
             border: 1px solid var(--danger);
@@ -226,138 +291,235 @@
 </head>
 <body>
 
-    <header>
-        <div class="logo">
-            🛣️ AUTOROUTE TYCOON <span style="font-size: 0.65rem; background: var(--accent); color: var(--bg-dark); padding: 2px 5px; border-radius: 4px;">MÉTÉO LIVE</span>
-        </div>
-        <div class="kpi-container">
-            <div class="kpi-card">
-                <span class="kpi-label">Trésorerie</span>
-                <span class="kpi-value" id="kpi-money" style="color: var(--success);">10 000 000 €</span>
+    <!-- PAGE DE CONNEXION / CRÉATION DE COMPTE -->
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <h2>🛣️ Autoroute Tycoon - Portail</h2>
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Se connecter</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Créer un compte</button>
             </div>
-            <div class="kpi-card">
-                <span class="kpi-label">Réseau Actif</span>
-                <span class="kpi-value" id="kpi-km">0 km</span>
-            </div>
-            <div class="kpi-card">
-                <span class="kpi-label">Météo Actuelle</span>
-                <span class="kpi-value" id="kpi-weather" style="color: var(--accent);">☀️ Clain & Normal</span>
-            </div>
-            <div class="kpi-card">
-                <span class="kpi-label">Revenu /s</span>
-                <span class="kpi-value" id="kpi-income" style="color: var(--success);">0 €/s</span>
-            </div>
-        </div>
-    </header>
 
-    <sidebar>
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab(event, 'network')">Réseau</button>
-            <button class="tab-btn" onclick="switchTab(event, 'fleet')">Flotte</button>
-            <button class="tab-btn" onclick="switchTab(event, 'rd')">R&D</button>
-            <button class="tab-btn" onclick="switchTab(event, 'bank')">Banque</button>
-            <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège</button>
+            <!-- Formulaire de Connexion -->
+            <div id="login-form" class="auth-form active">
+                <div class="control-group">
+                    <label>Adresse e-mail</label>
+                    <input type="email" id="login-email" placeholder="votre@email.com">
+                </div>
+                <div class="control-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="login-password" placeholder="••••••••">
+                </div>
+                <button onclick="handleLogin()">Connexion</button>
+            </div>
+
+            <!-- Formulaire d'Inscription -->
+            <div id="register-form" class="auth-form">
+                <div class="control-group">
+                    <label>Adresse e-mail</label>
+                    <input type="email" id="reg-email" placeholder="votre@email.com">
+                </div>
+                <div class="control-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="reg-password" placeholder="••••••••">
+                </div>
+                <button onclick="handleRegister()">Créer mon compte</button>
+            </div>
         </div>
+    </div>
 
-        <!-- Réseau & Construction -->
-        <div id="network" class="tab-content active">
-            <div id="weather-alert" class="weather-banner">
-                <strong>⚠️ ALERTE MÉTÉO :</strong> <span id="weather-desc-text">Tempête en cours sur le réseau !</span>
+    <!-- INTERFACE DE JEU PRINCIPALE -->
+    <div id="game-container">
+        <header>
+            <div class="logo">
+                🛣️ AUTOROUTE TYCOON <span style="font-size: 0.65rem; background: var(--accent); color: var(--bg-dark); padding: 2px 5px; border-radius: 4px;">MÉTÉO LIVE</span>
             </div>
-            <h2>Planification de Tronçon</h2>
-            <div class="control-group">
-                <label>Ville de Départ</label>
-                <select id="city-from"></select>
-            </div>
-            <div class="control-group">
-                <label>Ville d'Arrivée</label>
-                <select id="city-to"></select>
-            </div>
-            <div class="control-group">
-                <label>Modèle Économique</label>
-                <select id="road-model">
-                    <option value="toll">Section à Péage Payant (Revenus élevés, -Satisfaction)</option>
-                    <option value="free">Section Gratuite / Service Public (+Satisfaction max, 0 Revenu)</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label>Type d'Infrastructure</label>
-                <select id="road-type">
-                    <option value="standard">2x2 Voies Standard (1M€ / km)</option>
-                    <option value="smart">2x3 Voies + Portiques Free-Flow (2.5M€ / km)</option>
-                </select>
-            </div>
-            <button onclick="buildSection()">Lancer les travaux (Tracé Réel)</button>
-
-            <div style="margin-top: 20px;">
-                <h2>Journal du Réseau</h2>
-                <div id="construction-list" style="font-size: 0.8rem; color: var(--text-muted);">
-                    Aucun chantier récent.
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    <span class="kpi-label">Trésorerie</span>
+                    <span class="kpi-value" id="kpi-money" style="color: var(--success);">10 000 000 €</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Réseau Actif</span>
+                    <span class="kpi-value" id="kpi-km">0 km</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Météo Actuelle</span>
+                    <span class="kpi-value" id="kpi-weather" style="color: var(--accent);">☀️ Clain & Normal</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Revenu /s</span>
+                    <span class="kpi-value" id="kpi-income" style="color: var(--success);">0 €/s</span>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <!-- Flotte & Maintenance -->
-        <div id="fleet" class="tab-content">
-            <h2>Gestion des Flottes & Urgences</h2>
-            <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">3</strong></div>
-            <div class="stat-line"><span>Chasse-neige (Hiver/Tempête) :</span> <strong id="fleet-plows">2</strong></div>
-            <button onclick="buyVehicle('van')">Acheter un Fourgon (50 000 €)</button>
-            <button onclick="buyVehicle('plow')">Acheter un Chasse-neige (120 000 €)</button>
-            <button id="deploy-plows-btn" onclick="deployPlows()" style="background: var(--warning); color: var(--bg-dark); display: none;">❄️ Déployer les Chasse-neige en urgence</button>
-
-            <h2 style="margin-top: 20px;">État des Chaussées</h2>
-            <div class="stat-line"><span>Usure Globale :</span> <strong style="color: var(--success);" id="wear-rate">0 %</strong></div>
-            <button onclick="triggerMaintenance()">Campagne de Réfection (150 000 €)</button>
-        </div>
-
-        <!-- Recherche & Développement -->
-        <div id="rd" class="tab-content">
-            <h2>Laboratoire R&D (>90 Technologies)</h2>
-            <div class="stat-line"><span>Slots Actifs :</span> <strong id="rd-slots">0 / 3</strong></div>
-            <div id="rd-tree-container" style="margin-top: 10px;">
-                <!-- Rempli dynamiquement -->
+        <sidebar>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab(event, 'network')">Réseau</button>
+                <button class="tab-btn" onclick="switchTab(event, 'fleet')">Flotte</button>
+                <button class="tab-btn" onclick="switchTab(event, 'rd')">R&D</button>
+                <button class="tab-btn" onclick="switchTab(event, 'bank')">Banque</button>
+                <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège</button>
             </div>
-        </div>
 
-        <!-- Banque & Financement -->
-        <div id="bank" class="tab-content">
-            <h2>Banque Centrale & Crédits</h2>
-            <div class="bank-card">
-                <h3>Emprunt Bancaire</h3>
-                <p>Obtenez des liquidités immédiates remboursables via un prélèvement automatique sur vos revenus.</p>
-                <button onclick="takeLoan(2000000)">Emprunter 2 000 000 € (Taux 4.5%)</button>
-            </div>
-            <div class="bank-card" style="margin-top: 15px;">
-                <h3>Rachat de Concurrence</h3>
-                <p>Absorbez un réseau secondaire régional pour étendre votre emprise territoriale.</p>
-                <button onclick="buyCompetitor()" style="background: var(--warning); color: var(--bg-dark);">Racheter un réseau (5 000 000 €)</button>
-            </div>
-        </div>
+            <!-- Réseau & Construction -->
+            <div id="network" class="tab-content active">
+                <div id="weather-alert" class="weather-banner">
+                    <strong>⚠️ ALERTE MÉTÉO :</strong> <span id="weather-desc-text">Tempête en cours sur le réseau !</span>
+                </div>
+                <h2>Planification de Tronçon</h2>
+                <div class="control-group">
+                    <label>Ville de Départ</label>
+                    <select id="city-from"></select>
+                </div>
+                <div class="control-group">
+                    <label>Ville d'Arrivée</label>
+                    <select id="city-to"></select>
+                </div>
+                <div class="control-group">
+                    <label>Modèle Économique</label>
+                    <select id="road-model">
+                        <option value="toll">Section à Péage Payant (Revenus élevés, -Satisfaction)</option>
+                        <option value="free">Section Gratuite / Service Public (+Satisfaction max, 0 Revenu)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Type d'Infrastructure</label>
+                    <select id="road-type">
+                        <option value="standard">2x2 Voies Standard (1M€ / km)</option>
+                        <option value="smart">2x3 Voies + Portiques Free-Flow (2.5M€ / km)</option>
+                    </select>
+                </div>
+                <button onclick="buildSection()">Lancer les travaux (Tracé Réel)</button>
 
-        <!-- Siège Social & Admin -->
-        <div id="admin" class="tab-content">
-            <h2>Direction & Dialogue Social</h2>
-            <div class="control-group">
-                <label>Nom de la Concession</label>
-                <input type="text" id="company-name" value="APRR & Associés">
+                <div style="margin-top: 20px;">
+                    <h2>Journal du Réseau</h2>
+                    <div id="construction-list" style="font-size: 0.8rem; color: var(--text-muted);">
+                        Aucun chantier récent.
+                    </div>
+                </div>
             </div>
-            <div class="control-group">
-                <label>Nom du PDG</label>
-                <input type="text" id="ceo-name" value="Guillaume Watlet">
+
+            <!-- Flotte & Maintenance -->
+            <div id="fleet" class="tab-content">
+                <h2>Gestion des Flottes & Urgences</h2>
+                <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">3</strong></div>
+                <div class="stat-line"><span>Chasse-neige (Hiver/Tempête) :</span> <strong id="fleet-plows">2</strong></div>
+                <button onclick="buyVehicle('van')">Acheter un Fourgon (50 000 €)</button>
+                <button onclick="buyVehicle('plow')">Acheter un Chasse-neige (120 000 €)</button>
+                <button id="deploy-plows-btn" onclick="deployPlows()" style="background: var(--warning); color: var(--bg-dark); display: none;">❄️ Déployer les Chasse-neige en urgence</button>
+
+                <h2 style="margin-top: 20px;">État des Chaussées</h2>
+                <div class="stat-line"><span>Usure Globale :</span> <strong style="color: var(--success);" id="wear-rate">0 %</strong></div>
+                <button onclick="triggerMaintenance()">Campagne de Réfection (150 000 €)</button>
             </div>
-            <button onclick="saveCompanyInfo()">Mettre à jour</button>
 
-            <h2 style="margin-top: 20px;">Climat Social (CSE)</h2>
-            <div class="stat-line"><span>Moral du Personnel :</span> <strong style="color: var(--success);" id="staff-moral">90 %</strong></div>
-            <button onclick="boostMoral()" style="background: var(--success); color: white;">Verser une Prime de Pouvoir d'Achat (300k€)</button>
-        </div>
-    </sidebar>
+            <!-- Recherche & Développement -->
+            <div id="rd" class="tab-content">
+                <h2>Laboratoire R&D (>90 Technologies)</h2>
+                <div class="stat-line"><span>Slots Actifs :</span> <strong id="rd-slots">0 / 3</strong></div>
+                <div id="rd-tree-container" style="margin-top: 10px;"></div>
+            </div>
 
-    <div id="map"></div>
+            <!-- Banque & Financement -->
+            <div id="bank" class="tab-content">
+                <h2>Banque Centrale & Crédits</h2>
+                <div class="bank-card">
+                    <h3>Emprunt Bancaire</h3>
+                    <p>Obtenez des liquidités immédiates remboursables via un prélèvement automatique sur vos revenus.</p>
+                    <button onclick="takeLoan(2000000)">Emprunter 2 000 000 € (Taux 4.5%)</button>
+                </div>
+                <div class="bank-card" style="margin-top: 15px;">
+                    <h3>Rachat de Concurrence</h3>
+                    <p>Absorbez un réseau secondaire régional pour étendre votre emprise territoriale.</p>
+                    <button onclick="buyCompetitor()" style="background: var(--warning); color: var(--bg-dark);">Racheter un réseau (5 000 000 €)</button>
+                </div>
+            </div>
+
+            <!-- Siège Social & Admin -->
+            <div id="admin" class="tab-content">
+                <h2>Direction & Dialogue Social</h2>
+                <div class="control-group">
+                    <label>Nom de la Concession</label>
+                    <input type="text" id="company-name" value="APRR & Associés">
+                </div>
+                <div class="control-group">
+                    <label>Nom du PDG</label>
+                    <input type="text" id="ceo-name" value="Guillaume Watlet">
+                </div>
+                <button onclick="saveCompanyInfo()">Mettre à jour</button>
+
+                <h2 style="margin-top: 20px;">Climat Social (CSE)</h2>
+                <div class="stat-line"><span>Moral du Personnel :</span> <strong style="color: var(--success);" id="staff-moral">90 %</strong></div>
+                <button onclick="boostMoral()" style="background: var(--success); color: white;">Verser une Prime de Pouvoir d'Achat (300k€)</button>
+            </div>
+        </sidebar>
+
+        <div id="map"></div>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // --- 0. GESTION DU COMPTE (CONNEXION / INSCRIPTION) ---
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+            if(tab === 'login') {
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.getElementById('login-form').classList.add('active');
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('register-form').classList.add('active');
+            }
+        }
+
+        function handleRegister() {
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            if(!email || !password) {
+                alert("Veuillez remplir tous les champs (e-mail et mot de passe).");
+                return;
+            }
+            localStorage.setItem('tycoon_email', email);
+            localStorage.setItem('tycoon_pass', password);
+            alert("Compte créé avec succès ! Connexion en cours...");
+            launchGame();
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            const savedEmail = localStorage.getItem('tycoon_email');
+            const savedPass = localStorage.getItem('tycoon_pass');
+
+            if(!email || !password) {
+                alert("Veuillez entrer votre e-mail et votre mot de passe.");
+                return;
+            }
+
+            if(savedEmail && email === savedEmail && password === savedPass) {
+                alert("Connexion réussie ! Bon jeu.");
+                launchGame();
+            } else if(!savedEmail) {
+                alert("Aucun compte enregistré sur cet appareil. Veuillez créer un compte.");
+            } else {
+                alert("E-mail ou mot de passe incorrect.");
+            }
+        }
+
+        function launchGame() {
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('game-container').style.display = 'grid';
+            // Initialisation de la carte Leaflet une fois le conteneur visible
+            setTimeout(() => {
+                map.invalidateSize();
+                initCitySelectors();
+                initRDCards();
+                updateHUD();
+            }, 200);
+        }
+
         // --- 1. CARTOGRAPHIE ET 100+ LOCALITÉS FRANÇAISES ---
         const map = L.map('map', { zoomControl: false }).setView([46.603354, 1.888334], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -372,7 +534,7 @@
             { id: 11, name: "Montpellier", lat: 43.6108, lng: 3.8767 }, { id: 12, name: "Grenoble", lat: 45.1885, lng: 5.7245 },
             { id: 13, name: "Rouen", lat: 49.4432, lng: 1.0999 }, { id: 14, name: "Toulon", lat: 43.1242, lng: 5.928 },
             { id: 15, name: "Douai", lat: 50.3667, lng: 3.0833 }, { id: 16, name: "Reims", lat: 49.2583, lng: 4.0317 },
-            { id: 17, name: "Saint-Etienne", lat: 45.4397, lng: 4.3872 }, { id: 18, "name": "Le Havre", lat: 49.4944, lng: 0.1079 },
+            { id: 17, name: "Saint-Etienne", lat: 45.4397, lng: 4.3872 }, { id: 18, name: "Le Havre", lat: 49.4944, lng: 0.1079 },
             { id: 19, name: "Dijon", lat: 47.3220, lng: 5.0415 }, { id: 20, name: "Angers", lat: 47.4784, lng: -0.5632 },
             { id: 21, name: "Clermont-Ferrand", lat: 45.7772, lng: 3.0870 }, { id: 22, name: "Brest", lat: 48.3904, lng: -4.4860 },
             { id: 23, name: "Limoges", lat: 45.8336, lng: 1.2611 }, { id: 24, name: "Tours", lat: 47.3941, lng: 0.6848 },
@@ -428,7 +590,7 @@
             staffMoral: 90,
             rdActiveCount: 0,
             unlockedTechs: [],
-            currentWeather: 'normal', // 'normal', 'snow', 'storm', 'heatwave'
+            currentWeather: 'normal',
             weatherActive: false,
             weatherTimer: 0
         };
@@ -536,36 +698,33 @@
             document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} ➔ ${cityB.name} (${distance} km, ${model === 'toll' ? 'Péage' : 'Gratuite'}) inaugurée !`;
         }
 
-        // --- 3. MOTEUR MÉTÉOROLOGIQUE ET CATASTROPHES (NOUVEAU) ---
+        // --- 3. MOTEUR MÉTÉOROLOGIQUE ET CATASTROPHES ---
         function triggerWeatherEvent() {
-            if (gameState.km === 0) return; // Pas d'événement si pas de réseau
+            if (gameState.km === 0) return;
 
             const rand = Math.random();
             if (rand < 0.4) {
-                // Tempête de neige
                 gameState.currentWeather = 'snow';
                 gameState.weatherActive = true;
-                gameState.incomePerSec = Math.round(gameState.baseIncomePerSec * 0.4); // -60% de trafic/revenus
+                gameState.incomePerSec = Math.round(gameState.baseIncomePerSec * 0.4);
                 document.getElementById('weather-alert').style.display = 'block';
                 document.getElementById('weather-desc-text').innerText = "Tempête de neige majeure ! Le trafic est ralenti de 60 % et l'usure des voies s'accélère. Déployez vos chasse-neige sous peine de sanctions de l'État !";
                 document.getElementById('deploy-plows-btn').style.display = 'block';
                 document.getElementById('kpi-weather').innerText = "❄️ Tempête de Neige";
                 document.getElementById('kpi-weather').style.color = "var(--warning)";
 
-                // Lancer un minuteur de sanction d'État si non résolu au bout de 15 secondes
                 gameState.weatherTimer = setTimeout(() => {
                     if (gameState.weatherActive) {
-                        gameState.money -= 500000; // Sanction État 500k€
+                        gameState.money -= 500000;
                         alert("🚨 SANCTION DE L'ÉTAT : Non-assistance au réseau public lors de la tempête de neige ! Amende de 500 000 € prélevée.");
                         clearWeather();
                     }
                 }, 15000);
 
             } else if (rand < 0.7) {
-                // Canicule déformant l'asphalte
                 gameState.currentWeather = 'heatwave';
                 gameState.weatherActive = false;
-                gameState.wear = Math.min(100, gameState.wear + 15); // Use prématurée
+                gameState.wear = Math.min(100, gameState.wear + 15);
                 document.getElementById('weather-alert').style.display = 'block';
                 document.getElementById('weather-desc-text').innerText = "Canicule intense : l'asphalte se déforme et l'usure du réseau s'accélère !";
                 document.getElementById('kpi-weather').innerText = "🔥 Canicule Extrême";
@@ -685,11 +844,9 @@
             document.getElementById('rd-slots').innerText = gameState.rdActiveCount + " / 3";
         }
 
-        // Boucle financière en temps réel (Flux de trésorerie seconde par seconde)
         setInterval(() => {
             if (gameState.incomePerSec !== 0) {
                 gameState.money += gameState.incomePerSec;
-                // Usure naturelle ou liée à la météo
                 if (gameState.currentWeather === 'heatwave') {
                     gameState.wear = Math.min(100, gameState.wear + 0.2);
                 } else {
@@ -699,15 +856,9 @@
             }
         }, 1000);
 
-        // Déclencheur automatique de météo aléatoire toutes les 45 secondes
         setInterval(() => {
             triggerWeatherEvent();
         }, 45000);
-
-        // Initialisation globale
-        initCitySelectors();
-        initRDCards();
-        updateHUD();
     </script>
 </body>
 </html>
