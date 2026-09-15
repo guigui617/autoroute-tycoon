@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Pro & Ultra-Échelle 100+ Villes</title>
+    <title>Autoroute Tycoon - Édition Pro 0.2 </title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -211,13 +211,24 @@
             color: var(--text-muted);
             margin-bottom: 8px;
         }
+
+        /* Alerte météo display */
+        .weather-banner {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--danger);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo">
-            🛣️ AUTOROUTE TYCOON <span style="font-size: 0.65rem; background: var(--accent); color: var(--bg-dark); padding: 2px 5px; border-radius: 4px;">ULTRA 100+</span>
+            🛣️ AUTOROUTE TYCOON <span style="font-size: 0.65rem; background: var(--accent); color: var(--bg-dark); padding: 2px 5px; border-radius: 4px;">MÉTÉO LIVE</span>
         </div>
         <div class="kpi-container">
             <div class="kpi-card">
@@ -229,8 +240,8 @@
                 <span class="kpi-value" id="kpi-km">0 km</span>
             </div>
             <div class="kpi-card">
-                <span class="kpi-label">Satisfaction</span>
-                <span class="kpi-value" id="kpi-satisfaction">85 %</span>
+                <span class="kpi-label">Météo Actuelle</span>
+                <span class="kpi-value" id="kpi-weather" style="color: var(--accent);">☀️ Clain & Normal</span>
             </div>
             <div class="kpi-card">
                 <span class="kpi-label">Revenu /s</span>
@@ -250,6 +261,9 @@
 
         <!-- Réseau & Construction -->
         <div id="network" class="tab-content active">
+            <div id="weather-alert" class="weather-banner">
+                <strong>⚠️ ALERTE MÉTÉO :</strong> <span id="weather-desc-text">Tempête en cours sur le réseau !</span>
+            </div>
             <h2>Planification de Tronçon</h2>
             <div class="control-group">
                 <label>Ville de Départ</label>
@@ -285,11 +299,12 @@
 
         <!-- Flotte & Maintenance -->
         <div id="fleet" class="tab-content">
-            <h2>Gestion des Flottes</h2>
+            <h2>Gestion des Flottes & Urgences</h2>
             <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">3</strong></div>
-            <div class="stat-line"><span>Chasse-neige (Hiver) :</span> <strong id="fleet-plows">2</strong></div>
+            <div class="stat-line"><span>Chasse-neige (Hiver/Tempête) :</span> <strong id="fleet-plows">2</strong></div>
             <button onclick="buyVehicle('van')">Acheter un Fourgon (50 000 €)</button>
             <button onclick="buyVehicle('plow')">Acheter un Chasse-neige (120 000 €)</button>
+            <button id="deploy-plows-btn" onclick="deployPlows()" style="background: var(--warning); color: var(--bg-dark); display: none;">❄️ Déployer les Chasse-neige en urgence</button>
 
             <h2 style="margin-top: 20px;">État des Chaussées</h2>
             <div class="stat-line"><span>Usure Globale :</span> <strong style="color: var(--success);" id="wear-rate">0 %</strong></div>
@@ -406,15 +421,18 @@
             km: 0,
             satisfaction: 85,
             incomePerSec: 0,
+            baseIncomePerSec: 0,
             vans: 3,
             plows: 2,
             wear: 0,
             staffMoral: 90,
             rdActiveCount: 0,
-            unlockedTechs: []
+            unlockedTechs: [],
+            currentWeather: 'normal', // 'normal', 'snow', 'storm', 'heatwave'
+            weatherActive: false,
+            weatherTimer: 0
         };
 
-        // Arbre de Recherche simplifié (>90 technos modélisées par catégories phares)
         const rdTechnologies = [
             { id: 'infra_1', dept: 'Infrastructures & Matériaux', name: 'Enrobés Phoniques Avancés', cost: 500000, desc: 'Réduit les nuisances sonores et l’usure de 15%.' },
             { id: 'infra_2', dept: 'Infrastructures & Matériaux', name: 'Bétons Auto-cicatrisants', cost: 1200000, desc: 'Diminue la fréquence des réfections de chaussée.' },
@@ -476,7 +494,7 @@
         function buildSection() {
             const fromId = parseInt(document.getElementById('city-from').value);
             const toId = parseInt(document.getElementById('city-to').value);
-            const model = document.getElementById('road-model').value; // 'toll' ou 'free'
+            const model = document.getElementById('road-model').value;
 
             if (fromId === toId) {
                 alert("Veuillez sélectionner deux villes différentes !");
@@ -486,7 +504,6 @@
             const cityA = cities.find(c => c.id === fromId);
             const cityB = cities.find(c => c.id === toId);
 
-            // Simulation d'un tracé géométrique réaliste avec un point de déviation intermédiaire
             const midLat = (cityA.lat + cityB.lat) / 2 + (Math.random() - 0.5) * 0.4;
             const midLng = (cityA.lng + cityB.lng) / 2 + (Math.random() - 0.5) * 0.4;
 
@@ -500,8 +517,7 @@
 
             gameState.money -= cost;
 
-            // Tracé réel multi-points sur Leaflet
-            const color = model === 'toll' ? '#22c55e' : '#38bdf8'; // Vert = Péage, Bleu clair = Gratuit
+            const color = model === 'toll' ? '#22c55e' : '#38bdf8';
             L.polyline([[cityA.lat, cityA.lng], [midLat, midLng], [cityB.lat, cityB.lng]], {
                 color: color,
                 weight: 4,
@@ -510,16 +526,76 @@
 
             gameState.km += distance;
             if (model === 'toll') {
-                gameState.incomePerSec += distance * 15;
+                gameState.baseIncomePerSec += distance * 15;
             } else {
                 gameState.satisfaction = Math.min(100, gameState.satisfaction + 5);
             }
+            gameState.incomePerSec = gameState.baseIncomePerSec;
 
             updateHUD();
             document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} ➔ ${cityB.name} (${distance} km, ${model === 'toll' ? 'Péage' : 'Gratuite'}) inaugurée !`;
         }
 
-        // --- 3. GESTION FINANCIÈRE & R&D ---
+        // --- 3. MOTEUR MÉTÉOROLOGIQUE ET CATASTROPHES (NOUVEAU) ---
+        function triggerWeatherEvent() {
+            if (gameState.km === 0) return; // Pas d'événement si pas de réseau
+
+            const rand = Math.random();
+            if (rand < 0.4) {
+                // Tempête de neige
+                gameState.currentWeather = 'snow';
+                gameState.weatherActive = true;
+                gameState.incomePerSec = Math.round(gameState.baseIncomePerSec * 0.4); // -60% de trafic/revenus
+                document.getElementById('weather-alert').style.display = 'block';
+                document.getElementById('weather-desc-text').innerText = "Tempête de neige majeure ! Le trafic est ralenti de 60 % et l'usure des voies s'accélère. Déployez vos chasse-neige sous peine de sanctions de l'État !";
+                document.getElementById('deploy-plows-btn').style.display = 'block';
+                document.getElementById('kpi-weather').innerText = "❄️ Tempête de Neige";
+                document.getElementById('kpi-weather').style.color = "var(--warning)";
+
+                // Lancer un minuteur de sanction d'État si non résolu au bout de 15 secondes
+                gameState.weatherTimer = setTimeout(() => {
+                    if (gameState.weatherActive) {
+                        gameState.money -= 500000; // Sanction État 500k€
+                        alert("🚨 SANCTION DE L'ÉTAT : Non-assistance au réseau public lors de la tempête de neige ! Amende de 500 000 € prélevée.");
+                        clearWeather();
+                    }
+                }, 15000);
+
+            } else if (rand < 0.7) {
+                // Canicule déformant l'asphalte
+                gameState.currentWeather = 'heatwave';
+                gameState.weatherActive = false;
+                gameState.wear = Math.min(100, gameState.wear + 15); // Use prématurée
+                document.getElementById('weather-alert').style.display = 'block';
+                document.getElementById('weather-desc-text').innerText = "Canicule intense : l'asphalte se déforme et l'usure du réseau s'accélère !";
+                document.getElementById('kpi-weather').innerText = "🔥 Canicule Extrême";
+                document.getElementById('kpi-weather').style.color = "var(--danger)";
+                setTimeout(clearWeather, 12000);
+            }
+        }
+
+        function deployPlows() {
+            if (gameState.plows >= 1) {
+                clearTimeout(gameState.weatherTimer);
+                clearWeather();
+                alert("❄️ Chasse-neige déployés avec succès ! Le trafic est sécurisé, aucune sanction de l'État ne sera appliquée.");
+            } else {
+                alert("⚠️ Vous ne possédez pas assez de chasse-neige pour couvrir le réseau !");
+            }
+        }
+
+        function clearWeather() {
+            gameState.currentWeather = 'normal';
+            gameState.weatherActive = false;
+            gameState.incomePerSec = gameState.baseIncomePerSec;
+            document.getElementById('weather-alert').style.display = 'none';
+            document.getElementById('deploy-plows-btn').style.display = 'none';
+            document.getElementById('kpi-weather').innerText = "☀️ Clain & Normal";
+            document.getElementById('kpi-weather').style.color = "var(--accent)";
+            updateHUD();
+        }
+
+        // --- 4. GESTION FINANCIÈRE & R&D ---
         function unlockTech(techId, cost) {
             if (gameState.money >= cost) {
                 if (gameState.rdActiveCount >= 3) {
@@ -539,7 +615,8 @@
 
         function takeLoan(amount) {
             gameState.money += amount;
-            gameState.incomePerSec -= Math.round(amount * 0.002); // Remboursement progressif
+            gameState.baseIncomePerSec -= Math.round(amount * 0.002);
+            gameState.incomePerSec = gameState.baseIncomePerSec;
             updateHUD();
             alert(`Emprunt de ${amount.toLocaleString()} € validé par la Banque Centrale.`);
         }
@@ -548,7 +625,8 @@
             if (gameState.money >= 5000000) {
                 gameState.money -= 5000000;
                 gameState.km += 180;
-                gameState.incomePerSec += 2500;
+                gameState.baseIncomePerSec += 2500;
+                gameState.incomePerSec = gameState.baseIncomePerSec;
                 updateHUD();
                 alert("Rachat de la concession secondaire finalisé avec succès !");
             } else {
@@ -611,9 +689,20 @@
         setInterval(() => {
             if (gameState.incomePerSec !== 0) {
                 gameState.money += gameState.incomePerSec;
+                // Usure naturelle ou liée à la météo
+                if (gameState.currentWeather === 'heatwave') {
+                    gameState.wear = Math.min(100, gameState.wear + 0.2);
+                } else {
+                    gameState.wear = Math.min(100, gameState.wear + 0.05);
+                }
                 updateHUD();
             }
         }, 1000);
+
+        // Déclencheur automatique de météo aléatoire toutes les 45 secondes
+        setInterval(() => {
+            triggerWeatherEvent();
+        }, 45000);
 
         // Initialisation globale
         initCitySelectors();
