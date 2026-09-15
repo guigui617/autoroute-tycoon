@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Gestion Stratégique</title>
+    <title>Autoroute Tycoon - Gestion Stratégique & Banque</title>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Leaflet CSS & JS -->
@@ -121,6 +121,46 @@
             color: var(--accent);
         }
 
+        /* Onglets de navigation Banque */
+        .tab-bar {
+            display: flex;
+            gap: 10px;
+            background-color: var(--bg-card);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            width: auto;
+            margin: 0;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
         /* Cartes & Widgets style Dashboard */
         .welcome-card {
             background: linear-gradient(135deg, #131c38 0%, #1e293b 100%);
@@ -151,13 +191,13 @@
 
         .stat-card-title {
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             margin-bottom: 5px;
         }
 
         .stat-card-value {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: var(--text-main);
         }
@@ -218,7 +258,7 @@
             background-color: rgba(255, 255, 255, 0.02);
             border-radius: 6px;
             border: 1px solid var(--border);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .badge {
@@ -231,7 +271,6 @@
         .badge-mountain { background-color: var(--accent-danger); color: #fff; }
         .badge-valley { background-color: var(--accent-warning); color: #000; }
 
-        /* Style spécifique pour les infobulles des villes sur la carte */
         .leaflet-tooltip.city-label {
             background: #131c38;
             border: 1px solid var(--accent);
@@ -247,17 +286,17 @@
 
     <!-- Sidebar type Manage Your Airline -->
     <sidebar>
-        <div class="nav-item active"><span>🏠</span>Accueil</div>
-        <div class="nav-item"><span>🛣️</span>Lignes</div>
-        <div class="nav-item"><span>🚚</span>Flotte</div>
-        <div class="nav-item"><span>🏦</span>Finance</div>
+        <div class="nav-item active" onclick="switchMainView('home')"><span>🏠</span>Accueil</div>
+        <div class="nav-item" onclick="switchMainView('network')"><span>🛣️</span>Lignes</div>
+        <div class="nav-item" onclick="switchMainView('fleet')"><span>🚚</span>Flotte</div>
+        <div class="nav-item" onclick="switchMainView('bank')"><span>🏦</span>Banque</div>
         <div class="nav-item"><span>⭐</span>Aide</div>
     </sidebar>
 
     <!-- Layout principal -->
     <div class="main-layout">
         
-        <!-- Colonne de gauche : Dashboard de gestion -->
+        <!-- Colonne de gauche : Dashboard dynamique -->
         <div class="dashboard-col">
             
             <!-- Barre supérieure de stats globales -->
@@ -267,68 +306,135 @@
                 <div style="color:var(--text-muted)">Niv. Réseau : <strong>12</strong></div>
             </div>
 
-            <!-- Message d'accueil personnalisé -->
-            <div class="welcome-card">
-                <div class="welcome-title">Content de te revoir, Guigui.</div>
-                <div style="color: var(--text-muted); font-size: 0.9rem;" id="ticker">Chargement des données du réseau autoroutier...</div>
+            <!-- VUE ACCUEIL -->
+            <div id="view-home" class="dashboard-view">
+                <div class="welcome-card" style="margin-bottom: 20px;">
+                    <div class="welcome-title">Content de te revoir, Guigui.</div>
+                    <div style="color: var(--text-muted); font-size: 0.9rem;" id="ticker">Chargement des données du réseau autoroutier...</div>
+                </div>
+
+                <div class="stats-grid" style="margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-card-title">Tarif Péage</div>
+                        <div class="stat-card-value" id="toll-rate-display">- €/km</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Satisfaction</div>
+                        <div class="stat-card-value" id="satisfaction">-%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Emprunt Restant</div>
+                        <div class="stat-card-value" id="loan-status">0 €</div>
+                    </div>
+                </div>
+
+                <div class="card-panel">
+                    <h3>🏗️ Construire un Tronçon & Dynamic Pricing</h3>
+                    <label style="font-size:0.85rem; color:var(--text-muted);">Ville de départ</label>
+                    <select id="city-a"></select>
+                    
+                    <label style="font-size:0.85rem; color:var(--text-muted);">Ville d'arrivée</label>
+                    <select id="city-b"></select>
+
+                    <label style="font-size:0.85rem; color:var(--text-muted);">Type de tronçon</label>
+                    <select id="is-toll">
+                        <option value="true">🟢 Payant (Péage)</option>
+                        <option value="false">🔵 Gratuit (Sans péage)</option>
+                    </select>
+
+                    <button onclick="buildHighway()">Lancer le chantier</button>
+
+                    <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                        <label style="font-size:0.85rem; color:var(--text-muted);">Ajuster le tarif au kilomètre (€)</label>
+                        <input type="number" id="input-toll-rate" step="0.01" min="0.01" max="0.30" value="0.10">
+                        <button onclick="updateTollRate()" style="background-color: var(--accent-warning);">Mettre à jour le tarif</button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Grille des statistiques clés -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card-title">Tarif Péage</div>
-                    <div class="stat-card-value" id="toll-rate-display">- €/km</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Satisfaction</div>
-                    <div class="stat-card-value" id="satisfaction">-%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Emprunt Restant</div>
-                    <div class="stat-card-value" id="loan-status">0 €</div>
+            <!-- VUE RÉSEAU (Lignes) -->
+            <div id="view-network" class="dashboard-view" style="display:none;">
+                <div class="card-panel">
+                    <h3>🛣️ Réseau concédé & Entretien des tronçons</h3>
+                    <div id="highways-list" class="item-list"></div>
                 </div>
             </div>
 
-            <!-- Panneau Construction & Pricing -->
-            <div class="card-panel">
-                <h3>🏗️ Construire un Tronçon & Dynamic Pricing</h3>
-                <label style="font-size:0.85rem; color:var(--text-muted);">Ville de départ</label>
-                <select id="city-a"></select>
-                
-                <label style="font-size:0.85rem; color:var(--text-muted);">Ville d'arrivée</label>
-                <select id="city-b"></select>
-
-                <label style="font-size:0.85rem; color:var(--text-muted);">Type de tronçon</label>
-                <select id="is-toll">
-                    <option value="true">🟢 Payant (Péage)</option>
-                    <option value="false">🔵 Gratuit (Sans péage)</option>
-                </select>
-
-                <button onclick="buildHighway()">Lancer le chantier</button>
-
-                <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
-                    <label style="font-size:0.85rem; color:var(--text-muted);">Ajuster le tarif au kilomètre (€)</label>
-                    <input type="number" id="input-toll-rate" step="0.01" min="0.01" max="0.30" value="0.10">
-                    <button onclick="updateTollRate()" style="background-color: var(--accent-warning);">Mettre à jour le tarif</button>
+            <!-- VUE FLOTTE -->
+            <div id="view-fleet" class="dashboard-view" style="display:none;">
+                <div class="card-panel">
+                    <h3>🚚 Gestion de la Flotte d'Entretien</h3>
+                    <div style="font-size:0.85rem; font-weight:bold; margin-bottom:8px;">Matériel disponible :</div>
+                    <div id="fleet-catalog" class="item-list"></div>
+                    
+                    <div style="font-size:0.85rem; font-weight:bold; margin-top:15px; margin-bottom:8px;">Flotte possédée :</div>
+                    <div id="fleet-player" class="item-list"></div>
                 </div>
             </div>
 
-            <!-- Réseau concédé & Entretien -->
-            <div class="card-panel">
-                <h3>🛣️ Réseau concédé & Entretien</h3>
-                <div id="highways-list" class="item-list"></div>
-            </div>
+            <!-- VUE BANQUE (Financement style capture d'écran) -->
+            <div id="view-bank" class="dashboard-view" style="display:none;">
+                <div class="card-panel">
+                    <h3>🏦 Banque & Finances</h3>
+                    
+                    <!-- Onglets internes Banque -->
+                    <div class="tab-bar">
+                        <button class="tab-btn active" onclick="switchBankTab(event, 'bank-transactions')">Transactions</button>
+                        <button class="tab-btn" onclick="switchBankTab(event, 'bank-loans')">Prêts</button>
+                        <button class="tab-btn" onclick="switchBankTab(event, 'bank-bourse')">Bourse</button>
+                    </div>
 
-            <!-- Finances & Matériel -->
-            <div class="card-panel">
-                <h3>🏦 Finances & Flotte d'Entretien</h3>
-                <button onclick="takeLoan(2000000)" style="background-color: var(--accent-success); margin-bottom: 15px;">Emprunter 2.000.000 € (5%)</button>
-                
-                <div style="font-size:0.85rem; font-weight:bold; margin-bottom:8px;">Matériel disponible :</div>
-                <div id="fleet-catalog" class="item-list"></div>
-                
-                <div style="font-size:0.85rem; font-weight:bold; margin-top:15px; margin-bottom:8px;">Flotte possédée :</div>
-                <div id="fleet-player" class="item-list"></div>
+                    <!-- Onglet Transactions -->
+                    <div id="bank-transactions" class="tab-content active" style="margin-top:15px;">
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Dépenses et recettes journalières du réseau autoroutier</div>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-card-title">Frais d'entretien</div>
+                                <div class="stat-card-value" style="color:var(--accent-danger)">- 142 500 €</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-title">Recettes Péages</div>
+                                <div class="stat-card-value" style="color:var(--accent-success)">+ 892 310 €</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-title">Bilan net 24h</div>
+                                <div class="stat-card-value" style="color:var(--accent)">+ 749 810 €</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Onglet Prêts -->
+                    <div id="bank-loans" class="tab-content" style="margin-top:15px;">
+                        <div style="font-size:0.85rem; color:var(--text-muted);">Financement pour le développement de vos axes autoroutiers. 5% d'intérêt / mois.</div>
+                        
+                        <div style="background-color: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-top: 10px;">
+                            <label style="font-size:0.85rem; color:var(--text-muted);">Montant du prêt (€)</label>
+                            <input type="number" id="loan-amount-input" value="2000000" step="500000" min="500000" max="10000000">
+                            <button onclick="takeLoanFromInput()" style="background-color: var(--accent-success);">Contracter le prêt</button>
+                        </div>
+
+                        <div style="margin-top:15px; font-weight:bold; font-size:0.9rem;">Prêts en cours :</div>
+                        <div id="active-loans-display" class="item-list">
+                            <div style="text-align:center; padding:15px; color:var(--text-muted);">Aucun prêt en cours.</div>
+                        </div>
+                    </div>
+
+                    <!-- Onglet Bourse -->
+                    <div id="bank-bourse" class="tab-content" style="margin-top:15px;">
+                        <div style="background-color: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; border: 1px solid var(--border);">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span class="badge badge-toll">AUTOROUTE TCO</span>
+                                <span style="font-size:0.75rem; color:var(--accent-success)">▲ +2.45%</span>
+                            </div>
+                            <div style="font-size: 1.6rem; font-weight: bold; margin: 10px 0;">214 017 €</div>
+                            <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 15px;">Valorisation boursière de votre compagnie d'autoroutes</div>
+                            <div style="height: 60px; background: rgba(56, 189, 248, 0.1); border-radius: 6px; display:flex; align-items:flex-end; padding:5px;">
+                                <div style="width:100%; height:75%; background: linear-gradient(to top, transparent, var(--accent)); border-radius:4px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
         </div>
@@ -369,13 +475,9 @@
     });
 
     function initMap() {
-        // Centré précisément sur la France métropolitaine
         map = L.map('map', { zoomControl: false }).setView([46.6033, 1.8883], 6);
-        
-        // Ajout des contrôles de zoom en haut à droite de la carte
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Fond de carte sombre élégant assorti à l'interface
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
             subdomains: 'abcd',
@@ -384,7 +486,6 @@
 
         highwaysLayerGroup = L.layerGroup().addTo(map);
 
-        // Affichage des villes françaises
         Object.keys(CITIES_COORDS).forEach(cityName => {
             L.circleMarker(CITIES_COORDS[cityName], { radius: 5, color: '#38bdf8', fillColor: '#0284c7', fillOpacity: 1, weight: 2 })
              .bindTooltip(cityName, { permanent: true, direction: 'top', className: 'city-label' }).addTo(map);
@@ -393,6 +494,29 @@
 
     function resetMapFrance() {
         map.setView([46.6033, 1.8883], 6);
+    }
+
+    function switchMainView(viewName) {
+        document.querySelectorAll('.dashboard-view').forEach(v => v.style.display = 'none');
+        document.querySelectorAll('sidebar .nav-item').forEach(n => n.classList.remove('active'));
+
+        if (viewName === 'home') {
+            document.getElementById('view-home').style.display = 'block';
+        } else if (viewName === 'network') {
+            document.getElementById('view-network').style.display = 'block';
+        } else if (viewName === 'fleet') {
+            document.getElementById('view-fleet').style.display = 'block';
+        } else if (viewName === 'bank') {
+            document.getElementById('view-bank').style.display = 'block';
+        }
+        event.currentTarget.classList.add('active');
+    }
+
+    function switchBankTab(event, tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
     }
 
     async function loadGameState() {
@@ -405,7 +529,18 @@
         document.getElementById('satisfaction').innerText = `${Math.round(data.satisfaction)} %`;
         document.getElementById('ticker').innerText = data.ticker_message;
         document.getElementById('input-toll-rate').value = data.toll_rate;
-        document.getElementById('loan-status').innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.loan_amount);
+        
+        const loanVal = data.loan_amount || 0;
+        document.getElementById('loan-status').innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(loanVal);
+        
+        if (loanVal > 0) {
+            document.getElementById('active-loans-display').innerHTML = `
+                <div class="item-row">
+                    <div><strong>Emprunt Bancaire</strong><br><small style="color:var(--text-muted)">Intérêts: 5% / mois</small></div>
+                    <span style="color:var(--accent-warning); font-weight:bold;">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(loanVal)}</span>
+                </div>
+            `;
+        }
     }
 
     async function loadCities() {
@@ -453,7 +588,6 @@
                 const coordsB = CITIES_COORDS[hw.city_b];
                 const routeColor = hw.condition_pct < 50 ? '#ef4444' : (hw.is_toll ? '#22c55e' : '#38bdf8');
 
-                // Tracé routier réel OSRM
                 const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=full&geometries=geojson`;
 
                 try {
@@ -536,7 +670,8 @@
         loadGameState();
     }
 
-    async function takeLoan(amount) {
+    async function takeLoanFromInput() {
+        const amount = parseFloat(document.getElementById('loan-amount-input').value);
         const { data, error } = await supabaseClient.rpc('take_loan', { p_amount: amount });
         if (error) return alert("Erreur lors de l'emprunt.");
         alert(data.message);
