@@ -337,7 +337,7 @@
             <div class="kpi-container">
                 <div class="kpi-card">
                     <span class="kpi-label">Trésorerie</span>
-                    <span class="kpi-value" id="kpi-money" style="color: var(--success);">10 000 000 €</span>
+                    <span class="kpi-value" id="kpi-money" style="color: var(--success);">50 000 000 €</span>
                 </div>
                 <div class="kpi-card">
                     <span class="kpi-label">Réseau Actif</span>
@@ -511,7 +511,6 @@
         function launchGame() {
             document.getElementById('auth-overlay').style.display = 'none';
             document.getElementById('game-container').style.display = 'grid';
-            // Initialisation de la carte Leaflet une fois le conteneur visible
             setTimeout(() => {
                 map.invalidateSize();
                 initCitySelectors();
@@ -579,7 +578,7 @@
         ];
 
         let gameState = {
-            money: 10000000,
+            money: 50000000, // Trésorerie de départ augmentée à 50 Millions d'Euros
             km: 0,
             satisfaction: 85,
             incomePerSec: 0,
