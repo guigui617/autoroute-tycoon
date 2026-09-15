@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Finances & OpenStreetMap</title>
+    <title>Autoroute Tycoon - OpenStreetMap & Siège Social</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -30,8 +30,6 @@
         .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
         .nav-item.active { background: var(--primary); color: white; }
         .nav-item span.icon { font-size: 1.15rem; margin-bottom: 3px; }
-        .nav-item.badge-parent { position: relative; }
-        .nav-badge { position: absolute; top: 4px; right: 6px; background: var(--danger); color: white; font-size: 0.55rem; padding: 1px 4px; border-radius: 10px; font-weight: bold; }
 
         /* Structure principale */
         .app-layout { flex: 1; display: flex; height: 100vh; overflow: hidden; position: relative; }
@@ -40,38 +38,9 @@
         .welcome-header { margin-bottom: 20px; }
         .welcome-title { font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 3px; }
         .company-subtitle { font-size: 0.85rem; color: var(--text-muted); }
-        .company-subtitle span { color: var(--primary); font-weight: 600; }
-
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-        .stat-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
-        .stat-card-title { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
-        .stat-card-value { font-size: 1.2rem; font-weight: 700; color: white; }
-        .stat-card-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
-
-        /* Alerte sur une seule ligne */
-        .alert-banner { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; color: #f87171; font-size: 0.8rem; font-weight: 500; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .alert-banner:hover { background: rgba(239, 68, 68, 0.15); }
-
-        .section-title { font-size: 0.9rem; font-weight: 700; color: white; margin-bottom: 10px; text-transform: uppercase; }
-        .events-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-        .event-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
 
         .app-view { display: none; }
         .app-view.active { display: block; }
-
-        /* Sous-onglets de finances */
-        .sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg-panel); padding: 6px; border-radius: 8px; border: 1px solid var(--border); width: fit-content; }
-        .sub-tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-        .sub-tab-btn.active { background: var(--bg-card); color: white; border: 1px solid var(--border); }
-        .finance-subview { display: none; }
-        .finance-subview.active { display: block; }
-
-        /* Grilles financières */
-        .fin-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
-        .fin-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
-        .fin-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
-        .fin-card-title { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
-        .fin-card-val { font-size: 0.95rem; font-weight: 700; }
 
         /* Carte de droite */
         .right-map-panel { width: 52%; background: var(--bg-panel); border-left: 1px solid var(--border); height: 100vh; position: relative; }
@@ -83,8 +52,16 @@
         select, input[type="number"] { width: 100%; padding: 7px 10px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 10px; font-size: 0.8rem; outline: none; }
         button.primary-btn { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
         button.primary-btn:hover { background: var(--primary-hover); }
+
+        /* Siège Social Onglets & Style */
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg-panel); padding: 6px; border-radius: 8px; border: 1px solid var(--border); width: fit-content; }
+        .sub-tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .sub-tab-btn.active { background: var(--bg-card); color: white; border: 1px solid var(--border); }
+        .siege-subview { display: none; }
+        .siege-subview.active { display: block; }
+
+        .director-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 6px; font-size: 0.8rem; }
-        #loading-route { display: none; font-size: 0.75rem; color: var(--warning); margin-top: 5px; text-align: center; }
     </style>
 </head>
 <body>
@@ -93,10 +70,8 @@
     <div class="sidebar">
         <div class="nav-item active" onclick="switchTab('dashboard', this)"><span class="icon">🏠</span>Accueil</div>
         <div class="nav-item" onclick="switchTab('lignes', this)"><span class="icon">🛣️</span>Lignes</div>
-        <div class="nav-item badge-parent" onclick="switchTab('aires', this)"><span class="icon">⛽</span>Aires<span class="nav-badge">2</span></div>
-        <div class="nav-item" onclick="switchTab('finance', this)"><span class="icon">🏦</span>Finances</div>
+        <div class="nav-item" onclick="switchTab('aires', this)"><span class="icon">⛽</span>Aires</div>
         <div class="nav-item" onclick="switchTab('siege', this)"><span class="icon">🏢</span>Siège</div>
-        <div class="nav-item" onclick="switchTab('aide', this)"><span class="icon">❓</span>Aide</div>
     </div>
 
     <div class="app-layout">
@@ -106,63 +81,15 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; background: var(--bg-panel); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);">
                 <div style="font-size: 0.8rem; color: var(--text-muted);">Sanef Réseau · <span style="color:white; font-weight:600;">Niveau 24</span></div>
                 <div style="display: flex; gap: 16px; font-size: 0.8rem;">
-                    <div>⏱️ <span style="color:white;">00:20</span></div>
-                    <div>💰 <span id="top-budget" style="color:var(--success); font-weight:bold;">145,2 M €</span></div>
-                    <div>⭐ <span style="color:white;">6471</span></div>
+                    <div>💰 <span id="top-budget" style="color:var(--success); font-weight:bold;">88 697 775 519 $US</span></div>
                 </div>
             </div>
 
             <!-- VUE : ACCUEIL -->
             <div id="view-dashboard" class="app-view active">
                 <div class="welcome-header">
-                    <div class="welcome-title">Content de te revoir, guigui.</div>
-                    <div class="company-subtitle">Sanef Autoroutes · <span>Concessionnaire National</span></div>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-card-title">🏆 Rang Réseau National</div>
-                        <div class="stat-card-value">#1 <span style="font-size: 0.8rem; color: var(--success);">▲ 0</span></div>
-                        <div class="stat-card-sub">Sur 42 opérateurs</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-title">🔥 Trafic en Continu</div>
-                        <div class="stat-card-value">14 280 <span style="font-size: 0.75rem; color: var(--text-muted);">véh./h</span></div>
-                        <div class="stat-card-sub">Incidents : <span style="color:var(--danger)">1 actif</span></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-title">☀️ Péages du Jour</div>
-                        <div class="stat-card-value"><span style="color: var(--primary);">🛣️</span> +338,1 M €</div>
-                        <div class="stat-card-sub">50 749 usagers</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-title">💰 Trésorerie</div>
-                        <div class="stat-card-value" id="stat-budget">145,2 M €</div>
-                        <div class="stat-card-sub">Fonds disponibles</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-title">🚨 Patrouilleurs</div>
-                        <div class="stat-card-value">11</div>
-                        <div class="stat-card-sub">Unités d'intervention</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-title">⭐ Satisfaction Usagers</div>
-                        <div class="stat-card-value">100 / 100</div>
-                        <div class="stat-card-sub">Chaussées optimales</div>
-                    </div>
-                </div>
-
-                <div class="alert-banner" onclick="alert('Patrouilleurs dépêchés sur l\'A1. Incident résolu !')">
-                    <span>⚠️ Panne de camion signalée sur l'A1 — Cliquez pour envoyer les patrouilleurs !</span>
-                    <span>➔</span>
-                </div>
-
-                <div class="section-title">Événements Routiers en Direct</div>
-                <div class="events-container">
-                    <div class="event-card">
-                        <div style="display:flex; align-items:center; gap:8px;"><span>🌧️</span><div><strong>Vigilance Météo (A6)</strong> — Pluie verglaçante, saleuses engagées</div></div>
-                        <div style="color:var(--text-muted); font-size:0.7rem;">En direct</div>
-                    </div>
+                    <div class="welcome-title">Tableau de bord</div>
+                    <div class="company-subtitle">Bienvenue sur votre réseau autoroutier.</div>
                 </div>
             </div>
 
@@ -170,7 +97,7 @@
             <div id="view-lignes" class="app-view">
                 <div class="welcome-header">
                     <div class="welcome-title">Tracé des Autoroutes</div>
-                    <div class="company-subtitle">Reliez les villes de France via le réseau OpenStreetMap.</div>
+                    <div class="company-subtitle">Reliez les villes de France via OpenStreetMap pour débloquer les aires de repos.</div>
                 </div>
 
                 <div class="panel-box">
@@ -179,115 +106,79 @@
                     <select id="city-a" class="city-select"></select>
                     <label>Ville d'arrivée</label>
                     <select id="city-b" class="city-select"></select>
-                    <button class="primary-btn" onclick="launchRealHighwayProject()">Tracer la vraie autoroute (12.5M €)</button>
-                    <div id="loading-route">Calcul du tracé réel via OpenStreetMap...</div>
+                    <button class="primary-btn" onclick="launchRealHighwayProject()">Construire la liaison (12.5M $US)</button>
+                    <div id="loading-route" style="display:none; font-size:0.75rem; color:var(--warning); margin-top:5px;">Calcul du tracé OpenStreetMap...</div>
                 </div>
             </div>
 
-            <!-- VUE : AIRES -->
+            <!-- VUE : AIRES DE REPOS -->
             <div id="view-aires" class="app-view">
                 <div class="welcome-header">
-                    <div class="welcome-title">Aires de Services</div>
-                    <div class="company-subtitle">Maximisez vos revenus annexes.</div>
+                    <div class="welcome-title">Aires de Repos</div>
+                    <div class="company-subtitle">Disponibles uniquement sur les axes construits.</div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="item-row">
-                        <div><strong>Station-Service TotalEnergies</strong><br><small style="color:var(--text-muted)">Coût: 5M €</small></div>
-                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyAmenity()">Implanter</button>
-                    </div>
+                <div id="aires-list-container">
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Aucune aire de repos disponible. Construisez des liaisons routières pour voir apparaître les aires associées.</p>
                 </div>
             </div>
 
-            <!-- VUE : FINANCES (BANQUE) -->
-            <div id="view-finance" class="app-view">
-                <div class="welcome-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div>
-                        <div class="welcome-title">Finances & Banque</div>
-                        <div class="company-subtitle">Gérez vos flux de trésorerie, emprunts et investissements.</div>
-                    </div>
-                    <div style="background: var(--bg-panel); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.8rem;">
-                        Trésorerie : <span id="bank-treasury" style="color: var(--success); font-weight: bold;">145,2 M €</span>
-                    </div>
-                </div>
-
-                <!-- Sous-onglets de finances -->
-                <div class="sub-tabs">
-                    <button class="sub-tab-btn active" onclick="switchFinanceTab('transactions', this)">Transactions</button>
-                    <button class="sub-tab-btn" onclick="switchFinanceTab('prets', this)">Prêts</button>
-                    <button class="sub-tab-btn" onclick="switchFinanceTab('bourse', this)">Bourse</button>
-                </div>
-
-                <!-- SOUS-ONGLET : TRANSACTIONS -->
-                <div id="fin-sub-transactions" class="finance-subview active">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--danger); margin-bottom: 8px; text-transform: uppercase;">Dépenses Journalières (24h) : -42 694 008 €</div>
-                    <div class="fin-grid-4">
-                        <div class="fin-card"><div class="fin-card-title">Frais Fixes</div><div class="fin-card-val" style="color:var(--danger)">-16 652 979 €</div></div>
-                        <div class="fin-card"><div class="fin-card-title">Taxes Réseau</div><div class="fin-card-val" style="color:var(--danger)">-7 580 081 €</div></div>
-                        <div class="fin-card"><div class="fin-card-title">Carburant/Flotte</div><div class="fin-card-val" style="color:var(--danger)">-5 579 767 €</div></div>
-                        <div class="fin-card"><div class="fin-card-title">Équipage / Paie</div><div class="fin-card-val" style="color:var(--danger)">-5 202 920 €</div></div>
-                    </div>
-
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--success); margin-bottom: 8px; text-transform: uppercase;">Recettes Journalières (24h) : +356 835 184 €</div>
-                    <div class="fin-grid-3">
-                        <div class="fin-card"><div class="fin-card-title">Péages & Trafic</div><div class="fin-card-val" style="color:var(--success)">+306 128 609 €</div></div>
-                        <div class="fin-card"><div class="fin-card-title">Abonnements</div><div class="fin-card-val" style="color:var(--success)">+47 302 626 €</div></div>
-                        <div class="fin-card"><div class="fin-card-title">Services Annexes</div><div class="fin-card-val" style="color:var(--success)">+3 403 950 €</div></div>
-                    </div>
-                </div>
-
-                <!-- SOUS-ONGLET : PRÊTS -->
-                <div id="fin-sub-prets" class="finance-subview">
-                    <div class="panel-box">
-                        <h3>Contracter un Prêt</h3>
-                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Financement court terme pour passer une crise de trésorerie. 4.5% / mois d'intérêt + 10% de remboursement du principal.</p>
-                        <label>Montant (€)</label>
-                        <input type="number" id="loan-amount" value="10000000" min="1000000" step="1000000">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">
-                            Taux d'intérêt : <span style="color:var(--success)">4,5 % / mois</span><br>
-                            Échéance estimée : <span style="color:var(--danger)" id="loan-estimate">-1 450 000 € / mois</span>
-                        </div>
-                        <button class="primary-btn" onclick="takeBankLoan()">Contracter le prêt</button>
-                    </div>
-
-                    <div class="panel-box">
-                        <h3>Prêts en cours</h3>
-                        <div id="active-loans-list" style="font-size: 0.8rem; color: var(--text-muted);">
-                            Aucun prêt en cours.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SOUS-ONGLET : BOURSE -->
-                <div id="fin-sub-bourse" class="finance-subview">
-                    <div class="panel-box">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <h3 style="margin:0;">📈 Action Sanef (LUXA)</h3>
-                            <span style="font-size:0.7rem; background:var(--border); padding:2px 8px; border-radius:10px;">#6 sur 25</span>
-                        </div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 4px;">214 293 €</div>
-                        <div style="font-size: 0.75rem; color: var(--danger); margin-bottom: 12px;">▼ -0.45 %</div>
-                        <p style="font-size: 0.75rem; color: var(--text-muted);">Investissez dans les compagnies cotées : touchez des dividendes au prorata, encaissez les plus-values.</p>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- VUE : SIÈGE -->
+            <!-- VUE : SIÈGE SOCIAL -->
             <div id="view-siege" class="app-view">
-                <div class="welcome-header">
-                    <div class="welcome-title">Siège & Flotte</div>
+                <div class="welcome-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div class="welcome-title">Siège social</div>
+                        <div class="company-subtitle">Dirigez votre état-major et automatisez votre compagnie.</div>
+                    </div>
+                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--warning);">🪙 1748</div>
                 </div>
-                <div class="panel-box">
-                    <button class="primary-btn" onclick="alert('Véhicule acheté !')">Acheter un véhicule (350k €)</button>
-                </div>
-            </div>
 
-            <!-- VUE : AIDE -->
-            <div id="view-aide" class="app-view">
-                <div class="welcome-header"><div class="welcome-title">Aide</div></div>
-                <div class="panel-box" style="font-size:0.8rem; color:var(--text-muted);">
-                    Utilisez le menu Lignes pour tracer vos axes sur la carte OpenStreetMap.
+                <!-- Sous-onglets du Siège -->
+                <div class="sub-tabs">
+                    <button class="sub-tab-btn active" onclick="switchSiegeTab('organigramme', this)">Organigramme</button>
+                    <button class="sub-tab-btn" onclick="switchSiegeTab('rh', this)">RH</button>
+                    <button class="sub-tab-btn" onclick="switchSiegeTab('rd', this)">R&D</button>
+                    <button class="sub-tab-btn" onclick="switchSiegeTab('marketing', this)">Marketing</button>
+                    <button class="sub-tab-btn" onclick="switchSiegeTab('marque', this)">Marque</button>
                 </div>
+
+                <!-- SOUS-ONGLET : ORGANIGRAMME -->
+                <div id="siege-sub-organigramme" class="siege-subview active">
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez vos directeurs. Chacun débloque et automatise un pan de votre compagnie.</p>
+                    
+                    <div class="director-card">
+                        <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px;">Directeur des Ressources Humaines <span style="font-size:0.7rem; background:var(--primary); padding:2px 6px; border-radius:4px;">Niv. 5</span></div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Recrute automatiquement les équipes et supervise les directeurs de ligne.<br>85 000 $US/mois</div>
+                        <button class="primary-btn" style="width:auto; padding:5px 12px; background:var(--border);">Niveau max</button>
+                    </div>
+
+                    <div class="director-card">
+                        <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px;">Directeur Technique <span style="font-size:0.7rem; background:var(--primary); padding:2px 6px; border-radius:4px;">Niv. 5</span></div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Programme de R&D : carburant, maintenance, accès anticipé.<br>85 000 $US/mois</div>
+                        <button class="primary-btn" style="width:auto; padding:5px 12px; background:var(--border);">Niveau max</button>
+                    </div>
+
+                    <div class="director-card">
+                        <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px;">Directeur Financier <span style="font-size:0.7rem; background:var(--primary); padding:2px 6px; border-radius:4px;">Niv. 5</span></div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Optimise la trésorerie : prêts moins chers, plafond relevé, frais réduits.<br>85 000 $US/mois</div>
+                        <button class="primary-btn" style="width:auto; padding:5px 12px; background:var(--border);">Niveau max</button>
+                    </div>
+                </div>
+
+                <!-- SOUS-ONGLET : RH -->
+                <div id="siege-sub-rh" class="siege-subview">
+                    <div class="panel-box">
+                        <h3>Auto-embauche</h3>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Le DRH maintient vos effectifs aux cibles fixées, dans la limite du budget mensuel.</p>
+                        <label>Budget mensuel max ($)</label>
+                        <input type="number" value="0">
+                        <button class="primary-btn">Enregistrer</button>
+                    </div>
+                </div>
+
+                <div id="siege-sub-rd" class="siege-subview"><div class="panel-box"><h3>Recherche & Développement</h3><p style="font-size:0.8rem; color:var(--text-muted);">Améliorations technologiques en cours...</p></div></div>
+                <div id="siege-sub-marketing" class="siege-subview"><div class="panel-box"><h3>Marketing</h3><p style="font-size:0.8rem; color:var(--text-muted);">Campagnes publicitaires du réseau.</p></div></div>
+                <div id="siege-sub-marque" class="siege-subview"><div class="panel-box"><h3>Marque</h3><p style="font-size:0.8rem; color:var(--text-muted);">Gestion de la réputation nationale.</p></div></div>
+
             </div>
 
         </div>
@@ -305,16 +196,19 @@
         const frenchCities = {
             'Paris': [48.8566, 2.3522], 'Lyon': [45.7640, 4.8357], 'Marseille': [43.2965, 5.3698],
             'Bordeaux': [44.8378, -0.5792], 'Lille': [50.6292, 3.0573], 'Strasbourg': [48.5734, 7.7521],
-            'Nantes': [47.2184, -1.5536], 'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620],
-            'Rennes': [48.1173, -1.6778], 'Montpellier': [43.6108, 3.8767], 'Grenoble': [45.1885, 5.7245],
-            'Rouen': [49.4432, 1.0999], 'Tours': [47.3941, 0.6848], 'Dijon': [47.3220, 5.0415],
-            'Reims': [49.2583, 4.0317], 'Clermont-Ferrand': [45.7772, 3.0870]
+            'Nantes': [47.2184, -1.5536], 'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620]
         };
 
-        let budget = 145200000;
-        let activeLoans = [];
+        // Aires de repos rattachées à des liaisons précises
+        const restAreasDatabase = [
+            { id: 'aire-paris-lyon', routeKey: 'Paris-Lyon', name: 'Aire de Repos de Beaune', lat: 47.0261, lng: 4.8415, desc: 'Station-service & Restauration' },
+            { id: 'aire-lille-paris', routeKey: 'Lille-Paris', name: 'Aire de Repos de Vémars', lat: 49.0558, lng: 2.5511, desc: 'Carburant & Bornes électriques' }
+        ];
 
-        // Initialisation de la carte avec OpenStreetMap officiel standard
+        let budget = 88697775519;
+        let constructedRoutes = [];
+        let activeMarkers = [];
+
         const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
         
@@ -325,7 +219,7 @@
 
         Object.keys(frenchCities).forEach(cityName => {
             const coords = frenchCities[cityName];
-            L.circleMarker(coords, { radius: 5, color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.9, weight: 2 })
+            L.circleMarker(coords, { radius: 4, color: '#1e293b', fillColor: '#3b82f6', fillOpacity: 1, weight: 1.5 })
              .addTo(mapFullscreen)
              .bindPopup(`<b>${cityName}</b>`);
         });
@@ -352,9 +246,9 @@
             setTimeout(() => { mapFullscreen.invalidateSize(); }, 150);
         }
 
-        function switchFinanceTab(subName, element) {
-            document.querySelectorAll('.finance-subview').forEach(el => el.classList.remove('active'));
-            document.getElementById(`fin-sub-${subName}`).classList.add('active');
+        function switchSiegeTab(subName, element) {
+            document.querySelectorAll('.siege-subview').forEach(el => el.classList.remove('active'));
+            document.getElementById(`siege-sub-${subName}`).classList.add('active');
             document.querySelectorAll('.sub-tab-btn').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
         }
@@ -379,12 +273,19 @@
 
                 if(data.routes && data.routes.length > 0) {
                     budget -= 12500000;
-                    updateUI();
+                    document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+                    
                     const routeCoordinates = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                    L.polyline(routeCoordinates, { color: '#2563eb', weight: 5, opacity: 0.85 })
+                    L.polyline(routeCoordinates, { color: '#3b82f6', weight: 5, opacity: 0.85 })
                      .addTo(mapFullscreen)
-                     .bindPopup(`<b>Autoroute ${cA} ⇄ ${cB}</b><br>Tracé réel OpenStreetMap validé`);
-                    alert(`Tronçon ${cA} - ${cB} construit avec succès !`);
+                     .bindPopup(`<b>Autoroute ${cA} ⇄ ${cB}</b>`);
+
+                    // Enregistrer la route construite (dans les deux sens)
+                    constructedRoutes.push(`${cA}-${cB}`);
+                    constructedRoutes.push(`${cB}-${cA}`);
+
+                    updateAiresDisplay();
+                    alert(`Tronçon ${cA} - ${cB} construit avec succès ! Les aires de repos associées sont désormais débloquées.`);
                 } else {
                     alert('Erreur lors du calcul du tracé routier.');
                 }
@@ -394,46 +295,51 @@
             }
         }
 
-        function takeBankLoan() {
-            const amount = parseFloat(document.getElementById('loan-amount').value);
-            if(isNaN(amount) || amount <= 0) return alert('Montant invalide.');
-            budget += amount;
-            activeLoans.push(amount);
-            updateUI();
-            updateLoansUI();
-            alert(`Prêt de ${amount.toLocaleString()} € accordé avec succès !`);
-        }
-
-        function updateLoansUI() {
-            const container = document.getElementById('active-loans-list');
-            if(activeLoans.length === 0) {
-                container.innerHTML = 'Aucun prêt en cours.';
-                return;
-            }
+        function updateAiresDisplay() {
+            const container = document.getElementById('aires-list-container');
             container.innerHTML = '';
-            activeLoans.forEach((loan, index) => {
-                const monthly = loan * 0.145;
-                container.innerHTML += `<div class="item-row"><div><strong>Prêt #${index+1}</strong> : ${loan.toLocaleString()} €</div><div style="color:var(--danger)">-${monthly.toLocaleString()} €/mois</div></div>`;
+
+            // Nettoyer les anciens marqueurs d'aires sur la carte
+            activeMarkers.forEach(m => mapFullscreen.removeLayer(m));
+            activeMarkers = [];
+
+            let unlockedCount = 0;
+
+            restAreasDatabase.forEach(aire => {
+                // Vérifie si le tracé de la route correspondante a été construit
+                const isBuilt = constructedRoutes.some(route => aire.routeKey.includes(route.split('-')[0]) && aire.routeKey.includes(route.split('-')[1]));
+
+                if (isBuilt) {
+                    unlockedCount++;
+                    // Afficher sur la carte par un point spécifique (carré orange/jaune par exemple)
+                    const marker = L.circleMarker([aire.lat, aire.lng], {
+                        radius: 7,
+                        color: '#b45309',
+                        fillColor: '#f59e0b',
+                        fillOpacity: 1,
+                        weight: 2
+                    }).addTo(mapFullscreen);
+
+                    marker.bindPopup(`<b>⛽ ${aire.name}</b><br>${aire.desc}`);
+                    activeMarkers.push(marker);
+
+                    // Ajouter dans la liste de l'onglet Aires
+                    container.innerHTML += `
+                        <div class="item-row" style="cursor:pointer;" onclick="mapFullscreen.setView([${aire.lat}, ${aire.lng}], 10);">
+                            <div><strong>${aire.name}</strong><br><small style="color:var(--text-muted)">${aire.desc}</small></div>
+                            <span style="color:var(--success); font-size:0.75rem; font-weight:bold;">Opérationnel</span>
+                        </div>
+                    `;
+                }
             });
-        }
 
-        function buyAmenity() {
-            if(budget < 4000000) return alert('Fonds insuffisants !');
-            budget -= 4000000;
-            updateUI();
-            alert('Aires de services installées !');
-        }
-
-        function updateUI() {
-            const formatted = budget.toLocaleString() + ' €';
-            document.getElementById('stat-budget').innerText = formatted;
-            document.getElementById('top-budget').innerText = formatted;
-            document.getElementById('bank-treasury').innerText = formatted;
+            if (unlockedCount === 0) {
+                container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Aucune aire de repos disponible pour le moment. Construisez les liaisons routières requises.</p>';
+            }
         }
 
         window.onload = () => {
             populateCitySelectors();
-            updateUI();
         };
     </script>
 </body>
