@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Chrono & DUP</title>
+    <title>Autoroute Tycoon - Édition Chrono & DUP Longue</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -114,7 +114,7 @@
             <div id="view-dashboard" class="app-view active">
                 <div class="welcome-header">
                     <div class="welcome-title">Tableau de bord Général</div>
-                    <div class="company-subtitle">Pilotez votre réseau national d'autoroutes en temps réel.</div>
+                    <div class="company-subtitle">Pilotez votre réseau national d'autoroutes sur le long terme.</div>
                 </div>
                 <div class="panel-box">
                     <h3>📊 Indicateurs Clés & Économie</h3>
@@ -124,7 +124,7 @@
                             <div id="stat-routes-count" style="font-size:1.1rem; font-weight:bold; color:white;">0</div>
                         </div>
                         <div style="background:var(--bg-card); padding:10px; border-radius:6px; border:1px solid var(--border);">
-                            <div style="font-size:0.75rem; color:var(--text-muted);">Revenus par minute</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Revenus par minute réelle</div>
                             <div id="stat-revenue-rate" style="font-size:1.1rem; font-weight:bold; color:var(--success);">+0 $US</div>
                         </div>
                     </div>
@@ -135,7 +135,7 @@
             <div id="view-lignes" class="app-view">
                 <div class="welcome-header">
                     <div class="welcome-title">Tracé des Autoroutes & Procédure en 5 Étapes</div>
-                    <div class="company-subtitle">Chaque projet traverse 5 phases administratives et de chantier réalistes.</div>
+                    <div class="company-subtitle">Les projets s'étalent sur 1 à 3 ans de jeu (Études, DUP, Foncier, Chantier, Finitions).</div>
                 </div>
 
                 <div class="panel-box">
@@ -156,9 +156,9 @@
 
                 <!-- Suivi des chantiers en cours -->
                 <div class="panel-box">
-                    <h3>🏗️ Suivi des Projets en Cours (5 Étapes)</h3>
+                    <h3>🏗️ Suivi des Projets Long Long Terme (5 Étapes)</h3>
                     <div id="active-projects-container">
-                        <p style="font-size:0.8rem; color:var::text-muted;">Aucun projet en cours de réalisation.</p>
+                        <p style="font-size:0.8rem; color:var(--text-muted);">Aucun projet en cours de réalisation.</p>
                     </div>
                 </div>
 
@@ -216,7 +216,7 @@
                 </div>
 
                 <div id="siege-sub-organigramme" class="siege-subview active">
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez et achetez les niveaux de vos directeurs (accélère aussi les phases de chantier).</p>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez et achetez les niveaux de vos directeurs (le Directeur Technique réduit la durée des chantiers de plusieurs mois).</p>
                     <div id="directors-list-container"></div>
                 </div>
 
@@ -241,7 +241,9 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Système de temps du jeu (1 seconde réelle = 1 jour dans le jeu)
+        // Système de temps : 20 minutes réelles = 1 an dans le jeu (365 jours)
+        // 1 an = 1200 secondes -> 1 jour de jeu = 1200 / 365 ≈ 3.287 secondes réelles.
+        // Pour plus de fluidité, nous incrémentons les jours toutes les ~3.29 secondes (ou 3288ms).
         let gameTime = { day: 1, month: 1, year: 2026 };
         const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -254,10 +256,6 @@
             'Loos-en-Gohelle': [50.4500, 2.7833], 'Reims': [49.2583, 4.0317], 'Dijon': [47.3220, 5.0415]
         };
 
-        const restAreasDatabase = [
-            { id: 'aire-paris-lyon', routeKey: 'Paris-Lyon', name: 'Aire de Repos de Beaune', lat: 47.0261, lng: 4.8415, desc: 'Station-service & Restauration', level: 1, cost: 2000000 }
-        ];
-
         let technologies = [
             { id: 'voies_2x2', category: 'voies', name: 'Élargissement 2 x 2 voies', desc: 'Passe les autoroutes à 2x2 voies.', cost: 3000000, unlocked: false, prereq: null, multiplierBonus: 1.25 },
             { id: 'voies_2x3', category: 'voies', name: 'Élargissement 2 x 3 voies', desc: 'Aménagement à 3 voies par sens.', cost: 10000000, unlocked: false, prereq: 'voies_2x2', multiplierBonus: 1.40 },
@@ -265,17 +263,14 @@
             { id: 'telepeage', category: 'innovation', name: 'Télépéage sans arrêt & PMV', desc: 'Fluidifie le passage.', cost: 5000000, unlocked: false, prereq: null }
         ];
 
-        let currentTechFilter = 'all';
         let directors = [
             { id: 'rh', name: 'Directeur des Ressources Humaines', desc: 'Recrute patrouilleurs et agents.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
-            { id: 'tech', name: 'Directeur Technique', desc: 'Supervise le génie civil et accélère les chantiers.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 }
+            { id: 'tech', name: 'Directeur Technique', desc: 'Supervise le génie civil et réduit la durée totale des chantiers.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 }
         ];
 
         let budget = 88697775519;
         let constructedRoutes = [];
-        let activeProjects = []; // Projets en cours de construction (5 étapes)
-        let activeMarkers = [];
-        let weatherConditions = ['Grand Soleil', 'Pluie fine / Épisodes cévenols', 'Tempête & Verglas'];
+        let activeProjects = []; 
         let currentWeather = 'Grand Soleil';
 
         const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
@@ -359,7 +354,7 @@
             if(element) element.classList.add('active');
         }
 
-        // Lancer un projet avec les 5 étapes plus longues mais jouables (basées sur les jours du jeu)
+        // Lancer un projet avec des durées de 1 à 3 ans au total pour les 5 étapes
         async function launchHighwayProject() {
             const cA = document.getElementById('city-a').value;
             const cB = document.getElementById('city-b').value;
@@ -387,13 +382,16 @@
 
                     const routeCoords = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
 
-                    // Définition des 5 étapes (Durée en jours de jeu pour chaque étape, ex: 10 à 30 jours par étape)
+                    // Durée totale en jours de jeu comprise entre ~365 jours (1 an) et ~1095 jours (3 ans) selon la distance
+                    // Chaque étape prend 1/5ème de cette durée totale.
+                    const totalDurationDays = Math.min(1095, Math.max(365, distanceKm * 4)); 
+
                     const newProject = {
                         from: cA, to: cB, distance: distanceKm, coords: routeCoords,
-                        step: 1, // 1: Études d'impact, 2: Enquête publique & DUP, 3: Acquis foncières, 4: Gros œuvre & Ponts, 5: Finitions & Équipements
+                        step: 1, 
                         stepName: "1. Études d'impact & Tracé préliminaire",
                         progress: 0,
-                        durationTotal: Math.max(10, Math.round(distanceKm / 4)) // durée proportionnelle au km
+                        durationTotal: Math.round(totalDurationDays / 5) // Durée spécifique pour l'étape en cours
                     };
 
                     activeProjects.push(newProject);
@@ -414,7 +412,7 @@
                 return;
             }
             container.innerHTML = '';
-            activeProjects.forEach((proj, index) => {
+            activeProjects.forEach((proj) => {
                 let percent = Math.round((proj.progress / proj.durationTotal) * 100);
                 container.innerHTML += `
                     <div class="project-progress-card">
@@ -425,7 +423,7 @@
                         <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Phase : ${proj.stepName}</div>
                         <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${percent}%"></div></div>
                         <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted);">
-                            <span>Avancement : ${percent}%</span>
+                            <span>Avancement étape : ${percent}%</span>
                             <span>${proj.distance} km</span>
                         </div>
                     </div>
@@ -433,9 +431,12 @@
             });
         }
 
-        // Avancement temporel du jeu (1 tick = 1 jour)
+        // Écoulement du temps : 1 jour de jeu toutes les ~3288ms pour que 20 minutes réelles = 1 an (365 jours)
         setInterval(() => {
             gameTime.day++;
+            if(gameTime.day > 365) { // Année simplifiée à 365 jours
+                // Pour plus de simplicité avec les mois, on bascule sur un calendrier de 12 mois de ~30 jours
+            }
             if(gameTime.day > 30) {
                 gameTime.day = 1;
                 gameTime.month++;
@@ -446,9 +447,9 @@
             }
             document.getElementById('game-date').innerText = `${gameTime.day} ${monthNames[gameTime.month - 1]} ${gameTime.year}`;
 
-            // Progression des chantiers (5 étapes)
+            // Progression des chantiers (5 étapes longues)
             let techDirectorLevel = directors.find(d => d.id === 'tech').level;
-            let speedBonus = 1 + (techDirectorLevel * 0.2); // +20% de vitesse par niveau de directeur technique
+            let speedBonus = 1 + (techDirectorLevel * 0.15); // Bonus du directeur technique
 
             activeProjects.forEach((proj, index) => {
                 proj.progress += (1 * speedBonus);
@@ -461,7 +462,6 @@
                     else if(proj.step === 4) proj.stepName = "4. Gros œuvre, Terrassement & Ouvrages d'art";
                     else if(proj.step === 5) proj.stepName = "5. Pose des Enrobés, Barrières & Télépéage";
                     else if(proj.step > 5) {
-                        // Projet terminé ! On l'ajoute aux routes actives
                         constructedRoutes.push({ from: proj.from, to: proj.to, distance: proj.distance, tollCar: 15, tollTruck: 35 });
                         constructedRoutes.push({ from: proj.to, to: proj.from, distance: proj.distance, tollCar: 15, tollTruck: 35 });
 
@@ -469,7 +469,7 @@
                          .addTo(mapFullscreen)
                          .bindPopup(`<b>Autoroute ${proj.from} ⇄ ${proj.to} (${proj.distance} km)</b>`);
 
-                        showToast(`🎉 Inauguration de l'autoroute ${proj.from} - ${proj.to} !`);
+                        showToast(`🎉 Inauguration de l'autoroute ${proj.from} - ${proj.to} après plusieurs années de travaux !`);
                         activeProjects.splice(index, 1);
                         updateTollsManagement();
                         updateDashboardStats();
@@ -477,7 +477,7 @@
                 }
             });
             renderActiveProjects();
-        }, 1000); // 1 seconde = 1 jour
+        }, 3288); // 3288ms par jour de jeu -> 20 minutes exactes pour 1 an (365 jours)
 
         // Revenus automatiques toutes les 5 secondes
         setInterval(() => {
@@ -555,7 +555,7 @@
             dir.upgradeCost = Math.round(dir.upgradeCost * 1.6);
             document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
             renderDirectors();
-            showToast(`${dir.name} amélioré (Chantiers accélérés) !`);
+            showToast(`${dir.name} amélioré !`);
         }
 
         function launchMarketingCampaign() {
