@@ -23,8 +23,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
+        /* Barre latérale */
         sidebar { width: 80px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 20px; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: var(--text-muted); cursor: pointer; padding: 10px; border-radius: 8px; width: 60px; transition: 0.2s; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: var(--text-muted); cursor: pointer; padding: 10px; border-radius: 8px; width: 60px; transition: 0.2s; text-align: center; }
         .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
         .nav-item span { font-size: 1.5rem; margin-bottom: 4px; }
 
@@ -49,7 +50,6 @@
         .item-list { display: flex; flex-direction: column; gap: 10px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; border: 1px solid var(--border); }
         
-        /* Style des barres de progression des chantiers */
         .project-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
         .progress-bar-bg { width: 100%; background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
         .progress-bar-fill { background: var(--success); height: 100%; transition: width 0.4s ease; }
@@ -57,10 +57,11 @@
 </head>
 <body>
 
+    <!-- BARRE LATÉRALE CORRIGÉE AVEC TOUS LES BOUTONS -->
     <sidebar>
         <div class="nav-item active" onclick="switchMainView('dashboard', this)"><span>📊</span>Chantiers</div>
-        <div class="nav-item" onclick="switchMainView('hq', this)"><span>🏢</span>Siège</div>
-        <div class="nav-item" onclick="switchMainView('hr', this)"><span>👥</span>RH</div>
+        <div class="nav-item" onclick="switchMainView('hq-hr', this)"><span>🏢</span>Siège & RH</div>
+        <div class="nav-item" onclick="switchMainView('bank', this)"><span>🏦</span>Banque</div>
     </sidebar>
 
     <div class="main-container">
@@ -75,7 +76,7 @@
         <div class="content-body">
             <div class="left-panel">
                 
-                <!-- VUE CHANTIERS & PROCÉDURES -->
+                <!-- 1. VUE CHANTIERS -->
                 <div id="view-dashboard" class="dashboard-view">
                     <div class="card-panel">
                         <h3>🏗️ Lancer un nouveau tracé</h3>
@@ -108,10 +109,10 @@
                     </div>
                 </div>
 
-                <!-- VUE SIÈGE SOCIAL -->
-                <div id="view-hq" class="dashboard-view" style="display:none;">
+                <!-- 2. VUE SIÈGE SOCIAL & RH (FUSIONNÉS ENSEMBLE) -->
+                <div id="view-hq-hr" class="dashboard-view" style="display:none;">
                     <div class="card-panel">
-                        <h3>🏢 Direction & R&D</h3>
+                        <h3>🏢 Direction & Siège Social</h3>
                         <div id="hq-status-info" style="font-size:0.9rem; margin-bottom:15px; color:var(--text-muted)">Chargement...</div>
                         
                         <div class="item-list">
@@ -129,19 +130,29 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- VUE RESSOURCES HUMAINES -->
-                <div id="view-hr" class="dashboard-view" style="display:none;">
                     <div class="card-panel">
-                        <h3>👥 Gestion du Personnel</h3>
+                        <h3>👥 Gestion du Personnel & Recrutement</h3>
                         <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Vos juristes accélèrent les procédures, vos ingénieurs accélèrent les chantiers.</div>
                         <div id="hr-departments-list" class="item-list"></div>
                     </div>
                 </div>
 
+                <!-- 3. VUE BANQUE -->
+                <div id="view-bank" class="dashboard-view" style="display:none;">
+                    <div class="card-panel">
+                        <h3>🏦 Gestion Bancaire & Finances</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Gérez les tarifs de péage et consultez la santé financière de votre compagnie.</p>
+                        <div id="bank-info" style="font-size: 0.9rem; color: white;">
+                            • Tarif actuel des péages : <strong>0.08 € / km</strong><br>
+                            • Emprunts et subventions disponibles prochainement.
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
+            <!-- CARTE INTERACTIVE -->
             <div class="right-map">
                 <div id="map"></div>
             </div>
@@ -185,6 +196,8 @@
             document.getElementById(`view-${viewName}`).style.display = 'block';
             document.querySelectorAll('sidebar .nav-item').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
+            // Force le redimensionnement de la carte pour éviter les bugs d'affichage
+            setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
         async function loadGameState() {
