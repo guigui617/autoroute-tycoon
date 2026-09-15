@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Stratégique Avancée</title>
+    <title>Autoroute Tycoon - Tracés Réels (OSRM)</title>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Leaflet CSS & JS -->
@@ -169,7 +169,7 @@
 
 <div class="container">
     <header>
-        <h1>🛣️ Autoroute Tycoon - Édition Stratégique Avancée</h1>
+        <h1>🛣️ Autoroute Tycoon - Tracés Routiers Réels</h1>
         <div class="ticker">
             <span id="ticker">Chargement de la simulation...</span>
             <span>● EN DIRECT</span>
@@ -196,7 +196,7 @@
     </header>
 
     <div class="card">
-        <h2>🗺️ Carte interactive du Réseau routier</h2>
+        <h2>🗺️ Carte interactive (Tracés routiers réels OpenStreetMap)</h2>
         <div id="map"></div>
     </div>
 
@@ -246,7 +246,6 @@
 </div>
 
 <script>
-    // Configuration Supabase
     const SUPABASE_URL = 'https://bqyodcxwbjpucpmudkmn.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_8h4cupw2ZGpslNlJ4BZ7Rg_UtPH5CPc';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -267,8 +266,6 @@
         loadCities();
         loadHighways();
         loadFleet();
-        
-        // Boucle de mise à jour automatique en temps réel toutes les 5 secondes
         setInterval(autoGameTick, 5000);
     });
 
@@ -336,9 +333,33 @@
             `;
 
             if (CITIES_COORDS[hw.city_a] && CITIES_COORDS[hw.city_b]) {
-                const color = hw.condition_pct < 50 ? '#ef4444' : (hw.is_toll ? '#22c55e' : '#38bdf8');
-                L.polyline([CITIES_COORDS[hw.city_a], CITIES_COORDS[hw.city_b]], { color: color, weight: 5 })
-                 .bindPopup(`<b>${hw.name}</b><br>État de la chaussée : ${Math.round(hw.condition_pct)}%`).addTo(highwaysLayerGroup);
+                const coordsA = CITIES_COORDS[hw.city_a];
+                const coordsB = CITIES_COORDS[hw.city_b];
+                const routeColor = hw.condition_pct < 50 ? '#ef4444' : (hw.is_toll ? '#22c55e' : '#38bdf8');
+
+                // Appel OSRM pour récupérer le tracé routier réel (lon,lat)
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=full&geometries=geojson`;
+
+                try {
+                    const response = await fetch(osrmUrl);
+                    const routeData = await response.json();
+
+                    if (routeData.routes && routeData.routes.length > 0) {
+                        const geojsonRoute = {
+                            type: "Feature",
+                            geometry: routeData.routes[0].geometry
+                        };
+
+                        L.geoJSON(geojsonRoute, {
+                            style: { color: routeColor, weight: 5, opacity: 0.85 }
+                        }).bindPopup(`<b>${hw.name}</b><br>État : ${Math.round(hw.condition_pct)}%`).addTo(highwaysLayerGroup);
+                    } else {
+                        // Solution de secours en ligne droite si OSRM échoue
+                        L.polyline([coordsA, coordsB], { color: routeColor, weight: 5 }).addTo(highwaysLayerGroup);
+                    }
+                } catch (e) {
+                    L.polyline([coordsA, coordsB], { color: routeColor, weight: 5 }).addTo(highwaysLayerGroup);
+                }
             }
         });
     }
