@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Gestion Avancée</title>
+    <title>Autoroute Tycoon - Tracés Réels OpenStreetMap</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -33,22 +33,15 @@
         .nav-item.badge-parent { position: relative; }
         .nav-badge { position: absolute; top: 4px; right: 6px; background: var(--danger); color: white; font-size: 0.55rem; padding: 1px 4px; border-radius: 10px; font-weight: bold; }
 
-        /* Conteneur global en deux colonnes (Tableau de bord à gauche, Carte interactive à droite) */
+        /* Conteneur global */
         .app-layout { flex: 1; display: flex; height: 100vh; overflow: hidden; position: relative; }
-
-        /* Colonne de gauche (Dashboard et formulaires) */
         .left-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 20px 24px; background: var(--bg-main); }
-
-        /* Topbar supérieure type gestionnaire */
-        .top-bar-stats { display: flex; justify-content: flex-end; align-items: center; gap: 20px; background: var(--bg-panel); border-bottom: 1px solid var(--border); padding: 8px 20px; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
-        .top-stat-item { display: flex; align-items: center; gap: 6px; color: white; }
 
         .welcome-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
         .welcome-title { font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 3px; }
         .company-subtitle { font-size: 0.85rem; color: var(--text-muted); }
         .company-subtitle span { color: var(--primary); font-weight: 600; }
 
-        /* Grille de stats façon Airlines Manager */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
         .stat-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; position: relative; }
         .stat-card-title { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
@@ -56,18 +49,14 @@
         .stat-card-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
 
         .alert-banner { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; color: #f87171; font-size: 0.8rem; font-weight: 500; cursor: pointer; }
-        .alert-banner:hover { background: rgba(239, 68, 68, 0.15); }
-
         .section-title { font-size: 0.9rem; font-weight: 700; color: white; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         .events-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
         .event-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
-        .event-info { display: flex; align-items: center; gap: 8px; }
-        .event-time { color: var(--text-muted); font-size: 0.7rem; }
 
         .app-view { display: none; }
         .app-view.active { display: block; }
 
-        /* Colonne de droite : Carte interactive dédiée (plein écran comme sur l'image) */
+        /* Colonne de droite : Carte OpenStreetMap pure (fond sombre CartoDB ou tuiles standards) */
         .right-map-panel { width: 52%; background: var(--bg-panel); border-left: 1px solid var(--border); position: relative; height: 100vh; }
         .map-leaflet { width: 100%; height: 100%; background: #0b1120; }
 
@@ -75,16 +64,17 @@
         .panel-box h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; color: white; display: flex; align-items: center; gap: 6px; }
         label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px; font-weight: 500; }
         select, input { width: 100%; padding: 7px 10px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 10px; font-size: 0.8rem; outline: none; }
-        select:focus, input:focus { border-color: var(--primary); }
         button.primary-btn { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
         button.primary-btn:hover { background: var(--primary-hover); }
-
         .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 6px; font-size: 0.8rem; }
+        
+        /* Indicateur de chargement des vraies routes */
+        #loading-route { display: none; font-size: 0.75rem; color: var(--warning); margin-top: 5px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <!-- Barre latérale gauche identique à la capture -->
+    <!-- Barre latérale gauche -->
     <div class="sidebar">
         <div class="nav-item active" onclick="switchTab('dashboard', this)"><span class="icon">🏠</span>Accueil</div>
         <div class="nav-item" onclick="switchTab('lignes', this)"><span class="icon">🛣️</span>Lignes</div>
@@ -96,10 +86,9 @@
 
     <div class="app-layout">
         
-        <!-- Colonne Gauche : Écrans du jeu -->
+        <!-- Colonne Gauche -->
         <div class="left-content">
             
-            <!-- Barre supérieure de statut -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; background: var(--bg-panel); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);">
                 <div style="font-size: 0.8rem; color: var(--text-muted);">Sanef Réseau · <span style="color:white; font-weight:600;">Niveau 24</span></div>
                 <div style="display: flex; gap: 16px; font-size: 0.8rem;">
@@ -109,7 +98,7 @@
                 </div>
             </div>
 
-            <!-- VUE 1 : ACCUEIL -->
+            <!-- VUE : ACCUEIL -->
             <div id="view-dashboard" class="app-view active">
                 <div class="welcome-header">
                     <div>
@@ -151,123 +140,92 @@
                     </div>
                 </div>
 
-                <div class="alert-banner" onclick="dispatchEmergencyUnits()">
-                    <span>⚠️ Panne de camion signalée sur l'A1 (Paris-Lille) — Cliquez pour envoyer les patrouilleurs !</span>
+                <div class="alert-banner" onclick="alert('Patrouilleurs dépêchés sur l\'A1.')">
+                    <span>⚠️ Panne de camion signalée sur l'A1 — Cliquez pour envoyer les patrouilleurs !</span>
                     <span>➔</span>
                 </div>
 
                 <div class="section-title">Événements Routiers en Direct</div>
                 <div class="events-container">
                     <div class="event-card">
-                        <div class="event-info"><span>🌧️</span><div><strong>Vigilance Météo (A6)</strong> — Pluie verglaçante, saleuses engagées</div></div>
-                        <div class="event-time">En direct</div>
-                    </div>
-                    <div class="event-card">
-                        <div class="event-info"><span>🚧</span><div><strong>Travaux de réfection (A10)</strong> — Voie de droite neutralisée</div></div>
-                        <div class="event-time">Il y a 12 min</div>
+                        <div style="display:flex; align-items:center; gap:8px;"><span>🌧️</span><div><strong>Vigilance Météo (A6)</strong> — Pluie verglaçante, saleuses engagées</div></div>
+                        <div style="color:var(--text-muted); font-size:0.7rem;">En direct</div>
                     </div>
                 </div>
             </div>
 
-            <!-- VUE 2 : LIGNES & NOUVEAUX TRACÉS -->
+            <!-- VUE : LIGNES & TRACÉS RÉELS -->
             <div id="view-lignes" class="app-view">
                 <div class="welcome-header">
                     <div>
-                        <div class="welcome-title">Gestion des Lignes Autoroutières</div>
-                        <div class="company-subtitle">Reliez les métropoles de France pour étendre votre empire.</div>
+                        <div class="welcome-title">Tracé des Autoroutes (OpenStreetMap)</div>
+                        <div class="company-subtitle">Générez de vrais axes autoroutiers suivis par le réseau routier français.</div>
                     </div>
                 </div>
 
                 <div class="panel-box">
-                    <h3>🛣️ Ouvrir un Nouveau Tronçon</h3>
+                    <h3>🛣️ Ouvrir un Nouveau Tronçon Réel</h3>
                     <label>Ville de départ</label>
                     <select id="city-a" class="city-select"></select>
                     <label>Ville d'arrivée</label>
                     <select id="city-b" class="city-select"></select>
-                    <button class="primary-btn" onclick="launchHighwayProject()">Lancer la construction (12.5M €)</button>
-                </div>
-
-                <div class="panel-box">
-                    <h3>📊 Vos Axes Actifs</h3>
-                    <div id="active-highways-list" style="font-size:0.8rem; color:var(--text-muted);">A1 (Paris - Lille), A6 (Paris - Lyon)...</div>
+                    <button class="primary-btn" onclick="launchRealHighwayProject()">Tracer la vraie autoroute (12.5M €)</button>
+                    <div id="loading-route">Calcul du tracé réel via OpenStreetMap...</div>
                 </div>
             </div>
 
-            <!-- VUE 3 : AIRES & SERVICES -->
+            <!-- VUE : AIRES -->
             <div id="view-aires" class="app-view">
                 <div class="welcome-header">
-                    <div>
-                        <div class="welcome-title">Aires de Services & Partenariats B2B</div>
-                        <div class="company-subtitle">Optimisez vos recettes annexes sur les autoroutes.</div>
-                    </div>
+                    <div><div class="welcome-title">Aires de Services</div><div class="company-subtitle">Maximisez vos revenus annexes.</div></div>
                 </div>
-
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <div class="item-row">
-                        <div><strong>Station-Service TotalEnergies</strong><br><small style="color:var(--text-muted)">Coût: 5M € | +25k €/jour</small></div>
-                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyAmenity('Total')">Implanter</button>
+                        <div><strong>Station-Service TotalEnergies</strong><br><small style="color:var(--text-muted)">Coût: 5M €</small></div>
+                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyAmenity()">Implanter</button>
                     </div>
                     <div class="item-row">
-                        <div><strong>Bornes Tesla Supercharger</strong><br><small style="color:var(--text-muted)">Coût: 4M € | +18k €/jour</small></div>
-                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyAmenity('Tesla')">Implanter</button>
-                    </div>
-                    <div class="item-row">
-                        <div><strong>Restauration McDonald's</strong><br><small style="color:var(--text-muted)">Coût: 3.5M € | +15k €/jour</small></div>
-                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyAmenity('McDo')">Implanter</button>
+                        <div><strong>Bornes Tesla Supercharger</strong><br><small style="color:var(--text-muted)">Coût: 4M €</small></div>
+                        <button class="primary-btn" style="width:auto; padding:5px 10px;" onclick="buyAmenity()">Implanter</button>
                     </div>
                 </div>
             </div>
 
-            <!-- VUE 4 : FINANCES -->
+            <!-- VUE : FINANCES -->
             <div id="view-finance" class="app-view">
                 <div class="welcome-header">
-                    <div>
-                        <div class="welcome-title">Finances & Emprunts Bancaires</div>
-                        <div class="company-subtitle">Gérez votre trésorerie et le tarif des péages.</div>
-                    </div>
+                    <div><div class="welcome-title">Finances & Emprunts</div><div class="company-subtitle">Gérez vos liquidités.</div></div>
                 </div>
                 <div class="panel-box">
-                    <h3>🏦 Emprunts Obligataires</h3>
-                    <button class="primary-btn" onclick="takeLoan(20000000)" style="margin-bottom:10px;">Emprunter 20 000 000 € (Taux 3.2%)</button>
-                    <label>Tarif du péage au kilomètre</label>
-                    <select id="toll-rate">
-                        <option value="0.07">0.07 € / km (Éco)</option>
-                        <option value="0.09" selected>0.09 € / km (Standard)</option>
-                        <option value="0.12">0.12 € / km (Premium)</option>
-                    </select>
+                    <h3>🏦 Trésorerie</h3>
+                    <button class="primary-btn" onclick="takeLoan(20000000)">Emprunter 20 000 000 €</button>
                 </div>
             </div>
 
-            <!-- VUE 5 : SIÈGE -->
+            <!-- VUE : SIÈGE -->
             <div id="view-siege" class="app-view">
                 <div class="welcome-header">
-                    <div>
-                        <div class="welcome-title">Siège Social & Flotte</div>
-                        <div class="company-subtitle">Améliorez vos départements et achetez des patrouilleurs.</div>
-                    </div>
+                    <div><div class="welcome-title">Siège & Flotte</div><div class="company-subtitle">Sécurité routière.</div></div>
                 </div>
                 <div class="panel-box">
-                    <h3>🚨 Flotte d'Intervention</h3>
-                    <button class="primary-btn" onclick="buyPatrolVehicle()">Acheter un véhicule de patrouille (350k €)</button>
+                    <h3>🚨 Patrouilleurs</h3>
+                    <button class="primary-btn" onclick="alert('Véhicule acheté !')">Acheter un véhicule (350k €)</button>
                 </div>
             </div>
 
-            <!-- VUE 6 : AIDE -->
+            <!-- VUE : AIDE -->
             <div id="view-aide" class="app-view">
                 <div class="welcome-header">
-                    <div>
-                        <div class="welcome-title">Aide & Guide</div>
-                        <div class="company-subtitle">Astuces de gestionnaire d'autoroutes.</div>
-                    </div>
+                    <div><div class="welcome-title">Aide</div></div>
                 </div>
-                <div class="panel-box" style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-                    Reliez les grands pôles urbains de France, installez des aires de services pour maximiser vos revenus, et gardez une flotte de patrouilleurs active pour contrer les incidents !
+                <div class="panel-box" style="font-size:0.8rem; color:var(--text-muted);">
+                    Les tracés s'appuient sur le moteur OpenStreetMap gratuit pour suivre les routes réelles de France.
                 </div>
             </div>
 
         </div>
 
-        <!-- Colonne Droite : Carte Interactive Géante (identique à la capture) -->
+        <!-- Colonne Droite : Carte Interactive OpenStreetMap -->
         <div class="right-map-panel">
             <div id="map-fullscreen" class="map-leaflet"></div>
         </div>
@@ -277,30 +235,34 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Toutes les principales villes françaises pour le maillage
+        // Villes françaises avec coordonnées exactes
         const frenchCities = {
             'Paris': [48.8566, 2.3522], 'Lyon': [45.7640, 4.8357], 'Marseille': [43.2965, 5.3698],
             'Bordeaux': [44.8378, -0.5792], 'Lille': [50.6292, 3.0573], 'Strasbourg': [48.5734, 7.7521],
             'Nantes': [47.2184, -1.5536], 'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620],
             'Rennes': [48.1173, -1.6778], 'Montpellier': [43.6108, 3.8767], 'Grenoble': [45.1885, 5.7245],
             'Rouen': [49.4432, 1.0999], 'Tours': [47.3941, 0.6848], 'Dijon': [47.3220, 5.0415],
-            'Reims': [49.2583, 4.0317], 'Clermont-Ferrand': [45.7772, 3.0870], 'Brest': [48.3904, -4.4861]
+            'Reims': [49.2583, 4.0317], 'Clermont-Ferrand': [45.7772, 3.0870]
         };
 
         let budget = 145200000;
-        let activeHighways = [
-            { cityA: 'Paris', cityB: 'Lille', name: 'A1' },
-            { cityA: 'Paris', cityB: 'Lyon', name: 'A6' },
-            { cityA: 'Paris', cityB: 'Bordeaux', name: 'A10' }
-        ];
 
-        // Initialisation de la carte sombre (identique au style de l'image)
+        // Initialisation de la carte OpenStreetMap avec un fond sombre et élégant (CartoDB Dark Matter, gratuit et basé sur OSM)
         const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
+        
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 18,
-            attribution: '&copy; OpenStreetMap & CARTO'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; CARTO'
         }).addTo(mapFullscreen);
+
+        // Ajouter les marqueurs des villes de départ sur la carte
+        Object.keys(frenchCities).forEach(cityName => {
+            const coords = frenchCities[cityName];
+            L.circleMarker(coords, { radius: 5, color: '#3b82f6', fillColor: '#1e293b', fillOpacity: 1, weight: 2 })
+             .addTo(mapFullscreen)
+             .bindPopup(`<b>${cityName}</b>`);
+        });
 
         function populateCitySelectors() {
             const selects = document.querySelectorAll('.city-select');
@@ -326,54 +288,61 @@
             setTimeout(() => { mapFullscreen.invalidateSize(); }, 150);
         }
 
-        function renderHighways() {
-            activeHighways.forEach(hw => {
-                const c1 = frenchCities[hw.cityA];
-                const c2 = frenchCities[hw.cityB];
-                if(c1 && c2) {
-                    L.polyline([c1, c2], { color: '#3b82f6', weight: 4, opacity: 0.85 })
-                     .addTo(mapFullscreen)
-                     .bindPopup(`<b>Autoroute ${hw.name}</b><br>${hw.cityA} ⇄ ${hw.cityB}<br>Trafic fluide`);
-                }
-            });
-        }
-
-        function launchHighwayProject() {
+        // Fonction magique : interroge l'API OSRM gratuite d'OpenStreetMap pour obtenir le tracé réel de la route
+        async function launchRealHighwayProject() {
             const cA = document.getElementById('city-a').value;
             const cB = document.getElementById('city-b').value;
             if(cA === cB) return alert('Choisissez deux villes différentes !');
             if(budget < 12500000) return alert('Fonds insuffisants !');
 
-            budget -= 12500000;
-            activeHighways.push({ cityA: cA, cityB: cB, name: 'A' + Math.floor(Math.random() * 80 + 10) });
-            updateUI();
-            alert(`Nouveau tronçon ${cA} - ${Bordeaux || cB} mis en service avec succès !`);
-            mapFullscreen.eachLayer((layer) => { if (layer instanceof L.Polyline) mapFullscreen.removeLayer(layer); });
-            renderHighways();
+            const coordsA = frenchCities[cA];
+            const coordsB = frenchCities[cB];
+
+            document.getElementById('loading-route').style.display = 'block';
+
+            try {
+                // Requête vers le service de routage OpenStreetMap (OSRM public gratuit)
+                // Note: OSRM prend les coordonnées sous format [longitude, latitude]
+                const url = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=full&geometries=geojson`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                document.getElementById('loading-route').style.display = 'none';
+
+                if(data.routes && data.routes.length > 0) {
+                    budget -= 12500000;
+                    updateUI();
+
+                    // Récupération des points réels de la route
+                    const routeCoordinates = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+
+                    // Dessin de l'autoroute en suivant précisément le tracé réel de la route
+                    L.polyline(routeCoordinates, { color: '#3b82f6', weight: 4, opacity: 0.9 })
+                     .addTo(mapFullscreen)
+                     .bindPopup(`<b>Autoroute ${cA} ⇄ ${cB}</b><br>Tracé réel OpenStreetMap validé.<br>Trafic fluide`);
+
+                    alert(`Tronçon ${cA} - ${cB} construit en suivant le tracé réel de la route !`);
+                } else {
+                    alert('Erreur lors du calcul du tracé routier.');
+                }
+            } catch (error) {
+                document.getElementById('loading-route').style.display = 'none';
+                alert('Impossible de joindre le service de routage OpenStreetMap.');
+            }
         }
 
-        function dispatchEmergencyUnits() {
-            alert('Patrouilleurs dépêchés sur l\'A1. Incident résolu, trafic fluidifié !');
-        }
-
-        function buyAmenity(type) {
+        function buyAmenity() {
             if(budget < 4000000) return alert('Fonds insuffisants !');
             budget -= 4000000;
             updateUI();
-            alert(`Aires de services (${type}) installées avec succès !`);
+            alert('Aires de services installées avec succès !');
         }
 
         function takeLoan(amount) {
             budget += amount;
             updateUI();
-            alert(`Emprunt de ${amount.toLocaleString()} € accordé par la banque.`);
-        }
-
-        function buyPatrolVehicle() {
-            if(budget < 350000) return alert('Fonds insuffisants !');
-            budget -= 350000;
-            updateUI();
-            alert('Nouveau véhicule de patrouille acheté et affecté au réseau.');
+            alert(`Emprunt de ${amount.toLocaleString()} € accordé.`);
         }
 
         function updateUI() {
@@ -384,7 +353,6 @@
 
         window.onload = () => {
             populateCitySelectors();
-            renderHighways();
             updateUI();
         };
     </script>
