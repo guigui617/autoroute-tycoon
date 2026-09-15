@@ -1,73 +1,255 @@
-1. 💶 Système de Péage Variable & Dynamic Pricing
-Ne pas laisser un prix fixe, mais laisser le joueur ajuster son tarif au kilomètre.
+-- ==========================================
+-- 1. NETTOYAGE & CRÉATION DES TABLES
+-- ==========================================
+DROP TABLE IF EXISTS fleet_player CASCADE;
+DROP TABLE IF EXISTS fleet_catalog CASCADE;
+DROP TABLE IF EXISTS highways CASCADE;
+DROP TABLE IF EXISTS game_state CASCADE;
 
-Prix trop élevé (ex: > 0,15 € / km) :
+CREATE TABLE game_state (
+    id INT PRIMARY KEY,
+    budget NUMERIC DEFAULT 10000000,
+    toll_rate NUMERIC DEFAULT 0.10,
+    satisfaction NUMERIC DEFAULT 80,
+    ticker_message TEXT DEFAULT 'Bienvenue sur Autoroute Tycoon !',
+    loan_amount NUMERIC DEFAULT 0,
+    loan_monthly_payment NUMERIC DEFAULT 0,
+    loan_remaining_months INT DEFAULT 0
+);
 
-La trésorerie augmente à court terme.
+INSERT INTO game_state (id, budget, toll_rate, satisfaction, ticker_message)
+VALUES (1, 10000000, 0.10, 80, 'Réseau autoroutier prêt à être construit.');
 
-Conquence : Moins de trafic (les usagers prennent les nationales) et la satisfaction baisse.
+CREATE TABLE highways (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    city_a TEXT,
+    city_b TEXT,
+    distance_km NUMERIC,
+    is_toll BOOLEAN DEFAULT true,
+    relief_type TEXT DEFAULT 'plain', 
+    construction_cost NUMERIC,
+    condition_pct NUMERIC DEFAULT 100,
+    car_traffic INT DEFAULT 1200,
+    truck_traffic INT DEFAULT 400,
+    has_service_area BOOLEAN DEFAULT false,
+    has_ev_chargers BOOLEAN DEFAULT false
+);
 
-Prix modéré / bas (ex: < 0,08 € / km) :
+CREATE TABLE fleet_catalog (
+    vehicle_key TEXT PRIMARY KEY,
+    name TEXT,
+    price NUMERIC,
+    maintenance_cost NUMERIC
+);
 
-Trafic maximal et haute satisfaction.
+INSERT INTO fleet_catalog (vehicle_key, name, price, maintenance_cost) VALUES
+('patrol', 'Fourgon de Patrouille & Intervention', 50000, 1200),
+('tma', 'Camion Absorbeur de Chocs (TMA)', 180000, 3500),
+('salting', 'Camion de Salage & Déneigement', 220000, 4500),
+('resurfacer', 'Enrobeuse / Machine de Rénovation', 650000, 12000);
 
-Conséquence : Recettes unitaires plus faibles, mais gain de popularité.
+CREATE TABLE fleet_player (
+    vehicle_key TEXT PRIMARY KEY REFERENCES fleet_catalog(vehicle_key),
+    count INT DEFAULT 0
+);
 
-Heures de pointe / Saisons : Augmentation automatique du trafic lors des départs en vacances (Juillet/Août), générant des pics de revenus.
 
-2. 🏗️ Coûts de Construction Géographiques & Réalisme
-Le prix de construction d'une autoroute ne doit pas dépendre uniquement de la distance, mais du relief du terrain :
+-- ==========================================
+-- 2. FONCTIONS DE GESTION & LOGIQUE MÉTIER
+-- ==========================================
 
-Plaine (ex: Paris - Orléans) : Coût standard (1x).
+-- Calcul dynamique du relief, de la distance et du coût
+CREATE OR REPLACE FUNCTION get_highway_relief_and_cost(p_city_a TEXT, p_city_b TEXT)
+RETURNS JSON AS $$
+DECLARE
+    v_base_cost NUMERIC := 12000; -- Coût de base par km
+    v_distance NUMERIC := 150;     
+    v_relief TEXT := 'plain';
+    v_multiplier NUMERIC := 1.0;
+    v_total_cost NUMERIC;
+BEGIN
+    -- Identification simple du relief selon les axes montagneux ou vallonnés français
+    IF (p_city_a IN ('Nice', 'Grenoble', 'Chambéry') AND p_city_b IN ('Nice', 'Grenoble', 'Chambéry')) 
+       OR (p_city_a = 'Toulouse' AND p_city_b = 'Perpignan') THEN
+        v_relief := 'mountain';
+        v_multiplier := 2.8;
+        v_distance := 190;
+    ELSIF (p_city_a = 'Lyon' AND p_city_b = 'Grenoble') 
+          OR (p_city_a = 'Marseille' AND p_city_b = 'Nice') THEN
+        v_relief := 'valley';
+        v_multiplier := 1.5;
+        v_distance := 130;
+    ELSE
+        v_relief := 'plain';
+        v_multiplier := 1.0;
+        v_distance := 140;
+    END IF;
 
-Vallée / Collines (ex: Lyon - Grenoble) : Coût élevé (1.5x) en raison des viaducs.
+    v_total_cost := v_distance * v_base_cost * v_multiplier;
+    
+    RETURN json_build_object(
+        'distance', v_distance,
+        'relief', v_relief,
+        'cost', v_total_cost
+    );
+END;
+$$ LANGUAGE plpgsql;
 
-Montagne (ex: Nice - Grenoble) : Coût très élevé (2.5x à 3x) nécessitant la percée de tunnels et ponts complexes.
+-- Création d'une autoroute
+CREATE OR REPLACE FUNCTION create_highway(p_city_a TEXT, p_city_b TEXT, p_is_toll BOOLEAN DEFAULT true)
+RETURNS JSON AS $$
+DECLARE
+    v_info JSON;
+    v_cost NUMERIC;
+    v_distance NUMERIC;
+    v_relief TEXT;
+    v_budget NUMERIC;
+BEGIN
+    SELECT budget INTO v_budget FROM game_state WHERE id = 1;
+    
+    v_info := get_highway_relief_and_cost(p_city_a, p_city_b);
+    v_cost := (v_info->>'cost')::NUMERIC;
+    v_distance := (v_info->>'distance')::NUMERIC;
+    v_relief := v_info->>'relief'::TEXT;
 
-3. ⛽ Services Annexes & Redevances (Aires d'autoroute)
-Les péages ne sont pas la seule source de revenus d'une société d'autoroutes !
+    IF v_budget < v_cost THEN
+        RETURN json_build_object('success', false, 'message', 'Trésorerie insuffisante. Coût requis : ' || ROUND(v_cost) || ' €');
+    END IF;
 
-Aires de repos & Stations-service :
+    UPDATE game_state SET budget = budget - v_cost WHERE id = 1;
 
-Possibilité de louer des emplacements à des enseignes (Total, Shell, Leclerc, McDonald's).
+    INSERT INTO highways (name, city_a, city_b, distance_km, is_toll, relief_type, construction_cost, car_traffic, truck_traffic)
+    VALUES (p_city_a || ' - ' || p_city_b, p_city_a, p_city_b, v_distance, p_is_toll, v_relief, v_cost, 1200, 400);
 
-Génère un loyer mensuel fixe + une commission sur les ventes.
+    RETURN json_build_object('success', true, 'message', 'Chantier lancé avec succès ! Relief : ' || v_relief);
+END;
+$$ LANGUAGE plpgsql;
 
-Aires de recharge Électrique :
+-- Achat de véhicules
+CREATE OR REPLACE FUNCTION buy_vehicle(p_vehicle_key TEXT)
+RETURNS JSON AS $$
+DECLARE
+    v_price NUMERIC;
+    v_budget NUMERIC;
+BEGIN
+    SELECT price INTO v_price FROM fleet_catalog WHERE vehicle_key = p_vehicle_key;
+    SELECT budget INTO v_budget FROM game_state WHERE id = 1;
 
-Investissement initial pour installer des bornes de recharge rapide.
+    IF v_budget < v_price THEN
+        RETURN json_build_object('success', false, 'message', 'Fonds insuffisants.');
+    END IF;
 
-Améliore l'image environnementale de la concession et rapporte un revenu régulier.
+    UPDATE game_state SET budget = budget - v_price WHERE id = 1;
 
-4. 🛠️ Coûts d'Entretien & Dégradation du Réseau
-Chaque tronçon sous concession s'use avec le temps et le passage des poids lourds.
+    INSERT INTO fleet_player (vehicle_key, count)
+    VALUES (p_vehicle_key, 1)
+    ON CONFLICT (vehicle_key) 
+    DO UPDATE SET count = fleet_player.count + 1;
 
-Usure des chaussées :
+    RETURN json_build_object('success', true, 'message', 'Matériel acquis avec succès.');
+END;
+$$ LANGUAGE plpgsql;
 
-Si l'état descend en dessous de 50%, la vitesse limite baisse, les accidents augmentent et les usagers sont mécontents.
+-- Gestion des emprunts bancaires
+CREATE OR REPLACE FUNCTION take_loan(p_amount NUMERIC)
+RETURNS JSON AS $$
+BEGIN
+    UPDATE game_state 
+    SET budget = budget + p_amount,
+        loan_amount = loan_amount + (p_amount * 1.05),
+        loan_monthly_payment = (p_amount * 1.05) / 12,
+        loan_remaining_months = 12
+    WHERE id = 1;
 
-Budget de maintenance mensuel :
+    RETURN json_build_object('success', true, 'message', 'Emprunt validé par la banque.');
+END;
+$$ LANGUAGE plpgsql;
 
-Embauche d'équipes d'entretien et achat d'enrobeuses/camions de salage pour l'hiver.
+-- Simulation / Boucle de jeu en temps réel
+CREATE OR REPLACE FUNCTION process_game_tick()
+RETURNS JSON AS $$
+DECLARE
+    v_toll_rate NUMERIC;
+    v_total_revenue NUMERIC := 0;
+    v_total_maintenance NUMERIC := 12000;
+    v_service_revenue NUMERIC := 0;
+    v_total_satisfaction NUMERIC := 0;
+    v_highway_count INT := 0;
+    hw RECORD;
+    v_car_mult NUMERIC;
+    v_truck_mult NUMERIC;
+    v_net NUMERIC;
+    v_loan_pay NUMERIC;
+    v_loan_months INT;
+BEGIN
+    SELECT toll_rate, loan_monthly_payment, loan_remaining_months 
+    INTO v_toll_rate, v_loan_pay, v_loan_months 
+    FROM game_state WHERE id = 1;
 
-Possibilité d'effectuer des grands travaux de rénovation tous les 5 ou 10 ans de jeu.
+    -- Dynamic Pricing impact
+    IF v_toll_rate > 0.15 THEN
+        v_car_mult := 0.5;
+        v_truck_mult := 0.9;
+    ELSIF v_toll_rate < 0.08 THEN
+        v_car_mult := 1.5;
+        v_truck_mult := 1.2;
+    ELSE
+        v_car_mult := 1.0;
+        v_truck_mult := 1.0;
+    END IF;
 
-5. 🏦 Système Financier : Emprunts & Subventions
-Au début du jeu, construire une longue autoroute coûte très cher.
+    FOR hw IN SELECT * FROM highways LOOP
+        v_highway_count := v_highway_count + 1;
 
-Prêts bancaires :
+        DECLARE
+            v_rev_cars NUMERIC := hw.car_traffic * v_car_mult * hw.distance_km * v_toll_rate;
+            v_rev_trucks NUMERIC := hw.truck_traffic * v_truck_mult * hw.distance_km * (v_toll_rate * 3.5);
+            v_wear NUMERIC := 0.4 + (hw.truck_traffic * 0.0008);
+        BEGIN
+            IF hw.is_toll THEN
+                v_total_revenue := v_total_revenue + v_rev_cars + v_rev_trucks;
+            END IF;
 
-Possibilité de souscrire un prêt à la banque avec un taux d'intérêt (ex: 3% sur 24 mois).
+            -- Usure
+            UPDATE highways 
+            SET condition_pct = GREATEST(0, condition_pct - v_wear)
+            WHERE id = hw.id;
 
-Permet de financer rapidement une grande ligne (ex: Paris - Marseille) pour encaisser des péages immédiatement.
+            IF hw.condition_pct < 50 THEN
+                v_total_satisfaction := v_total_satisfaction - 15;
+            ELSE
+                v_total_satisfaction := v_total_satisfaction + 85;
+            END IF;
 
-Subventions d'État / Régionales :
+            -- Services annexes
+            IF hw.has_service_area THEN
+                v_service_revenue := v_service_revenue + 15000;
+            END IF;
+            IF hw.has_ev_chargers THEN
+                v_service_revenue := v_service_revenue + 8000;
+            END IF;
+        END;
+    END LOOP;
 
-L'État peut offrir des primes pour désenclaver certaines régions ou relier des villes moyennes.
+    -- Gestion du prêt
+    IF v_loan_months > 0 AND v_loan_pay > 0 THEN
+        v_total_maintenance := v_total_maintenance + v_loan_pay;
+        UPDATE game_state 
+        SET loan_remaining_months = loan_remaining_months - 1
+        WHERE id = 1;
+    END IF;
 
-6. 🚚 Typologie du Trafic (Voitures vs Poids Lourds)
-Séparer le trafic en deux catégories :
+    v_net := v_total_revenue + v_service_revenue - v_total_maintenance;
 
-Véhicules légers (Voitures) : Sensibles au prix et à la satisfaction.
+    IF v_highway_count > 0 THEN
+        UPDATE game_state 
+        SET budget = budget + v_net,
+            satisfaction = GREATEST(0, LEAST(100, v_total_satisfaction / v_highway_count)),
+            ticker_message = 'Péages : ' || ROUND(v_total_revenue) || ' € | Services : ' || ROUND(v_service_revenue) || ' € | Entretien : ' || ROUND(v_total_maintenance) || ' €'
+        WHERE id = 1;
+    END IF;
 
-Poids lourds (Camions) : Payent un péage 3x à 4x plus cher, mais usent la route 2x plus vite.
+    RETURN json_build_object('success', true, 'net', v_net);
+END;
+$$ LANGUAGE plpgsql;
