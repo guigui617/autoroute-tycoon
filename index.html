@@ -155,9 +155,7 @@
                     <div class="welcome-title">Arbre Technologique (R&D)</div>
                     <div class="company-subtitle">Recherchez des innovations pour booster vos profits et réduire la maintenance.</div>
                 </div>
-                <div id="tech-tree-container">
-                    <!-- Généré par script -->
-                </div>
+                <div id="tech-tree-container"></div>
             </div>
 
             <!-- VUE : SIÈGE SOCIAL -->
@@ -181,24 +179,10 @@
 
                 <!-- SOUS-ONGLET : ORGANIGRAMME -->
                 <div id="siege-sub-organigramme" class="siege-subview active">
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez vos directeurs. Chacun débloque et automatise un pan de votre compagnie.</p>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez et achetez les niveaux de vos directeurs. Plus le niveau monte, plus le salaire augmente.</p>
                     
-                    <div class="director-card">
-                        <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px;">Directeur des Ressources Humaines <span style="font-size:0.7rem; background:var(--primary); padding:2px 6px; border-radius:4px;">Niv. 5</span></div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Recrute automatiquement les équipes et supervise les directeurs de ligne.<br>85 000 $US/mois</div>
-                        <button class="primary-btn" style="width:auto; padding:5px 12px; background:var(--border);">Niveau max</button>
-                    </div>
-
-                    <div class="director-card">
-                        <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px;">Directeur Technique <span style="font-size:0.7rem; background:var(--primary); padding:2px 6px; border-radius:4px;">Niv. 5</span></div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Programme de R&D : carburant, maintenance, accès anticipé.<br>85 000 $US/mois</div>
-                        <button class="primary-btn" style="width:auto; padding:5px 12px; background:var(--border);">Niveau max</button>
-                    </div>
-
-                    <div class="director-card">
-                        <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px;">Directeur Financier <span style="font-size:0.7rem; background:var(--primary); padding:2px 6px; border-radius:4px;">Niv. 5</span></div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Optimise la trésorerie : prêts moins chers, plafond relevé, frais réduits.<br>85 000 $US/mois</div>
-                        <button class="primary-btn" style="width:auto; padding:5px 12px; background:var(--border);">Niveau max</button>
+                    <div id="directors-list-container">
+                        <!-- Généré dynamiquement par script -->
                     </div>
                 </div>
 
@@ -251,8 +235,15 @@
             { id: 'bornes_ev', name: 'Bornes Électriques Ultra-rapides', desc: 'Améliore les revenus des aires de repos de 30%.', cost: 12000000, unlocked: false }
         ];
 
+        // Directeurs : salaire de base à 10 000 $US qui augmente par niveau, avec coût d'achat/amélioration
+        let directors = [
+            { id: 'rh', name: 'Directeur des Ressources Humaines', desc: 'Recrute automatiquement les équipes et supervise les directeurs de ligne.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
+            { id: 'tech', name: 'Directeur Technique', desc: 'Programme de R&D : carburant, maintenance, accès anticipé.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
+            { id: 'fin', name: 'Directeur Financier', desc: 'Optimise la trésorerie : prêts moins chers, plafond relevé, frais réduits.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 }
+        ];
+
         let budget = 88697775519;
-        let constructedRoutes = []; // Stocke {from, to, tollCar, tollTruck}
+        let constructedRoutes = [];
         let activeMarkers = [];
         let weatherConditions = ['Grand Soleil', 'Pluie fine', 'Temps couvert'];
         let currentWeather = 'Grand Soleil';
@@ -310,6 +301,33 @@
             element.classList.add('active');
         }
 
+        function renderDirectors() {
+            const container = document.getElementById('directors-list-container');
+            container.innerHTML = '';
+            directors.forEach(dir => {
+                let currentSalary = dir.level === 0 ? 0 : dir.baseSalary * Math.pow(1.8, dir.level - 1);
+                let isMax = dir.level >= dir.maxLevel;
+                container.innerHTML += `
+                    <div class="director-card">
+                        <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px;">${dir.name} <span style="font-size:0.7rem; background:var(--primary); padding:2px 6px; border-radius:4px;">Niv. ${dir.level} / ${dir.maxLevel}</span></div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${dir.desc}<br>Salaire actuel : <strong style="color:var(--success);">${Math.round(currentSalary).toLocaleString()} $US/mois</strong></div>
+                        ${isMax ? '<button class="primary-btn" style="width:auto; padding:5px 12px; background:var(--border);" disabled>Niveau max</button>' : `<button class="primary-btn" style="width:auto; padding:5px 12px;" onclick="upgradeDirector('${dir.id}')">${dir.level === 0 ? 'Recruter (Acheter)' : 'Améliorer le niveau'} (${dir.upgradeCost.toLocaleString()} $US)</button>`}
+                    </div>
+                `;
+            });
+        }
+
+        function upgradeDirector(dirId) {
+            const dir = directors.find(d => d.id === dirId);
+            if(budget < dir.upgradeCost) return alert('Fonds insuffisants pour recruter ou monter en niveau ce directeur !');
+            budget -= dir.upgradeCost;
+            dir.level++;
+            dir.upgradeCost = Math.round(dir.upgradeCost * 1.6);
+            document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+            renderDirectors();
+            showToast(`${dir.name} mis à niveau (Niv. ${dir.level}) !`);
+        }
+
         async function launchRealHighwayProject() {
             const cA = document.getElementById('city-a').value;
             const cB = document.getElementById('city-b').value;
@@ -357,7 +375,6 @@
             const container = document.getElementById('tolls-management-list');
             container.innerHTML = '';
             
-            // Filtrer pour n'afficher que les routes uniques
             const uniqueRoutes = constructedRoutes.filter((r, index, self) => 
                 index === self.findIndex(t => (t.from === r.from && t.to === r.to) || (t.from === r.to && t.to === r.from))
             );
@@ -367,7 +384,7 @@
                 return;
             }
 
-            uniqueRoutes.forEach((route, idx) => {
+            uniqueRoutes.forEach((route) => {
                 container.innerHTML += `
                     <div class="item-row">
                         <div><strong>${route.from} ⇄ ${route.to}</strong></div>
@@ -485,7 +502,6 @@
             document.getElementById('stat-revenue-rate').innerText = `+${revenueRate.toLocaleString()} $US / min`;
         }
 
-        // Boucle de revenus et de météo en temps réel
         setInterval(() => {
             const uniqueRoutesCount = constructedRoutes.length / 2;
             if(uniqueRoutesCount > 0) {
@@ -497,7 +513,6 @@
             }
         }, 5000);
 
-        // Changement de météo aléatoire toutes les 45 secondes
         setInterval(() => {
             currentWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
             document.getElementById('weather-status').innerText = currentWeather;
@@ -507,6 +522,7 @@
         window.onload = () => {
             populateCitySelectors();
             renderTechTree();
+            renderDirectors();
         };
     </script>
 </body>
