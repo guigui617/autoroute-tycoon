@@ -1,516 +1,73 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon</title>
-    <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <style>
-        :root {
-            --bg-primary: #0f172a;
-            --bg-card: #1e293b;
-            --accent: #38bdf8;
-            --accent-success: #22c55e;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
-        }
-
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            gap: 20px;
-        }
-
-        header {
-            background-color: var(--bg-card);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .stats-bar {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .stat-card {
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            min-width: 150px;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        #map {
-            height: 520px;
-            width: 100%;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            z-index: 1;
-        }
-
-        button {
-            background-color: var(--accent);
-            color: #000;
-            font-weight: bold;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        select, input {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 6px;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        .item-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background-color: rgba(255, 255, 255, 0.03);
-            border-radius: 6px;
-            border: 1px solid var(--border);
-        }
-
-        .badge-toll {
-            background-color: #16a34a;
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-
-        .badge-free {
-            background-color: #0284c7;
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-
-        .ticker {
-            background-color: #0284c7;
-            color: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: 500;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .live-indicator {
-            background-color: #22c55e;
-            color: #000;
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: bold;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
-
-        .leaflet-tooltip.city-label {
-            background: #1e293b;
-            border: 1px solid var(--accent);
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: bold;
-            border-radius: 4px;
-            padding: 2px 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <header>
-        <h1>🛣️ Autoroute Tycoon - Réseau France</h1>
-        <div class="ticker">
-            <span id="ticker">Connexion au réseau en temps réel...</span>
-            <span class="live-indicator">● EN DIRECT</span>
-        </div>
-        
-        <div class="stats-bar">
-            <div class="stat-card">
-                <div>Trésorerie</div>
-                <div class="stat-value" id="budget">- €</div>
-            </div>
-            <div class="stat-card">
-                <div>Tarif péage/km</div>
-                <div class="stat-value" id="toll-rate">- €</div>
-            </div>
-            <div class="stat-card">
-                <div>Satisfaction</div>
-                <div class="stat-value" id="satisfaction">-%</div>
-            </div>
-            <div class="stat-card">
-                <div>Statut</div>
-                <div class="stat-value" style="font-size: 1.1rem; color: var(--accent-success);">Actif (Temps réel)</div>
-            </div>
-        </div>
-    </header>
-
-    <div class="card">
-        <h2>🗺️ Carte Réseau (🟢 Payant | 🔵 Gratuit)</h2>
-        <div id="map"></div>
-    </div>
-
-    <div class="grid-2">
-        <div class="card">
-            <h2>🏗️ Construire une Autoroute</h2>
-            <div>
-                <label>Ville de départ</label>
-                <select id="city-a"></select>
-                
-                <label>Ville d'arrivée</label>
-                <select id="city-b"></select>
-
-                <label>Type de tronçon</label>
-                <select id="is-toll">
-                    <option value="true">🟢 Payant (Péage)</option>
-                    <option value="false">🔵 Gratuit (Trafic & Satisfaction ++)</option>
-                </select>
-
-                <button onclick="buildHighway()">Lancer le chantier</button>
-            </div>
-
-            <h3 style="margin-top:20px;">Réseau sous concession</h3>
-            <div id="highways-list" class="item-list"></div>
-        </div>
-
-        <div class="card">
-            <h2>🚜 Flotte & Interventions</h2>
-            <h3>Acheter du matériel</h3>
-            <div id="fleet-catalog" class="item-list"></div>
-
-            <h3 style="margin-top:20px;">Flotte actuelle</h3>
-            <div id="fleet-player" class="item-list"></div>
-        </div>
-    </div>
-</div>
-
-<script>
-    const SUPABASE_URL = 'https://bqyodcxwbjpucpmudkmn.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_8h4cupw2ZGpslNlJ4BZ7Rg_UtPH5CPc';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const CITIES_COORDS = {
-        'Paris': [48.8566, 2.3522],
-        'Marseille': [43.2965, 5.3698],
-        'Lyon': [45.7640, 4.8357],
-        'Toulouse': [43.6047, 1.4442],
-        'Nice': [43.7102, 7.2620],
-        'Nantes': [47.2184, -1.5536],
-        'Montpellier': [43.6108, 3.8767],
-        'Strasbourg': [48.5734, 7.7521],
-        'Bordeaux': [44.8378, -0.5792],
-        'Lille': [50.6292, 3.0573],
-        'Rennes': [48.1172, -1.6778],
-        'Reims': [49.2583, 4.0317],
-        'Toulon': [43.1242, 5.9280],
-        'Saint-Étienne': [45.4397, 4.3872],
-        'Le Havre': [49.4944, 0.1079],
-        'Grenoble': [45.1885, 5.7245],
-        'Dijon': [47.3220, 5.0415],
-        'Angers': [47.4784, -0.5632],
-        'Nîmes': [43.8367, 4.3601],
-        'Aix-en-Provence': [43.5297, 5.4474],
-        'Clermont-Ferrand': [45.7772, 3.0870],
-        'Le Mans': [48.0061, 0.1996],
-        'Brest': [48.3904, -4.4861],
-        'Tours': [47.3941, 0.6848],
-        'Amiens': [49.8941, 2.2957],
-        'Limoges': [45.8336, 1.2611],
-        'Metz': [49.1193, 6.1757],
-        'Perpignan': [42.6986, 2.8956],
-        'Besançon': [47.2378, 6.0241],
-        'Orléans': [47.9029, 1.9090],
-        'Rouen': [49.4431, 1.0993],
-        'Caen': [49.1828, -0.3707],
-        'Nancy': [48.6921, 6.1844],
-        'Dunkerque': [51.0343, 2.3768]
-    };
-
-    let map, highwaysLayerGroup;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        initMap();
-        loadGameState();
-        loadCities();
-        loadHighways();
-        loadFleet();
-
-        // Lancement de la boucle automatique en temps réel (toutes les 5 secondes)
-        setInterval(autoGameTick, 5000);
-    });
-
-    function initMap() {
-        map = L.map('map').setView([46.603354, 1.888334], 6);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap',
-            maxZoom: 19
-        }).addTo(map);
-
-        highwaysLayerGroup = L.layerGroup().addTo(map);
-
-        Object.keys(CITIES_COORDS).forEach(cityName => {
-            const coords = CITIES_COORDS[cityName];
-            L.circleMarker(coords, {
-                radius: 6,
-                color: '#0284c7',
-                fillColor: '#38bdf8',
-                fillOpacity: 1,
-                weight: 2
-            }).bindTooltip(cityName, { permanent: true, direction: 'top', className: 'city-label' }).addTo(map);
-        });
-    }
-
-    async function loadGameState() {
-        const { data, error } = await supabaseClient.from('game_state').select('*').eq('id', 1).single();
-        if (error) return console.error(error);
-
-        document.getElementById('budget').innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.budget);
-        document.getElementById('toll-rate').innerText = `${data.toll_rate} €`;
-        document.getElementById('satisfaction').innerText = `${data.satisfaction} %`;
-        document.getElementById('ticker').innerText = data.ticker_message || "Réseau autoroutier en service.";
-    }
-
-    async function loadCities() {
-        const selectA = document.getElementById('city-a');
-        const selectB = document.getElementById('city-b');
-        selectA.innerHTML = ''; selectB.innerHTML = '';
-
-        const sortedCities = Object.keys(CITIES_COORDS).sort();
-        sortedCities.forEach(city => {
-            selectA.add(new Option(city, city));
-            selectB.add(new Option(city, city));
-        });
-    }
-
-    async function loadHighways() {
-        const { data, error } = await supabaseClient.from('highways').select('*');
-        if (error) return console.error(error);
-
-        const container = document.getElementById('highways-list');
-        container.innerHTML = '';
-        highwaysLayerGroup.clearLayers();
-
-        data.forEach(async (hw) => {
-            const isToll = hw.is_toll !== false;
-            const badge = isToll ? '<span class="badge-toll">PÉAGE</span>' : '<span class="badge-free">GRATUIT</span>';
-
-            container.innerHTML += `
-                <div class="item-row">
-                    <div>
-                        <strong>${hw.name}</strong> ${badge}<br>
-                        <small style="color:var(--text-muted)">${hw.distance_km} km | Trafic: ${hw.traffic} véh/j</small>
-                    </div>
-                </div>
-            `;
-
-            let cityA = hw.city_a;
-            let cityB = hw.city_b;
-
-            if (!cityA && hw.name) {
-                const parts = hw.name.split(/[-–—]/).map(s => s.trim());
-                if (parts.length >= 2) {
-                    cityA = parts[0];
-                    cityB = parts[1];
-                }
-            }
-
-            if (CITIES_COORDS[cityA] && CITIES_COORDS[cityB]) {
-                const coordsA = CITIES_COORDS[cityA];
-                const coordsB = CITIES_COORDS[cityB];
-                
-                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=full&geometries=geojson`;
-
-                try {
-                    const response = await fetch(osrmUrl);
-                    const routeData = await response.json();
-
-                    if (routeData.routes && routeData.routes.length > 0) {
-                        const geojsonRoute = {
-                            type: "Feature",
-                            geometry: routeData.routes[0].geometry
-                        };
-
-                        const routeColor = isToll ? '#16a34a' : '#0284c7';
-
-                        const routeLayer = L.geoJSON(geojsonRoute, {
-                            style: {
-                                color: routeColor,
-                                weight: 5,
-                                opacity: 0.85
-                            }
-                        }).addTo(highwaysLayerGroup);
-
-                        const typeText = isToll ? 'Payante' : 'Gratuite';
-                        routeLayer.bindPopup(`<b>${hw.name}</b> (${typeText})<br>${hw.distance_km} km<br>Trafic: ${hw.traffic} véh/j`);
-                    }
-                } catch (e) {
-                    console.error("Erreur OSRM:", e);
-                    const routeColor = isToll ? '#16a34a' : '#0284c7';
-                    L.polyline([coordsA, coordsB], { color: routeColor, weight: 4 }).addTo(highwaysLayerGroup);
-                }
-            }
-        });
-    }
-
-    async function loadFleet() {
-        const { data: catalog } = await supabaseClient.from('fleet_catalog').select('*');
-        const { data: player } = await supabaseClient.from('fleet_player').select('*');
-
-        const catalogContainer = document.getElementById('fleet-catalog');
-        const playerContainer = document.getElementById('fleet-player');
-        
-        catalogContainer.innerHTML = '';
-        playerContainer.innerHTML = '';
-
-        if (catalog) {
-            catalog.forEach(item => {
-                const price = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(item.price);
-                catalogContainer.innerHTML += `
-                    <div class="item-row">
-                        <div>
-                            <strong>${item.name}</strong><br>
-                            <small style="color:var(--text-muted)">${price}</small>
-                        </div>
-                        <button onclick="buyVehicle('${item.vehicle_key}')">Acheter</button>
-                    </div>
-                `;
-            });
-        }
-
-        if (player) {
-            player.forEach(item => {
-                const vehicleInfo = catalog ? catalog.find(c => c.vehicle_key === item.vehicle_key) : null;
-                if (item.count > 0) {
-                    playerContainer.innerHTML += `
-                        <div class="item-row">
-                            <div><strong>${vehicleInfo ? vehicleInfo.name : item.vehicle_key}</strong></div>
-                            <span style="font-weight:bold; color:var(--accent);">${item.count}</span>
-                        </div>
-                    `;
-                }
-            });
-        }
-    }
-
-    async function buildHighway() {
-        const cityA = document.getElementById('city-a').value;
-        const cityB = document.getElementById('city-b').value;
-        const isToll = document.getElementById('is-toll').value === 'true';
-
-        if (cityA === cityB) {
-            alert("Veuillez choisir deux villes différentes.");
-            return;
-        }
-
-        const { data, error } = await supabaseClient.rpc('create_highway', { 
-            p_city_a: cityA, 
-            p_city_b: cityB,
-            p_is_toll: isToll 
-        });
-        
-        if (error) {
-            const { data: fallbackData, error: fallbackError } = await supabaseClient.rpc('create_highway', { 
-                p_city_a: cityA, 
-                p_city_b: cityB 
-            });
-            if (fallbackError) return alert("Erreur lors de la construction.");
-            alert(fallbackData.message);
-        } else {
-            alert(data.message);
-        }
-
-        loadGameState();
-        loadHighways();
-    }
-
-    async function buyVehicle(key) {
-        const { data, error } = await supabaseClient.rpc('buy_vehicle', { p_vehicle_key: key });
-        if (error) return alert("Erreur d'achat.");
-
-        loadGameState();
-        loadFleet();
-    }
-
-    // Exécution automatique de la simulation en temps réel en arrière-plan
-    async function autoGameTick() {
-        const { error } = await supabaseClient.rpc('process_game_tick');
-        if (!error) {
-            loadGameState();
-        }
-    }
-</script>
-
-</body>
-</html>
+1. 💶 Système de Péage Variable & Dynamic Pricing
+Ne pas laisser un prix fixe, mais laisser le joueur ajuster son tarif au kilomètre.
+
+Prix trop élevé (ex: > 0,15 € / km) :
+
+La trésorerie augmente à court terme.
+
+Conquence : Moins de trafic (les usagers prennent les nationales) et la satisfaction baisse.
+
+Prix modéré / bas (ex: < 0,08 € / km) :
+
+Trafic maximal et haute satisfaction.
+
+Conséquence : Recettes unitaires plus faibles, mais gain de popularité.
+
+Heures de pointe / Saisons : Augmentation automatique du trafic lors des départs en vacances (Juillet/Août), générant des pics de revenus.
+
+2. 🏗️ Coûts de Construction Géographiques & Réalisme
+Le prix de construction d'une autoroute ne doit pas dépendre uniquement de la distance, mais du relief du terrain :
+
+Plaine (ex: Paris - Orléans) : Coût standard (1x).
+
+Vallée / Collines (ex: Lyon - Grenoble) : Coût élevé (1.5x) en raison des viaducs.
+
+Montagne (ex: Nice - Grenoble) : Coût très élevé (2.5x à 3x) nécessitant la percée de tunnels et ponts complexes.
+
+3. ⛽ Services Annexes & Redevances (Aires d'autoroute)
+Les péages ne sont pas la seule source de revenus d'une société d'autoroutes !
+
+Aires de repos & Stations-service :
+
+Possibilité de louer des emplacements à des enseignes (Total, Shell, Leclerc, McDonald's).
+
+Génère un loyer mensuel fixe + une commission sur les ventes.
+
+Aires de recharge Électrique :
+
+Investissement initial pour installer des bornes de recharge rapide.
+
+Améliore l'image environnementale de la concession et rapporte un revenu régulier.
+
+4. 🛠️ Coûts d'Entretien & Dégradation du Réseau
+Chaque tronçon sous concession s'use avec le temps et le passage des poids lourds.
+
+Usure des chaussées :
+
+Si l'état descend en dessous de 50%, la vitesse limite baisse, les accidents augmentent et les usagers sont mécontents.
+
+Budget de maintenance mensuel :
+
+Embauche d'équipes d'entretien et achat d'enrobeuses/camions de salage pour l'hiver.
+
+Possibilité d'effectuer des grands travaux de rénovation tous les 5 ou 10 ans de jeu.
+
+5. 🏦 Système Financier : Emprunts & Subventions
+Au début du jeu, construire une longue autoroute coûte très cher.
+
+Prêts bancaires :
+
+Possibilité de souscrire un prêt à la banque avec un taux d'intérêt (ex: 3% sur 24 mois).
+
+Permet de financer rapidement une grande ligne (ex: Paris - Marseille) pour encaisser des péages immédiatement.
+
+Subventions d'État / Régionales :
+
+L'État peut offrir des primes pour désenclaver certaines régions ou relier des villes moyennes.
+
+6. 🚚 Typologie du Trafic (Voitures vs Poids Lourds)
+Séparer le trafic en deux catégories :
+
+Véhicules légers (Voitures) : Sensibles au prix et à la satisfaction.
+
+Poids lourds (Camions) : Payent un péage 3x à 4x plus cher, mais usent la route 2x plus vite.
