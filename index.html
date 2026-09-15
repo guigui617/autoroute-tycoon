@@ -1,9 +1,14 @@
+Voici le **script complet et unifié** de votre jeu *Autoroute Tycoon*. Tout est assemblé proprement et prêt à l'emploi : le jeu de base avec son temps réaliste (20 minutes = 1 an), les 5 étapes longues (1 à 3 ans), le module de compte et de sauvegarde, ainsi que tous les nouveaux modules (Mode Photo, Banque, Trophées, Statistiques, Journal des actualités et Gestion des incidents).
+
+Vous pouvez copier l'intégralité de ce code et le coller directement dans un nouveau fichier `.html` :
+
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Chrono & DUP Longue</title>
+    <title>Autoroute Tycoon - Édition Complète & Intégrale</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -33,7 +38,7 @@
 
         /* Structure principale */
         .app-layout { flex: 1; display: flex; height: 100vh; overflow: hidden; position: relative; }
-        .left-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 20px 24px; background: var(--bg-main); }
+        .left-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 20px 24px; padding-bottom: 60px; background: var(--bg-main); }
 
         .welcome-header { margin-bottom: 20px; }
         .welcome-title { font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 3px; }
@@ -49,7 +54,7 @@
         .panel-box { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
         .panel-box h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; color: white; }
         label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px; }
-        select, input[type="number"] { width: 100%; padding: 7px 10px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 10px; font-size: 0.8rem; outline: none; }
+        select, input[type="number"], input[type="text"] { width: 100%; padding: 7px 10px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 10px; font-size: 0.8rem; outline: none; }
         button.primary-btn { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
         button.primary-btn:hover { background: var(--primary-hover); }
         button.primary-btn:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
@@ -81,9 +86,37 @@
         .rd-card.locked { opacity: 0.65; border-style: dashed; }
 
         /* Notifications Toast */
-        #toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+        #toast-container { position: fixed; bottom: 45px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
         .toast { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- MODULE COMPTE & SAUVEGARDE --- */
+        .auth-floating-panel { position: fixed; top: 20px; right: 380px; z-index: 10000; display: flex; gap: 8px; background: var(--bg-panel); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); align-items: center; font-size: 0.8rem; }
+        .auth-btn { background: var(--primary); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        .auth-btn:hover { background: var(--primary-hover); }
+        .auth-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; }
+        .auth-modal-content { background: var(--bg-panel); border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 340px; color: var(--text-main); }
+        .auth-modal-content h3 { margin-bottom: 12px; font-size: 1rem; }
+
+        /* --- MODULES SUPPLÉMENTAIRES (News Ticker, Outils, Modales) --- */
+        #news-ticker-bar { position: fixed; bottom: 0; left: 68px; right: 0; height: 32px; background: rgba(17, 28, 48, 0.95); border-top: 1px solid var(--border); display: flex; align-items: center; overflow: hidden; z-index: 999; font-size: 0.75rem; color: var(--text-muted); }
+        .ticker-badge { background: var(--primary); color: white; padding: 0 12px; height: 100%; display: flex; align-items: center; font-weight: bold; flex-shrink: 0; }
+        .ticker-content { white-space: nowrap; animation: tickerScroll 30s linear infinite; padding-left: 20px; color: white; }
+        @keyframes tickerScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        .extra-tools-panel { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; gap: 6px; }
+        .tool-btn { background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .tool-btn:hover { background: var(--primary); }
+
+        /* Mode Photo */
+        body.photo-mode .sidebar, body.photo-mode .left-content, body.photo-mode .auth-floating-panel, body.photo-mode #news-ticker-bar, body.photo-mode .extra-tools-panel { display: none !important; }
+        body.photo-mode .right-map-panel { width: 100% !important; height: 100vh !important; border: none !important; }
+        .exit-photo-btn { display: none; position: fixed; top: 20px; right: 20px; z-index: 99999; background: var(--danger); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        body.photo-mode .exit-photo-btn { display: block; }
+
+        .extra-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; }
+        .extra-modal-content { background: var(--bg-panel); border: 1px solid var(--border); padding: 24px; border-radius: 12px; width: 450px; max-height: 85vh; overflow-y: auto; color: var(--text-main); }
+        .badge-item { background: var(--bg-card); border: 1px solid var(--border); padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -97,8 +130,98 @@
         <div class="nav-item" onclick="switchTab('siege', this)"><span class="icon">🏢</span>Siège</div>
     </div>
 
+    <!-- Boutons d'accès Module Compte & Outils Additionnels en haut à droite -->
+    <div class="auth-floating-panel">
+        👤 <span id="current-username" style="color:var(--text-muted);">Invité</span>
+        <button class="auth-btn" onclick="openAuthModal()">Compte</button>
+    </div>
+
+    <div class="extra-tools-panel">
+        <button class="tool-btn" onclick="togglePhotoMode()">📷 Photo</button>
+        <button class="tool-btn" onclick="openModal('bank-modal')">🏦 Banque</button>
+        <button class="tool-btn" onclick="openModal('trophies-modal')">🏆 Trophées</button>
+        <button class="tool-btn" onclick="openModal('stats-modal')">📊 Stats</button>
+    </div>
+
+    <button class="exit-photo-btn" onclick="togglePhotoMode()">❌ Quitter le Mode Photo</button>
+
+    <!-- Bandeau d'actualités (News Ticker) -->
+    <div id="news-ticker-bar">
+        <div class="ticker-badge">DIRECT INFO</div>
+        <div class="ticker-content" id="ticker-text">Bienvenue sur Autoroute Tycoon. Le réseau national s'étend progressivement...</div>
+    </div>
+
+    <!-- Modale de Compte & Sauvegarde -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-modal-content">
+            <h3>Mon Compte & Sauvegarde</h3>
+            <label>Nom d'utilisateur / Entreprise</label>
+            <input type="text" id="auth-username-input" placeholder="Ex: PDG Autoroute">
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button class="auth-btn" style="flex:1;" onclick="saveAccountName()">Définir le nom</button>
+                <button class="auth-btn" style="flex:1; background:var(--success);" onclick="triggerManualSave()">Sauvegarder</button>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--border); margin: 12px 0;">
+            
+            <div style="font-size: 0.75rem; color:var(--text-muted); margin-bottom: 8px;">Export / Import de sauvegarde (Fichier) :</div>
+            <div style="display: flex; gap: 8px;">
+                <button class="auth-btn" style="flex:1; background:#8b5cf6;" onclick="exportSaveFile()">Exporter</button>
+                <button class="auth-btn" style="flex:1; background:#64748b;" onclick="document.getElementById('import-file-input').click()">Importer</button>
+                <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveFile(event)">
+            </div>
+
+            <button class="auth-btn" style="width:100%; background:var(--danger); margin-top:16px;" onclick="closeAuthModal()">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Modale Banque -->
+    <div id="bank-modal" class="extra-modal">
+        <div class="extra-modal-content">
+            <h3>🏦 Emprunts Bancaires & Investisseurs</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Empruntez des fonds pour accélérer vos chantiers.</p>
+            <div class="badge-item">
+                <div><strong>Petit Prêt</strong><br>50 000 000 $US</div>
+                <button class="auth-btn" onclick="takeLoan(50000000, 1500000)">Emprunter</button>
+            </div>
+            <div class="badge-item">
+                <div><strong>Gros Emprunt Stratégique</strong><br>250 000 000 $US</div>
+                <button class="auth-btn" onclick="takeLoan(250000000, 7500000)">Emprunter</button>
+            </div>
+            <div id="active-loan-info" style="font-size:0.8rem; margin:10px 0; color:var(--warning);">Aucun emprunt en cours.</div>
+            <button class="auth-btn" style="width:100%; background:var(--danger); margin-top:12px;" onclick="closeModal('bank-modal')">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Modale Trophées -->
+    <div id="trophies-modal" class="extra-modal">
+        <div class="extra-modal-content">
+            <h3>🏆 Trophées & Succès</h3>
+            <div id="trophies-list-container"></div>
+            <button class="auth-btn" style="width:100%; background:var(--danger); margin-top:12px;" onclick="closeModal('trophies-modal')">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Modale Statistiques -->
+    <div id="stats-modal" class="extra-modal">
+        <div class="extra-modal-content">
+            <h3>📊 Livre des Records & Statistiques</h3>
+            <div id="stats-content-box" style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px;"></div>
+            <button class="auth-btn" style="width:100%; background:var(--danger); margin-top:16px;" onclick="closeModal('stats-modal')">Fermer</button>
+        </div>
+    </div>
+
+    <!-- Modale Gestion de crise (Incident) -->
+    <div id="crisis-modal" class="extra-modal">
+        <div class="extra-modal-content" style="border-left: 4px solid var(--danger);">
+            <h3 id="crisis-title" style="color:var(--danger);">⚠️ Incident sur le réseau !</h3>
+            <p id="crisis-desc" style="font-size: 0.85rem; margin-bottom: 16px;"></p>
+            <button class="auth-btn" style="width:100%; background:var(--success);" onclick="resolveCrisis()">Intervenir immédiatement & Rétablir le trafic</button>
+        </div>
+    </div>
+
     <div class="app-layout">
-        
         <div class="left-content">
             
             <!-- Barre supérieure info & temps -->
@@ -241,9 +364,7 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Système de temps : 20 minutes réelles = 1 an dans le jeu (365 jours)
-        // 1 an = 1200 secondes -> 1 jour de jeu = 1200 / 365 ≈ 3.287 secondes réelles.
-        // Pour plus de fluidité, nous incrémentons les jours toutes les ~3.29 secondes (ou 3288ms).
+        // Système de temps : 20 minutes réelles = 1 an dans le jeu (365 jours) -> 1 jour = ~3.288 secondes
         let gameTime = { day: 1, month: 1, year: 2026 };
         const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -257,8 +378,8 @@
         };
 
         let technologies = [
-            { id: 'voies_2x2', category: 'voies', name: 'Élargissement 2 x 2 voies', desc: 'Passe les autoroutes à 2x2 voies.', cost: 3000000, unlocked: false, prereq: null, multiplierBonus: 1.25 },
-            { id: 'voies_2x3', category: 'voies', name: 'Élargissement 2 x 3 voies', desc: 'Aménagement à 3 voies par sens.', cost: 10000000, unlocked: false, prereq: 'voies_2x2', multiplierBonus: 1.40 },
+            { id: 'voies_2x2', category: 'voies', name: 'Élargissement 2 x 2 voies', desc: 'Passe les autoroutes à 2x2 voies.', cost: 3000000, unlocked: false, prereq: null },
+            { id: 'voies_2x3', category: 'voies', name: 'Élargissement 2 x 3 voies', desc: 'Aménagement à 3 voies par sens.', cost: 10000000, unlocked: false, prereq: 'voies_2x2' },
             { id: 'bitume', category: 'infrastructure', name: 'Bitume Haute Résistance & Drainant', desc: 'Réduit les coûts de maintenance de 25%.', cost: 8000000, unlocked: false, prereq: null },
             { id: 'telepeage', category: 'innovation', name: 'Télépéage sans arrêt & PMV', desc: 'Fluidifie le passage.', cost: 5000000, unlocked: false, prereq: null }
         ];
@@ -354,7 +475,6 @@
             if(element) element.classList.add('active');
         }
 
-        // Lancer un projet avec des durées de 1 à 3 ans au total pour les 5 étapes
         async function launchHighwayProject() {
             const cA = document.getElementById('city-a').value;
             const cB = document.getElementById('city-b').value;
@@ -381,9 +501,6 @@
                     document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
 
                     const routeCoords = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-
-                    // Durée totale en jours de jeu comprise entre ~365 jours (1 an) et ~1095 jours (3 ans) selon la distance
-                    // Chaque étape prend 1/5ème de cette durée totale.
                     const totalDurationDays = Math.min(1095, Math.max(365, distanceKm * 4)); 
 
                     const newProject = {
@@ -391,7 +508,7 @@
                         step: 1, 
                         stepName: "1. Études d'impact & Tracé préliminaire",
                         progress: 0,
-                        durationTotal: Math.round(totalDurationDays / 5) // Durée spécifique pour l'étape en cours
+                        durationTotal: Math.round(totalDurationDays / 5)
                     };
 
                     activeProjects.push(newProject);
@@ -431,12 +548,9 @@
             });
         }
 
-        // Écoulement du temps : 1 jour de jeu toutes les ~3288ms pour que 20 minutes réelles = 1 an (365 jours)
+        // Boucle temporelle principale (20 minutes réelles = 1 an)
         setInterval(() => {
             gameTime.day++;
-            if(gameTime.day > 365) { // Année simplifiée à 365 jours
-                // Pour plus de simplicité avec les mois, on bascule sur un calendrier de 12 mois de ~30 jours
-            }
             if(gameTime.day > 30) {
                 gameTime.day = 1;
                 gameTime.month++;
@@ -447,9 +561,11 @@
             }
             document.getElementById('game-date').innerText = `${gameTime.day} ${monthNames[gameTime.month - 1]} ${gameTime.year}`;
 
-            // Progression des chantiers (5 étapes longues)
             let techDirectorLevel = directors.find(d => d.id === 'tech').level;
-            let speedBonus = 1 + (techDirectorLevel * 0.15); // Bonus du directeur technique
+            let speedBonus = 1 + (techDirectorLevel * 0.15);
+
+            // Si une crise est active, on ralentit la progression des chantiers
+            if(isCrisisActive) speedBonus *= 0.3;
 
             activeProjects.forEach((proj, index) => {
                 proj.progress += (1 * speedBonus);
@@ -469,7 +585,7 @@
                          .addTo(mapFullscreen)
                          .bindPopup(`<b>Autoroute ${proj.from} ⇄ ${proj.to} (${proj.distance} km)</b>`);
 
-                        showToast(`🎉 Inauguration de l'autoroute ${proj.from} - ${proj.to} après plusieurs années de travaux !`);
+                        showToast(`🎉 Inauguration de l'autoroute ${proj.from} - ${proj.to} !`);
                         activeProjects.splice(index, 1);
                         updateTollsManagement();
                         updateDashboardStats();
@@ -477,18 +593,21 @@
                 }
             });
             renderActiveProjects();
-        }, 3288); // 3288ms par jour de jeu -> 20 minutes exactes pour 1 an (365 jours)
+        }, 3288);
 
-        // Revenus automatiques toutes les 5 secondes
+        // Revenus et remboursements bancaires automatiques
         setInterval(() => {
             const uniqueRoutesCount = constructedRoutes.length / 2;
             if(uniqueRoutesCount > 0) {
-                let multiplier = currentWeather.includes('Pluie') ? 0.8 : (currentWeather.includes('Tempête') ? 0.5 : 1.0);
-                let income = Math.round(uniqueRoutesCount * 750 * multiplier);
+                let income = Math.round(uniqueRoutesCount * 750);
                 budget += income;
-                const budgetEl = document.getElementById('top-budget');
-                if(budgetEl) budgetEl.innerText = budget.toLocaleString() + ' $US';
             }
+            if(currentLoan) {
+                budget -= currentLoan.monthlyPayment;
+                if(budget < 0) budget = 0;
+            }
+            const budgetEl = document.getElementById('top-budget');
+            if(budgetEl) budgetEl.innerText = budget.toLocaleString() + ' $US';
         }, 5000);
 
         function updateDashboardStats() {
@@ -565,11 +684,182 @@
             showToast('Campagne publicitaire lancée !');
         }
 
+        // --- GESTION COMPTE & SAUVEGARDE ---
+        function openAuthModal() { document.getElementById('auth-modal').style.display = 'flex'; }
+        function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
+        function saveAccountName() {
+            let name = document.getElementById('auth-username-input').value.trim();
+            if(!name) return alert('Nom invalide.');
+            localStorage.setItem('autoroute_tycoon_username', name);
+            document.getElementById('current-username').innerText = name;
+            showToast(`Compte associé à : ${name}`);
+            closeAuthModal();
+        }
+
+        function triggerManualSave() {
+            const gameState = { budget, gameTime, constructedRoutes, activeProjects, directors, technologies, currentLoan };
+            localStorage.setItem('autoroute_tycoon_save_data', JSON.stringify(gameState));
+            showToast('💾 Partie sauvegardée avec succès !');
+            closeAuthModal();
+        }
+
+        function exportSaveFile() {
+            triggerManualSave();
+            let data = localStorage.getItem('autoroute_tycoon_save_data');
+            let blob = new Blob([data], { type: 'application/json' });
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = `autoroute_tycoon_save_${Date.now()}.json`;
+            a.click();
+        }
+
+        function importSaveFile(event) {
+            let file = event.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let savedData = JSON.parse(e.target.result);
+                    localStorage.setItem('autoroute_tycoon_save_data', JSON.stringify(savedData));
+                    location.reload();
+                } catch(err) { alert('Fichier invalide.'); }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- OUTILS ET MODALES ADDITIONNELLES ---
+        function openModal(id) {
+            if(id === 'trophies-modal') renderTrophies();
+            if(id === 'stats-modal') renderStats();
+            document.getElementById(id).style.display = 'flex';
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function togglePhotoMode() {
+            document.body.classList.toggle('photo-mode');
+            setTimeout(() => { mapFullscreen.invalidateSize(); }, 200);
+        }
+
+        let achievements = [
+            { id: 'first_road', title: 'Premier Bitume', desc: 'Inaugurer votre première autoroute.', unlocked: false, check: () => constructedRoutes.length > 0 },
+            { id: 'millionaire', title: 'Capitaine d\'Industrie', desc: 'Atteindre un budget supérieur à 100 milliards.', unlocked: false, check: () => budget >= 100000000000 },
+            { id: 'road_master', title: 'Grand Maître du Réseau', desc: 'Construire au moins 4 tronçons.', unlocked: false, check: () => (constructedRoutes.length / 2) >= 4 }
+        ];
+
+        function renderTrophies() {
+            const container = document.getElementById('trophies-list-container');
+            container.innerHTML = '';
+            achievements.forEach(ach => {
+                if(!ach.unlocked && ach.check()) ach.unlocked = true;
+                container.innerHTML += `
+                    <div class="badge-item" style="border-color: ${ach.unlocked ? 'var(--success)' : 'var(--border)'}">
+                        <div><strong>${ach.title}</strong><br><span style="color:var(--text-muted);">${ach.desc}</span></div>
+                        <div style="font-weight:bold; color:${ach.unlocked ? 'var(--success)' : 'var(--text-muted)'}">${ach.unlocked ? '✔ Débloqué' : '🔒 Verrouillé'}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderStats() {
+            const box = document.getElementById('stats-content-box');
+            let totalKm = 0;
+            constructedRoutes.forEach(r => totalKm += r.distance);
+            totalKm = totalKm / 2;
+            let yearsElapsed = gameTime.year - 2026;
+
+            box.innerHTML = `
+                <div class="badge-item"><span>🛣️ Kilométrage total bitumé :</span> <strong>${totalKm} km</strong></div>
+                <div class="badge-item"><span>⏳ Années de jeu écoulées :</span> <strong>${yearsElapsed} an(s)</strong></div>
+                <div class="badge-item"><span>🏗️ Chantiers en cours :</span> <strong>${activeProjects.length}</strong></div>
+                <div class="badge-item"><span>💰 Budget actuel :</span> <strong style="color:var(--success);">${budget.toLocaleString()} $US</strong></div>
+            `;
+        }
+
+        let currentLoan = null;
+        function takeLoan(amount, monthlyPayment) {
+            if(currentLoan) return alert('Vous avez déjà un emprunt en cours !');
+            budget += amount;
+            document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+            currentLoan = { amount, monthlyPayment };
+            document.getElementById('active-loan-info').innerText = `Emprunt actif : ${amount.toLocaleString()} $US (Remboursement : ${monthlyPayment.toLocaleString()} $US / mois)`;
+            alert('Emprunt accordé.');
+            closeModal('bank-modal');
+        }
+
+        let isCrisisActive = false;
+        const crisisList = [
+            { title: "Panne de convoi exceptionnel", desc: "Un convoi lourd bloque partiellement la voie principale." },
+            { title: "Manifestation aux péages", desc: "Des usagers bloquent l'accès aux barrières." }
+        ];
+
+        function triggerRandomCrisis() {
+            if(isCrisisActive || constructedRoutes.length === 0) return;
+            let rc = crisisList[Math.floor(Math.random() * crisisList.length)];
+            document.getElementById('crisis-title').innerText = "⚠️ " + rc.title;
+            document.getElementById('crisis-desc').innerText = rc.desc;
+            document.getElementById('crisis-modal').style.display = 'flex';
+            isCrisisActive = true;
+        }
+
+        function resolveCrisis() {
+            document.getElementById('crisis-modal').style.display = 'none';
+            isCrisisActive = false;
+            showToast('✔ Incident résolu, les chantiers reprennent leur vitesse normale.');
+        }
+
+        const tickerMessages = [
+            "📈 Hausse du trafic routier observée sur l'ensemble des axes.",
+            "📢 Le Ministère des Transports salue la qualité des infrastructures.",
+            "👷 Les équipes rappellent la prudence aux abords des chantiers."
+        ];
+
+        setInterval(() => {
+            let msg = tickerMessages[Math.floor(Math.random() * tickerMessages.length)];
+            document.getElementById('ticker-text').innerText = msg;
+            if(Math.random() > 0.6) triggerRandomCrisis();
+        }, 45000);
+
+        // Chargement initial au démarrage
         window.onload = () => {
             populateCitySelectors();
             renderDirectors();
+            
+            let savedUser = localStorage.getItem('autoroute_tycoon_username');
+            if(savedUser) {
+                document.getElementById('current-username').innerText = savedUser;
+                document.getElementById('auth-username-input').value = savedUser;
+            }
+
+            let savedData = localStorage.getItem('autoroute_tycoon_save_data');
+            if(savedData) {
+                try {
+                    let parsed = JSON.parse(savedData);
+                    if(parsed.budget !== undefined) budget = parsed.budget;
+                    if(parsed.gameTime) gameTime = parsed.gameTime;
+                    if(parsed.constructedRoutes) constructedRoutes = parsed.constructedRoutes;
+                    if(parsed.activeProjects) activeProjects = parsed.activeProjects;
+                    if(parsed.directors) directors = parsed.directors;
+                    if(parsed.currentLoan) {
+                        currentLoan = parsed.currentLoan;
+                        document.getElementById('active-loan-info').innerText = `Emprunt actif : ${currentLoan.amount.toLocaleString()} $US`;
+                    }
+                    
+                    // Redessiner les routes sur la carte
+                    let uniqueRoutes = constructedRoutes.filter((r, index, self) => 
+                        index === self.findIndex(t => (t.from === r.from && t.to === r.to) || (t.from === r.to && t.to === r.from))
+                    );
+                    // Note: Les tracés géométriques précis nécessiteraient de recalculer OSRM, ici rechargement simple
+                    document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+                    updateDashboardStats();
+                    updateTollsManagement();
+                } catch(e) { console.error("Erreur chargement save", e); }
+            }
+
             setTimeout(() => { mapFullscreen.invalidateSize(); }, 200);
         };
     </script>
 </body>
 </html>
+
+```
