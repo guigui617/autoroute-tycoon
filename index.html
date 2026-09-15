@@ -179,11 +179,9 @@
 
                 <!-- SOUS-ONGLET : ORGANIGRAMME -->
                 <div id="siege-sub-organigramme" class="siege-subview active">
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez et achetez les niveaux de vos directeurs. Plus le niveau monte, plus le salaire augmente.</p>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez et achetez les niveaux de vos directeurs. Plus le niveau monte, plus le salaire augmente (départ à 10 000 $US).</p>
                     
-                    <div id="directors-list-container">
-                        <!-- Généré dynamiquement par script -->
-                    </div>
+                    <div id="directors-list-container"></div>
                 </div>
 
                 <!-- SOUS-ONGLET : RH -->
@@ -235,7 +233,6 @@
             { id: 'bornes_ev', name: 'Bornes Électriques Ultra-rapides', desc: 'Améliore les revenus des aires de repos de 30%.', cost: 12000000, unlocked: false }
         ];
 
-        // Directeurs : salaire de base à 10 000 $US qui augmente par niveau, avec coût d'achat/amélioration
         let directors = [
             { id: 'rh', name: 'Directeur des Ressources Humaines', desc: 'Recrute automatiquement les équipes et supervise les directeurs de ligne.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
             { id: 'tech', name: 'Directeur Technique', desc: 'Programme de R&D : carburant, maintenance, accès anticipé.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
@@ -248,6 +245,7 @@
         let weatherConditions = ['Grand Soleil', 'Pluie fine', 'Temps couvert'];
         let currentWeather = 'Grand Soleil';
 
+        // Initialisation propre de la carte Leaflet
         const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
         
@@ -265,6 +263,7 @@
 
         function showToast(message) {
             const container = document.getElementById('toast-container');
+            if(!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerText = message;
@@ -288,21 +287,28 @@
 
         function switchTab(tabName, element) {
             document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${tabName}`).classList.add('active');
+            const targetView = document.getElementById(`view-${tabName}`);
+            if(targetView) targetView.classList.add('active');
+            
             document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
+            
+            // Correction affichage carte lors du changement d'onglet
             setTimeout(() => { mapFullscreen.invalidateSize(); }, 150);
         }
 
         function switchSiegeTab(subName, element) {
             document.querySelectorAll('.siege-subview').forEach(el => el.classList.remove('active'));
-            document.getElementById(`siege-sub-${subName}`).classList.add('active');
+            const targetSub = document.getElementById(`siege-sub-${subName}`);
+            if(targetSub) targetSub.classList.add('active');
+            
             document.querySelectorAll('.sub-tab-btn').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
+            if(element) element.classList.add('active');
         }
 
         function renderDirectors() {
             const container = document.getElementById('directors-list-container');
+            if(!container) return;
             container.innerHTML = '';
             directors.forEach(dir => {
                 let currentSalary = dir.level === 0 ? 0 : dir.baseSalary * Math.pow(1.8, dir.level - 1);
@@ -337,14 +343,15 @@
             const coordsA = frenchCities[cA];
             const coordsB = frenchCities[cB];
 
-            document.getElementById('loading-route').style.display = 'block';
+            const loadingEl = document.getElementById('loading-route');
+            if(loadingEl) loadingEl.style.display = 'block';
 
             try {
                 const url = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=full&geometries=geojson`;
                 const response = await fetch(url);
                 const data = await response.json();
 
-                document.getElementById('loading-route').style.display = 'none';
+                if(loadingEl) loadingEl.style.display = 'none';
 
                 if(data.routes && data.routes.length > 0) {
                     budget -= 12500000;
@@ -366,13 +373,14 @@
                     alert('Erreur lors du calcul du tracé routier.');
                 }
             } catch (error) {
-                document.getElementById('loading-route').style.display = 'none';
+                if(loadingEl) loadingEl.style.display = 'none';
                 alert('Impossible de joindre le service de routage.');
             }
         }
 
         function updateTollsManagement() {
             const container = document.getElementById('tolls-management-list');
+            if(!container) return;
             container.innerHTML = '';
             
             const uniqueRoutes = constructedRoutes.filter((r, index, self) => 
@@ -409,6 +417,7 @@
 
         function updateAiresDisplay() {
             const container = document.getElementById('aires-list-container');
+            if(!container) return;
             container.innerHTML = '';
 
             activeMarkers.forEach(m => mapFullscreen.removeLayer(m));
@@ -462,6 +471,7 @@
 
         function renderTechTree() {
             const container = document.getElementById('tech-tree-container');
+            if(!container) return;
             container.innerHTML = '';
             technologies.forEach(tech => {
                 container.innerHTML += `
@@ -497,25 +507,30 @@
 
         function updateDashboardStats() {
             const uniqueRoutesCount = constructedRoutes.length / 2;
-            document.getElementById('stat-routes-count').innerText = uniqueRoutesCount;
+            const routesCountEl = document.getElementById('stat-routes-count');
+            const revenueRateEl = document.getElementById('stat-revenue-rate');
+            if(routesCountEl) routesCountEl.innerText = uniqueRoutesCount;
             const revenueRate = uniqueRoutesCount * 45000;
-            document.getElementById('stat-revenue-rate').innerText = `+${revenueRate.toLocaleString()} $US / min`;
+            if(revenueRateEl) revenueRateEl.innerText = `+${revenueRate.toLocaleString()} $US / min`;
         }
 
         setInterval(() => {
             const uniqueRoutesCount = constructedRoutes.length / 2;
             if(uniqueRoutesCount > 0) {
                 let multiplier = currentWeather === 'Pluie fine' ? 0.8 : 1.0;
-                let techBonus = technologies.find(t => t.id === 'telepeage'] && technologies.find(t => t.id === 'telepeage').unlocked ? 1.15 : 1.0;
+                let telepeageTech = technologies.find(t => t.id === 'telepeage');
+                let techBonus = (telepeageTech && telepeageTech.unlocked) ? 1.15 : 1.0;
                 let income = Math.round(uniqueRoutesCount * 750 * multiplier * techBonus);
                 budget += income;
-                document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+                const budgetEl = document.getElementById('top-budget');
+                if(budgetEl) budgetEl.innerText = budget.toLocaleString() + ' $US';
             }
         }, 5000);
 
         setInterval(() => {
             currentWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
-            document.getElementById('weather-status').innerText = currentWeather;
+            const weatherEl = document.getElementById('weather-status');
+            if(weatherEl) weatherEl.innerText = currentWeather;
             showToast(`Bulletin météo : ${currentWeather}`);
         }, 45000);
 
@@ -523,6 +538,7 @@
             populateCitySelectors();
             renderTechTree();
             renderDirectors();
+            setTimeout(() => { mapFullscreen.invalidateSize(); }, 200);
         };
     </script>
 </body>
