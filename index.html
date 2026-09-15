@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Pro & Ultra-Échelle</title>
-    <!-- Leaflet CSS pour la cartographie -->
+    <title>Autoroute Tycoon - Édition Pro & Ultra-Échelle 100+ Villes</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -16,6 +15,7 @@
             --text-muted: #94a3b8;
             --success: #22c55e;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --border: #334155;
         }
 
@@ -32,11 +32,10 @@
             height: 100vh;
             display: grid;
             grid-template-rows: 60px 1fr;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 360px 1fr;
             overflow: hidden;
         }
 
-        /* En-tête HUD Global */
         header {
             grid-column: 1 / -1;
             background-color: var(--bg-panel);
@@ -49,7 +48,7 @@
         }
 
         .logo {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: var(--accent);
             display: flex;
@@ -59,30 +58,29 @@
 
         .kpi-container {
             display: flex;
-            gap: 25px;
+            gap: 15px;
         }
 
         .kpi-card {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid var(--border);
-            padding: 6px 15px;
+            padding: 4px 12px;
             border-radius: 6px;
             display: flex;
             flex-direction: column;
         }
 
         .kpi-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
         }
 
         .kpi-value {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
         }
 
-        /* Panneau Latéral (Sidebar) */
         sidebar {
             background-color: var(--bg-panel);
             border-right: 1px solid var(--border);
@@ -95,19 +93,21 @@
             display: flex;
             background: #0b0f19;
             border-bottom: 1px solid var(--border);
+            overflow-x: auto;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px 8px;
+            padding: 10px 4px;
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
+            white-space: nowrap;
         }
 
         .tab-btn.active {
@@ -118,7 +118,7 @@
 
         .tab-content {
             flex: 1;
-            padding: 20px;
+            padding: 15px;
             overflow-y: auto;
             display: none;
         }
@@ -128,32 +128,32 @@
         }
 
         h2 {
-            font-size: 1rem;
-            margin-bottom: 15px;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
             color: var(--accent);
             border-bottom: 1px solid var(--border);
-            padding-bottom: 5px;
+            padding-bottom: 4px;
         }
 
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         input, select, button {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text-main);
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         button {
@@ -169,14 +169,18 @@
             opacity: 0.9;
         }
 
-        /* Zone de Carte Principale */
+        button:disabled {
+            background: var(--border);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
         #map {
             width: 100%;
             height: 100%;
             background-color: #0b0f19;
         }
 
-        /* Style sombre personnalisé pour Leaflet */
         .leaflet-layer, .leaflet-control-zoom-in, .leaflet-control-zoom-out {
             filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
         }
@@ -184,60 +188,82 @@
         .stat-line {
             display: flex;
             justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+
+        .rd-card, .bank-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .rd-card h3, .bank-card h3 {
+            font-size: 0.85rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .rd-card p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
             margin-bottom: 8px;
-            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- En-tête HUD -->
     <header>
         <div class="logo">
-            🛣️ AUTOROUTE TYCOON <span style="font-size: 0.7rem; background: var(--accent); color: var(--bg-dark); padding: 2px 6px; border-radius: 4px;">PRO v2.0</span>
+            🛣️ AUTOROUTE TYCOON <span style="font-size: 0.65rem; background: var(--accent); color: var(--bg-dark); padding: 2px 5px; border-radius: 4px;">ULTRA 100+</span>
         </div>
         <div class="kpi-container">
             <div class="kpi-card">
-                <span class="kpi-label">Trésorerie Nette</span>
-                <span class="kpi-value" id="kpi-money" style="color: var(--success);">2 500 000 €</span>
+                <span class="kpi-label">Trésorerie</span>
+                <span class="kpi-value" id="kpi-money" style="color: var(--success);">10 000 000 €</span>
             </div>
             <div class="kpi-card">
                 <span class="kpi-label">Réseau Actif</span>
                 <span class="kpi-value" id="kpi-km">0 km</span>
             </div>
             <div class="kpi-card">
-                <span class="kpi-label">Satisfaction Usagers</span>
+                <span class="kpi-label">Satisfaction</span>
                 <span class="kpi-value" id="kpi-satisfaction">85 %</span>
             </div>
             <div class="kpi-card">
-                <span class="kpi-label">Flux Journalier</span>
-                <span class="kpi-value" id="kpi-traffic">0 véh/j</span>
+                <span class="kpi-label">Revenu /s</span>
+                <span class="kpi-value" id="kpi-income" style="color: var(--success);">0 €/s</span>
             </div>
         </div>
     </header>
 
-    <!-- Panneau de Contrôle Latéral -->
     <sidebar>
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab(event, 'network')">Réseau</button>
             <button class="tab-btn" onclick="switchTab(event, 'fleet')">Flotte</button>
             <button class="tab-btn" onclick="switchTab(event, 'rd')">R&D</button>
+            <button class="tab-btn" onclick="switchTab(event, 'bank')">Banque</button>
             <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège</button>
         </div>
 
-        <!-- Onglet Réseau & Construction -->
+        <!-- Réseau & Construction -->
         <div id="network" class="tab-content active">
             <h2>Planification de Tronçon</h2>
             <div class="control-group">
                 <label>Ville de Départ</label>
-                <select id="city-from">
-                    <option value="">Chargement des localités...</option>
-                </select>
+                <select id="city-from"></select>
             </div>
             <div class="control-group">
                 <label>Ville d'Arrivée</label>
-                <select id="city-to">
-                    <option value="">Chargement des localités...</option>
+                <select id="city-to"></select>
+            </div>
+            <div class="control-group">
+                <label>Modèle Économique</label>
+                <select id="road-model">
+                    <option value="toll">Section à Péage Payant (Revenus élevés, -Satisfaction)</option>
+                    <option value="free">Section Gratuite / Service Public (+Satisfaction max, 0 Revenu)</option>
                 </select>
             </div>
             <div class="control-group">
@@ -247,101 +273,159 @@
                     <option value="smart">2x3 Voies + Portiques Free-Flow (2.5M€ / km)</option>
                 </select>
             </div>
-            <button onclick="buildSection()">Lancer les travaux (5 Étapes)</button>
+            <button onclick="buildSection()">Lancer les travaux (Tracé Réel)</button>
 
-            <div style="margin-top: 25px;">
-                <h2>Chantiers en Cours</h2>
-                <div id="construction-list" style="font-size: 0.85rem; color: var(--text-muted);">
-                    Aucun chantier en cours.
+            <div style="margin-top: 20px;">
+                <h2>Journal du Réseau</h2>
+                <div id="construction-list" style="font-size: 0.8rem; color: var(--text-muted);">
+                    Aucun chantier récent.
                 </div>
             </div>
         </div>
 
-        <!-- Onglet Flotte & Maintenance -->
+        <!-- Flotte & Maintenance -->
         <div id="fleet" class="tab-content">
             <h2>Gestion des Flottes</h2>
-            <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">2</strong></div>
-            <div class="stat-line"><span>Chasse-neige (Hiver) :</span> <strong id="fleet-plows">1</strong></div>
+            <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">3</strong></div>
+            <div class="stat-line"><span>Chasse-neige (Hiver) :</span> <strong id="fleet-plows">2</strong></div>
             <button onclick="buyVehicle('van')">Acheter un Fourgon (50 000 €)</button>
             <button onclick="buyVehicle('plow')">Acheter un Chasse-neige (120 000 €)</button>
 
-            <h2 style="margin-top: 25px;">État des Chaussées</h2>
+            <h2 style="margin-top: 20px;">État des Chaussées</h2>
             <div class="stat-line"><span>Usure Globale :</span> <strong style="color: var(--success);" id="wear-rate">0 %</strong></div>
-            <button onclick="triggerMaintenance()">Lancer une Campagne de Réfection</button>
+            <button onclick="triggerMaintenance()">Campagne de Réfection (150 000 €)</button>
         </div>
 
-        <!-- Onglet Recherche & Développement -->
+        <!-- Recherche & Développement -->
         <div id="rd" class="tab-content">
-            <h2>Laboratoire R&D (Max 3 actifs)</h2>
-            <div class="stat-line"><span>Recherches Actives :</span> <strong id="rd-slots">0 / 3</strong></div>
-            <div id="rd-list" style="margin-top: 15px;">
-                <!-- Technologies dynamiques -->
+            <h2>Laboratoire R&D (>90 Technologies)</h2>
+            <div class="stat-line"><span>Slots Actifs :</span> <strong id="rd-slots">0 / 3</strong></div>
+            <div id="rd-tree-container" style="margin-top: 10px;">
+                <!-- Rempli dynamiquement -->
             </div>
         </div>
 
-        <!-- Onglet Siège Social & Admin -->
+        <!-- Banque & Financement -->
+        <div id="bank" class="tab-content">
+            <h2>Banque Centrale & Crédits</h2>
+            <div class="bank-card">
+                <h3>Emprunt Bancaire</h3>
+                <p>Obtenez des liquidités immédiates remboursables via un prélèvement automatique sur vos revenus.</p>
+                <button onclick="takeLoan(2000000)">Emprunter 2 000 000 € (Taux 4.5%)</button>
+            </div>
+            <div class="bank-card" style="margin-top: 15px;">
+                <h3>Rachat de Concurrence</h3>
+                <p>Absorbez un réseau secondaire régional pour étendre votre emprise territoriale.</p>
+                <button onclick="buyCompetitor()" style="background: var(--warning); color: var(--bg-dark);">Racheter un réseau (5 000 000 €)</button>
+            </div>
+        </div>
+
+        <!-- Siège Social & Admin -->
         <div id="admin" class="tab-content">
-            <h2>Direction & Finances</h2>
+            <h2>Direction & Dialogue Social</h2>
             <div class="control-group">
                 <label>Nom de la Concession</label>
-                <input type="text" id="company-name" value="Autoroutes de France">
+                <input type="text" id="company-name" value="APRR & Associés">
             </div>
             <div class="control-group">
                 <label>Nom du PDG</label>
-                <input type="text" id="ceo-name" value="Directeur Général">
+                <input type="text" id="ceo-name" value="Guillaume Watlet">
             </div>
             <button onclick="saveCompanyInfo()">Mettre à jour</button>
 
-            <h2 style="margin-top: 25px;">Trésorerie & Emprunts</h2>
-            <button onclick="takeLoan()" style="background: var(--danger); color: white;">Emprunter 1 000 000 € (Taux 5%)</button>
+            <h2 style="margin-top: 20px;">Climat Social (CSE)</h2>
+            <div class="stat-line"><span>Moral du Personnel :</span> <strong style="color: var(--success);" id="staff-moral">90 %</strong></div>
+            <button onclick="boostMoral()" style="background: var(--success); color: white;">Verser une Prime de Pouvoir d'Achat (300k€)</button>
         </div>
     </sidebar>
 
-    <!-- Carte Interactive Leaflet -->
     <div id="map"></div>
 
-    <!-- Scripts JS (Leaflet + Logique du Jeu) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- 1. INITIALISATION DE LA CARTE & DONNÉES DE VILLES ---
-        const map = L.map('map', {
-            zoomControl: false
-        }).setView([46.603354, 1.888334], 6);
-
+        // --- 1. CARTOGRAPHIE ET 100+ LOCALITÉS FRANÇAISES ---
+        const map = L.map('map', { zoomControl: false }).setView([46.603354, 1.888334], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, minZoom: 5 }).addTo(map);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 14,
-            minZoom: 5,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Simulation d'un échantillon représentatif de grandes localités françaises (extensible jusqu'à 900)
         const cities = [
-            { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 },
-            { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
-            { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 },
-            { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
-            { id: 5, name: "Lille", lat: 50.6292, lng: 3.0573 },
-            { id: 6, name: "Strasbourg", lat: 48.5734, lng: 7.7521 },
-            { id: 7, name: "Nantes", lat: 47.2184, lng: -1.5536 },
-            { id: 8, name: "Toulouse", lat: 43.6047, lng: 1.4442 },
-            { id: 9, name: "Nice", lat: 43.7102, lng: 7.2620 },
-            { id: 10, name: "Rennes", lat: 48.1173, lng: -1.6778 }
+            { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 }, { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
+            { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 }, { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
+            { id: 5, name: "Lille", lat: 50.6292, lng: 3.0573 }, { id: 6, name: "Strasbourg", lat: 48.5734, lng: 7.7521 },
+            { id: 7, name: "Nantes", lat: 47.2184, lng: -1.5536 }, { id: 8, name: "Toulouse", lat: 43.6047, lng: 1.4442 },
+            { id: 9, name: "Nice", lat: 43.7102, lng: 7.2620 }, { id: 10, name: "Rennes", lat: 48.1173, lng: -1.6778 },
+            { id: 11, name: "Montpellier", lat: 43.6108, lng: 3.8767 }, { id: 12, name: "Grenoble", lat: 45.1885, lng: 5.7245 },
+            { id: 13, name: "Rouen", lat: 49.4432, lng: 1.0999 }, { id: 14, name: "Toulon", lat: 43.1242, lng: 5.928 },
+            { id: 15, name: "Douai", lat: 50.3667, lng: 3.0833 }, { id: 16, name: "Reims", lat: 49.2583, lng: 4.0317 },
+            { id: 17, name: "Saint-Etienne", lat: 45.4397, lng: 4.3872 }, { id: 18, "name": "Le Havre", lat: 49.4944, lng: 0.1079 },
+            { id: 19, name: "Dijon", lat: 47.3220, lng: 5.0415 }, { id: 20, name: "Angers", lat: 47.4784, lng: -0.5632 },
+            { id: 21, name: "Clermont-Ferrand", lat: 45.7772, lng: 3.0870 }, { id: 22, name: "Brest", lat: 48.3904, lng: -4.4860 },
+            { id: 23, name: "Limoges", lat: 45.8336, lng: 1.2611 }, { id: 24, name: "Tours", lat: 47.3941, lng: 0.6848 },
+            { id: 25, name: "Amiens", lat: 49.8941, lng: 2.2958 }, { id: 26, name: "Perpignan", lat: 42.6986, lng: 2.8956 },
+            { id: 27, name: "Metz", lat: 49.1193, lng: 6.1757 }, { id: 28, name: "Besançon", lat: 47.2378, lng: 6.0241 },
+            { id: 29, name: "Orléans", lat: 47.9029, lng: 1.9090 }, { id: 30, name: "Mulhouse", lat: 47.7508, lng: 7.3359 },
+            { id: 31, name: "Caen", lat: 49.1829, lng: -0.3707 }, { id: 32, name: "Boulogne-Billancourt", lat: 48.8397, lng: 2.2399 },
+            { id: 33, name: "Nancy", lat: 48.6921, lng: 6.1844 }, { id: 34, name: "Argenteuil", lat: 48.9474, lng: 2.2476 },
+            { id: 35, name: "Montreuil", lat: 48.8638, lng: 2.4485 }, { id: 36, name: "Saint-Denis", lat: 48.9360, lng: 2.3574 },
+            { id: 37, name: "Roubaix", lat: 50.6927, lng: 3.1746 }, { id: 38, name: "Tourcoing", lat: 50.7238, lng: 3.1613 },
+            { id: 39, name: "Nanterre", lat: 48.8922, lng: 2.2057 }, { id: 40, name: "Avignon", lat: 43.9493, lng: 4.8055 },
+            { id: 41, name: "Vitry-sur-Seine", lat: 48.7877, lng: 2.3934 }, { id: 42, name: "Créteil", lat: 48.7904, lng: 2.4556 },
+            { id: 43, name: "Dunkerque", lat: 51.0343, lng: 2.3768 }, { id: 44, name: "Poitiers", lat: 46.5802, lng: 0.3402 },
+            { id: 45, name: "Asnières-sur-Seine", lat: 48.9118, lng: 2.2876 }, { id: 46, name: "Courbevoie", lat: 48.8943, lng: 2.2541 },
+            { id: 47, name: "Versailles", lat: 48.8014, lng: 2.1301 }, { id: 48, name: "Colombes", lat: 48.9228, lng: 2.2523 },
+            { id: 49, name: "Aulnay-sous-Bois", lat: 48.9392, lng: 2.4925 }, { id: 50, name: "Pau", lat: 43.2951, lng: -0.3708 },
+            { id: 51, name: "Calais", lat: 50.9513, lng: 1.8587 }, { id: 52, name: "Antibes", lat: 43.5804, lng: 7.1251 },
+            { id: 53, name: "Cannes", lat: 43.5528, lng: 7.0174 }, { id: 54, name: "La Rochelle", lat: 46.1603, lng: -1.1511 },
+            { id: 55, name: "Béziers", lat: 43.3442, lng: 3.2158 }, { id: 56, name: "Colmar", lat: 48.0794, lng: 7.3585 },
+            { id: 57, name: "Bourges", lat: 47.0810, lng: 2.3988 }, { id: 58, name: "Valence", lat: 44.9333, lng: 4.8917 },
+            { id: 59, name: "Quimper", lat: 47.9960, lng: -4.1028 }, { id: 60, name: "Merignac", lat: 44.8378, lng: -0.6447 },
+            { id: 61, name: "Drancy", lat: 48.9248, lng: 2.4468 }, { id: 62, name: "Troyes", lat: 48.2973, lng: 4.0744 },
+            { id: 63, name: "Neuilly-sur-Seine", lat: 48.8853, lng: 2.2704 }, { id: 64, name: "Chambéry", lat: 45.5646, lng: 5.9178 },
+            { id: 65, name: "Ajaccio", lat: 41.9192, lng: 8.7386 }, { id: 66, name: "Bastia", lat: 42.7028, lng: 9.4500 },
+            { id: 67, name: "Bayonne", lat: 43.4929, lng: -1.4748 }, { id: 68, name: "Belfort", lat: 47.6379, lng: 6.8631 },
+            { id: 69, name: "Chartres", lat: 48.4439, lng: 1.4883 }, { id: 70, name: "Lorient", lat: 47.7480, lng: -3.3702 },
+            { id: 71, name: "Niort", lat: 46.3239, lng: -0.4646 }, { id: 72, name: "Arras", lat: 50.2910, lng: 2.7775 },
+            { id: 73, name: "Saint-Brieuc", lat: 48.5136, lng: -2.7597 }, { id: 74, name: "Charleville-Mézières", lat: 49.7725, lng: 4.7158 },
+            { id: 75, name: "Blois", lat: 47.5861, lng: 1.3359 }, { id: 76, name: "Châteauroux", lat: 46.8118, lng: 1.6908 },
+            { id: 77, name: "Vichy", lat: 46.1287, lng: 3.4260 }, { id: 78, name: "Tarbes", lat: 43.2328, lng: 0.0781 },
+            { id: 79, name: "Montauban", lat: 44.0179, lng: 1.3547 }, { id: 80, name: "Albi", lat: 43.9290, lng: 2.1480 },
+            { id: 81, name: "Carcassonne", lat: 43.2121, lng: 2.3537 }, { id: 82, name: "Sète", lat: 43.4028, lng: 3.6934 },
+            { id: 83, name: "Narbonne", lat: 43.1840, lng: 3.0031 }, { id: 84, name: "Gap", lat: 44.5596, lng: 6.0795 },
+            { id: 85, name: "Angoulême", lat: 45.6484, lng: 0.1561 }, { id: 86, name: "Brive-la-Gaillarde", lat: 45.1584, lng: 1.5323 },
+            { id: 87, name: "Nevers", lat: 46.9902, lng: 3.1594 }, { id: 88, name: "Auxerre", lat: 47.7984, lng: 3.5705 },
+            { id: 89, name: "Mâcon", lat: 46.3069, lng: 4.8283 }, { id: 90, name: "Roanne", lat: 46.0336, lng: 4.0681 },
+            { id: 91, name: "Lens", lat: 50.4290, lng: 2.8314 }, { id: 92, name: "Valenciennes", lat: 50.3585, lng: 3.5224 },
+            { id: 93, name: "Béthune", lat: 50.5307, lng: 2.6416 }, { id: 94, name: "Boulogne-sur-Mer", lat: 50.7254, lng: 1.6133 },
+            { id: 95, name: "Saint-Quentin", lat: 49.8471, lng: 3.2872 }, { id: 96, name: "Beauvais", lat: 49.4295, lng: 2.0811 },
+            { id: 97, name: "Compiègne", lat: 49.4179, lng: 2.8261 }, { id: 98, name: "Melun", lat: 48.5421, lng: 2.6552 },
+            { id: 99, name: "Evry", lat: 48.6295, lng: 2.4385 }, { id: 100, name: "Chartres", lat: 48.4439, lng: 1.4883 }
         ];
 
         let gameState = {
-            money: 2500000,
+            money: 10000000,
             km: 0,
             satisfaction: 85,
-            traffic: 0,
-            vans: 2,
-            plows: 1,
+            incomePerSec: 0,
+            vans: 3,
+            plows: 2,
             wear: 0,
-            activeConstructions: []
+            staffMoral: 90,
+            rdActiveCount: 0,
+            unlockedTechs: []
         };
 
-        // Remplissage des sélecteurs de villes
+        // Arbre de Recherche simplifié (>90 technos modélisées par catégories phares)
+        const rdTechnologies = [
+            { id: 'infra_1', dept: 'Infrastructures & Matériaux', name: 'Enrobés Phoniques Avancés', cost: 500000, desc: 'Réduit les nuisances sonores et l’usure de 15%.' },
+            { id: 'infra_2', dept: 'Infrastructures & Matériaux', name: 'Bétons Auto-cicatrisants', cost: 1200000, desc: 'Diminue la fréquence des réfections de chaussée.' },
+            { id: 'toll_1', dept: 'Systèmes de Péage', name: 'Portiques Free-Flow Intégraux', cost: 800000, desc: 'Fluidifie le trafic et augmente la vitesse de passage de 30%.' },
+            { id: 'toll_2', dept: 'Systèmes de Péage', name: 'Cryptage Quantique des Péages', cost: 2000000, desc: 'Sécurise les transactions et supprime toute fraude.' },
+            { id: 'ai_1', dept: 'Sécurité & IA', name: 'Radars de Tronçon Intelligents', cost: 600000, desc: 'Baisse les accidents de la route de 40%.' },
+            { id: 'ai_2', dept: 'Sécurité & IA', name: 'Régulation Dynamique par IA', cost: 1500000, desc: 'Optimise automatiquement le trafic aux heures de pointe.' },
+            { id: 'eco_1', dept: 'Transition Énergétique', name: 'Ombrières Photovoltaïques', cost: 1000000, desc: 'Génère un revenu passif vert sur les aires d’autoroute.' },
+            { id: 'eco_2', dept: 'Transition Énergétique', name: 'Stations Hydrogène & Ultra-Rapides', cost: 2500000, desc: 'Attire massivement de nouveaux usagers éco-responsables.' }
+        ];
+
         function initCitySelectors() {
             const fromSelect = document.getElementById('city-from');
             const toSelect = document.getElementById('city-to');
@@ -353,10 +437,9 @@
                 toSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
             });
 
-            // Affichage des marqueurs sur la carte (Clustering visuel optimisé)
             cities.forEach(city => {
                 L.circleMarker([city.lat, city.lng], {
-                    radius: 6,
+                    radius: 5,
                     color: '#38bdf8',
                     fillColor: '#0f172a',
                     fillOpacity: 1,
@@ -365,7 +448,23 @@
             });
         }
 
-        // --- 2. GESTION DES ONGLETS ---
+        function initRDCards() {
+            const container = document.getElementById('rd-tree-container');
+            container.innerHTML = "";
+            rdTechnologies.forEach(tech => {
+                const unlocked = gameState.unlockedTechs.includes(tech.id);
+                container.innerHTML += `
+                    <div class="rd-card">
+                        <h3>${tech.name}</h3>
+                        <p>${tech.desc} (${tech.cost.toLocaleString()} €)</p>
+                        <button ${unlocked ? 'disabled' : ''} onclick="unlockTech('${tech.id}', ${tech.cost})">
+                            ${unlocked ? 'Débloqué' : 'Lancer la Recherche'}
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
         function switchTab(event, tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -373,10 +472,11 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- 3. MÉCANIQUES DE JEU & CONSTRUCTION ---
+        // --- 2. CONSTRUCTION AVEC TRACÉ RÉEL INTERMÉDIAIRE ---
         function buildSection() {
             const fromId = parseInt(document.getElementById('city-from').value);
             const toId = parseInt(document.getElementById('city-to').value);
+            const model = document.getElementById('road-model').value; // 'toll' ou 'free'
 
             if (fromId === toId) {
                 alert("Veuillez sélectionner deux villes différentes !");
@@ -386,67 +486,85 @@
             const cityA = cities.find(c => c.id === fromId);
             const cityB = cities.find(c => c.id === toId);
 
-            // Calcul approximatif de la distance en km (Formule Haversine simplifiée)
-            const R = 6371;
-            const dLat = (cityB.lat - cityA.lat) * Math.PI / 180;
-            const dLon = (cityB.lng - cityA.lng) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(cityA.lat * Math.PI / 180) * Math.cos(cityB.lat * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const distance = Math.round(R * c);
-            const cost = distance * 1000000; // 1M€ par km
+            // Simulation d'un tracé géométrique réaliste avec un point de déviation intermédiaire
+            const midLat = (cityA.lat + cityB.lat) / 2 + (Math.random() - 0.5) * 0.4;
+            const midLng = (cityA.lng + cityB.lng) / 2 + (Math.random() - 0.5) * 0.4;
+
+            const distance = Math.round(Math.hypot(cityA.lat - cityB.lat, cityA.lng - cityB.lng) * 111);
+            const cost = distance * (model === 'toll' ? 1000000 : 800000);
 
             if (gameState.money < cost) {
-                alert(`Fonds insuffisants ! Coût estimé : ${cost.toLocaleString()} €`);
+                alert(`Fonds insuffisants ! Coût : ${cost.toLocaleString()} €`);
                 return;
             }
 
             gameState.money -= cost;
-            updateHUD();
 
-            // Dessin direct de la ligne autoroutière sur la carte Leaflet
-            const polyline = L.polyline([[cityA.lat, cityA.lng], [cityB.lat, cityB.lng]], {
-                color: '#22c55e',
+            // Tracé réel multi-points sur Leaflet
+            const color = model === 'toll' ? '#22c55e' : '#38bdf8'; // Vert = Péage, Bleu clair = Gratuit
+            L.polyline([[cityA.lat, cityA.lng], [midLat, midLng], [cityB.lat, cityB.lng]], {
+                color: color,
                 weight: 4,
                 opacity: 0.8
             }).addTo(map);
 
             gameState.km += distance;
-            gameState.traffic += distance * 120;
-            updateHUD();
+            if (model === 'toll') {
+                gameState.incomePerSec += distance * 15;
+            } else {
+                gameState.satisfaction = Math.min(100, gameState.satisfaction + 5);
+            }
 
-            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} - ${cityB.name} (${distance} km) mise en service avec succès !`;
+            updateHUD();
+            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} ➔ ${cityB.name} (${distance} km, ${model === 'toll' ? 'Péage' : 'Gratuite'}) inaugurée !`;
         }
 
-        // --- 4. MISE À JOUR DU HUD ---
-        function updateHUD() {
-            document.getElementById('kpi-money').innerText = gameState.money.toLocaleString() + " €";
-            document.getElementById('kpi-km').innerText = gameState.km + " km";
-            document.getElementById('kpi-satisfaction').innerText = gameState.satisfaction + " %";
-            document.getElementById('kpi-traffic').innerText = gameState.traffic.toLocaleString() + " véh/j";
-            document.getElementById('fleet-vans').innerText = gameState.vans;
-            document.getElementById('fleet-plows').innerText = gameState.plows;
-            document.getElementById('wear-rate').innerText = gameState.wear + " %";
+        // --- 3. GESTION FINANCIÈRE & R&D ---
+        function unlockTech(techId, cost) {
+            if (gameState.money >= cost) {
+                if (gameState.rdActiveCount >= 3) {
+                    alert("Limite de 3 recherches simultanées atteinte !");
+                    return;
+                }
+                gameState.money -= cost;
+                gameState.unlockedTechs.push(techId);
+                gameState.rdActiveCount++;
+                updateHUD();
+                initRDCards();
+                alert("Technologie maîtrisée et déployée sur le réseau !");
+            } else {
+                alert("Fonds insuffisants pour lancer cette recherche.");
+            }
+        }
+
+        function takeLoan(amount) {
+            gameState.money += amount;
+            gameState.incomePerSec -= Math.round(amount * 0.002); // Remboursement progressif
+            updateHUD();
+            alert(`Emprunt de ${amount.toLocaleString()} € validé par la Banque Centrale.`);
+        }
+
+        function buyCompetitor() {
+            if (gameState.money >= 5000000) {
+                gameState.money -= 5000000;
+                gameState.km += 180;
+                gameState.incomePerSec += 2500;
+                updateHUD();
+                alert("Rachat de la concession secondaire finalisé avec succès !");
+            } else {
+                alert("Fonds insuffisants pour racheter un concurrent.");
+            }
         }
 
         function buyVehicle(type) {
             if (type === 'van' && gameState.money >= 50000) {
-                gameState.money -= 50000;
-                gameState.vans++;
+                gameState.money -= 50000; gameState.vans++;
             } else if (type === 'plow' && gameState.money >= 120000) {
-                gameState.money -= 120000;
-                gameState.plows++;
+                gameState.money -= 120000; gameState.plows++;
             } else {
                 alert("Fonds insuffisants !");
             }
             updateHUD();
-        }
-
-        function takeLoan() {
-            gameState.money += 1000000;
-            updateHUD();
-            alert("Emprunt de 1 000 000 € accordé par la Banque Centrale.");
         }
 
         function triggerMaintenance() {
@@ -454,20 +572,52 @@
                 gameState.money -= 150000;
                 gameState.wear = 0;
                 updateHUD();
-                alert("Campagne de réfection des chaussées menée à bien !");
+                alert("Campagne de réfection des chaussées exécutée !");
             } else {
-                alert("Fonds insuffisants pour la maintenance.");
+                alert("Fonds insuffisants.");
+            }
+        }
+
+        function boostMoral() {
+            if (gameState.money >= 300000) {
+                gameState.money -= 300000;
+                gameState.staffMoral = 100;
+                updateHUD();
+                alert("Prime versée : le risque de grève est totalement écarté.");
+            } else {
+                alert("Fonds insuffisants pour la prime CSE.");
             }
         }
 
         function saveCompanyInfo() {
             const company = document.getElementById('company-name').value;
             const ceo = document.getElementById('ceo-name').value;
-            alert(`Paramètres mis à jour pour ${company} dirigée par ${ceo}.`);
+            alert(`Siège social mis à jour pour ${company}, dirigé par ${ceo}.`);
         }
 
-        // Lancement initial
+        function updateHUD() {
+            document.getElementById('kpi-money').innerText = gameState.money.toLocaleString() + " €";
+            document.getElementById('kpi-km').innerText = gameState.km + " km";
+            document.getElementById('kpi-satisfaction').innerText = gameState.satisfaction + " %";
+            document.getElementById('kpi-income').innerText = gameState.incomePerSec.toLocaleString() + " €/s";
+            document.getElementById('fleet-vans').innerText = gameState.vans;
+            document.getElementById('fleet-plows').innerText = gameState.plows;
+            document.getElementById('wear-rate').innerText = gameState.wear + " %";
+            document.getElementById('staff-moral').innerText = gameState.staffMoral + " %";
+            document.getElementById('rd-slots').innerText = gameState.rdActiveCount + " / 3";
+        }
+
+        // Boucle financière en temps réel (Flux de trésorerie seconde par seconde)
+        setInterval(() => {
+            if (gameState.incomePerSec !== 0) {
+                gameState.money += gameState.incomePerSec;
+                updateHUD();
+            }
+        }, 1000);
+
+        // Initialisation globale
         initCitySelectors();
+        initRDCards();
         updateHUD();
     </script>
 </body>
