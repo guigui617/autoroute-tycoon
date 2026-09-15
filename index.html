@@ -1,255 +1,439 @@
--- ==========================================
--- 1. NETTOYAGE & CRÉATION DES TABLES
--- ==========================================
-DROP TABLE IF EXISTS fleet_player CASCADE;
-DROP TABLE IF EXISTS fleet_catalog CASCADE;
-DROP TABLE IF EXISTS highways CASCADE;
-DROP TABLE IF EXISTS game_state CASCADE;
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autoroute Tycoon - Édition Stratégique Avancée</title>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-CREATE TABLE game_state (
-    id INT PRIMARY KEY,
-    budget NUMERIC DEFAULT 10000000,
-    toll_rate NUMERIC DEFAULT 0.10,
-    satisfaction NUMERIC DEFAULT 80,
-    ticker_message TEXT DEFAULT 'Bienvenue sur Autoroute Tycoon !',
-    loan_amount NUMERIC DEFAULT 0,
-    loan_monthly_payment NUMERIC DEFAULT 0,
-    loan_remaining_months INT DEFAULT 0
-);
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --accent: #38bdf8;
+            --accent-success: #22c55e;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
 
-INSERT INTO game_state (id, budget, toll_rate, satisfaction, ticker_message)
-VALUES (1, 10000000, 0.10, 80, 'Réseau autoroutier prêt à être construit.');
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
 
-CREATE TABLE highways (
-    id SERIAL PRIMARY KEY,
-    name TEXT,
-    city_a TEXT,
-    city_b TEXT,
-    distance_km NUMERIC,
-    is_toll BOOLEAN DEFAULT true,
-    relief_type TEXT DEFAULT 'plain', 
-    construction_cost NUMERIC,
-    condition_pct NUMERIC DEFAULT 100,
-    car_traffic INT DEFAULT 1200,
-    truck_traffic INT DEFAULT 400,
-    has_service_area BOOLEAN DEFAULT false,
-    has_ev_chargers BOOLEAN DEFAULT false
-);
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            gap: 20px;
+        }
 
-CREATE TABLE fleet_catalog (
-    vehicle_key TEXT PRIMARY KEY,
-    name TEXT,
-    price NUMERIC,
-    maintenance_cost NUMERIC
-);
+        header {
+            background-color: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
 
-INSERT INTO fleet_catalog (vehicle_key, name, price, maintenance_cost) VALUES
-('patrol', 'Fourgon de Patrouille & Intervention', 50000, 1200),
-('tma', 'Camion Absorbeur de Chocs (TMA)', 180000, 3500),
-('salting', 'Camion de Salage & Déneigement', 220000, 4500),
-('resurfacer', 'Enrobeuse / Machine de Rénovation', 650000, 12000);
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
 
-CREATE TABLE fleet_player (
-    vehicle_key TEXT PRIMARY KEY REFERENCES fleet_catalog(vehicle_key),
-    count INT DEFAULT 0
-);
+        .stat-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 160px;
+        }
 
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
 
--- ==========================================
--- 2. FONCTIONS DE GESTION & LOGIQUE MÉTIER
--- ==========================================
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+        }
 
--- Calcul dynamique du relief, de la distance et du coût
-CREATE OR REPLACE FUNCTION get_highway_relief_and_cost(p_city_a TEXT, p_city_b TEXT)
-RETURNS JSON AS $$
-DECLARE
-    v_base_cost NUMERIC := 12000; -- Coût de base par km
-    v_distance NUMERIC := 150;     
-    v_relief TEXT := 'plain';
-    v_multiplier NUMERIC := 1.0;
-    v_total_cost NUMERIC;
-BEGIN
-    -- Identification simple du relief selon les axes montagneux ou vallonnés français
-    IF (p_city_a IN ('Nice', 'Grenoble', 'Chambéry') AND p_city_b IN ('Nice', 'Grenoble', 'Chambéry')) 
-       OR (p_city_a = 'Toulouse' AND p_city_b = 'Perpignan') THEN
-        v_relief := 'mountain';
-        v_multiplier := 2.8;
-        v_distance := 190;
-    ELSIF (p_city_a = 'Lyon' AND p_city_b = 'Grenoble') 
-          OR (p_city_a = 'Marseille' AND p_city_b = 'Nice') THEN
-        v_relief := 'valley';
-        v_multiplier := 1.5;
-        v_distance := 130;
-    ELSE
-        v_relief := 'plain';
-        v_multiplier := 1.0;
-        v_distance := 140;
-    END IF;
+        .card {
+            background-color: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
 
-    v_total_cost := v_distance * v_base_cost * v_multiplier;
-    
-    RETURN json_build_object(
-        'distance', v_distance,
-        'relief', v_relief,
-        'cost', v_total_cost
-    );
-END;
-$$ LANGUAGE plpgsql;
+        #map {
+            height: 480px;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            z-index: 1;
+        }
 
--- Création d'une autoroute
-CREATE OR REPLACE FUNCTION create_highway(p_city_a TEXT, p_city_b TEXT, p_is_toll BOOLEAN DEFAULT true)
-RETURNS JSON AS $$
-DECLARE
-    v_info JSON;
-    v_cost NUMERIC;
-    v_distance NUMERIC;
-    v_relief TEXT;
-    v_budget NUMERIC;
-BEGIN
-    SELECT budget INTO v_budget FROM game_state WHERE id = 1;
-    
-    v_info := get_highway_relief_and_cost(p_city_a, p_city_b);
-    v_cost := (v_info->>'cost')::NUMERIC;
-    v_distance := (v_info->>'distance')::NUMERIC;
-    v_relief := v_info->>'relief'::TEXT;
+        button {
+            background-color: var(--accent);
+            color: #000;
+            font-weight: bold;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            width: 100%;
+            margin-top: 5px;
+        }
 
-    IF v_budget < v_cost THEN
-        RETURN json_build_object('success', false, 'message', 'Trésorerie insuffisante. Coût requis : ' || ROUND(v_cost) || ' €');
-    END IF;
+        button:hover { opacity: 0.9; }
 
-    UPDATE game_state SET budget = budget - v_cost WHERE id = 1;
+        select, input {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 6px;
+            width: 100%;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
 
-    INSERT INTO highways (name, city_a, city_b, distance_km, is_toll, relief_type, construction_cost, car_traffic, truck_traffic)
-    VALUES (p_city_a || ' - ' || p_city_b, p_city_a, p_city_b, v_distance, p_is_toll, v_relief, v_cost, 1200, 400);
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
 
-    RETURN json_build_object('success', true, 'message', 'Chantier lancé avec succès ! Relief : ' || v_relief);
-END;
-$$ LANGUAGE plpgsql;
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
 
--- Achat de véhicules
-CREATE OR REPLACE FUNCTION buy_vehicle(p_vehicle_key TEXT)
-RETURNS JSON AS $$
-DECLARE
-    v_price NUMERIC;
-    v_budget NUMERIC;
-BEGIN
-    SELECT price INTO v_price FROM fleet_catalog WHERE vehicle_key = p_vehicle_key;
-    SELECT budget INTO v_budget FROM game_state WHERE id = 1;
+        .badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge-toll { background-color: var(--accent-success); color: #000; }
+        .badge-free { background-color: var(--accent); color: #000; }
+        .badge-mountain { background-color: var(--accent-danger); color: #fff; }
+        .badge-valley { background-color: var(--accent-warning); color: #000; }
 
-    IF v_budget < v_price THEN
-        RETURN json_build_object('success', false, 'message', 'Fonds insuffisants.');
-    END IF;
+        .ticker {
+            background-color: #0284c7;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-    UPDATE game_state SET budget = budget - v_price WHERE id = 1;
+        .leaflet-tooltip.city-label {
+            background: #1e293b;
+            border: 1px solid var(--accent);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
 
-    INSERT INTO fleet_player (vehicle_key, count)
-    VALUES (p_vehicle_key, 1)
-    ON CONFLICT (vehicle_key) 
-    DO UPDATE SET count = fleet_player.count + 1;
+<div class="container">
+    <header>
+        <h1>🛣️ Autoroute Tycoon - Édition Stratégique Avancée</h1>
+        <div class="ticker">
+            <span id="ticker">Chargement de la simulation...</span>
+            <span>● EN DIRECT</span>
+        </div>
+        
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div>Trésorerie</div>
+                <div class="stat-value" id="budget">- €</div>
+            </div>
+            <div class="stat-card">
+                <div>Tarif Péage/km</div>
+                <div class="stat-value" id="toll-rate-display">- €</div>
+            </div>
+            <div class="stat-card">
+                <div>Satisfaction Usagers</div>
+                <div class="stat-value" id="satisfaction">-%</div>
+            </div>
+            <div class="stat-card">
+                <div>Emprunt Restant</div>
+                <div class="stat-value" id="loan-status">0 €</div>
+            </div>
+        </div>
+    </header>
 
-    RETURN json_build_object('success', true, 'message', 'Matériel acquis avec succès.');
-END;
-$$ LANGUAGE plpgsql;
+    <div class="card">
+        <h2>🗺️ Carte interactive du Réseau routier</h2>
+        <div id="map"></div>
+    </div>
 
--- Gestion des emprunts bancaires
-CREATE OR REPLACE FUNCTION take_loan(p_amount NUMERIC)
-RETURNS JSON AS $$
-BEGIN
-    UPDATE game_state 
-    SET budget = budget + p_amount,
-        loan_amount = loan_amount + (p_amount * 1.05),
-        loan_monthly_payment = (p_amount * 1.05) / 12,
-        loan_remaining_months = 12
-    WHERE id = 1;
+    <div class="grid-3">
+        <!-- Construction & Pricing -->
+        <div class="card">
+            <h2>🏗️ Construire & Tarif</h2>
+            <label>Ville de départ</label>
+            <select id="city-a"></select>
+            
+            <label>Ville d'arrivée</label>
+            <select id="city-b"></select>
 
-    RETURN json_build_object('success', true, 'message', 'Emprunt validé par la banque.');
-END;
-$$ LANGUAGE plpgsql;
+            <label>Type de tronçon</label>
+            <select id="is-toll">
+                <option value="true">🟢 Payant (Péage)</option>
+                <option value="false">🔵 Gratuit (Sans péage)</option>
+            </select>
 
--- Simulation / Boucle de jeu en temps réel
-CREATE OR REPLACE FUNCTION process_game_tick()
-RETURNS JSON AS $$
-DECLARE
-    v_toll_rate NUMERIC;
-    v_total_revenue NUMERIC := 0;
-    v_total_maintenance NUMERIC := 12000;
-    v_service_revenue NUMERIC := 0;
-    v_total_satisfaction NUMERIC := 0;
-    v_highway_count INT := 0;
-    hw RECORD;
-    v_car_mult NUMERIC;
-    v_truck_mult NUMERIC;
-    v_net NUMERIC;
-    v_loan_pay NUMERIC;
-    v_loan_months INT;
-BEGIN
-    SELECT toll_rate, loan_monthly_payment, loan_remaining_months 
-    INTO v_toll_rate, v_loan_pay, v_loan_months 
-    FROM game_state WHERE id = 1;
+            <button onclick="buildHighway()">Lancer le chantier</button>
 
-    -- Dynamic Pricing impact
-    IF v_toll_rate > 0.15 THEN
-        v_car_mult := 0.5;
-        v_truck_mult := 0.9;
-    ELSIF v_toll_rate < 0.08 THEN
-        v_car_mult := 1.5;
-        v_truck_mult := 1.2;
-    ELSE
-        v_car_mult := 1.0;
-        v_truck_mult := 1.0;
-    END IF;
+            <h3 style="margin-top:25px;">Ajuster le Dynamic Pricing</h3>
+            <label>Tarif au kilomètre (€)</label>
+            <input type="number" id="input-toll-rate" step="0.01" min="0.01" max="0.30" value="0.10">
+            <button onclick="updateTollRate()">Mettre à jour le tarif</button>
+        </div>
 
-    FOR hw IN SELECT * FROM highways LOOP
-        v_highway_count := v_highway_count + 1;
+        <!-- Réseau concédé & État des routes -->
+        <div class="card">
+            <h2>🛣️ Réseau & Entretien</h2>
+            <div id="highways-list" class="item-list"></div>
+        </div>
 
-        DECLARE
-            v_rev_cars NUMERIC := hw.car_traffic * v_car_mult * hw.distance_km * v_toll_rate;
-            v_rev_trucks NUMERIC := hw.truck_traffic * v_truck_mult * hw.distance_km * (v_toll_rate * 3.5);
-            v_wear NUMERIC := 0.4 + (hw.truck_traffic * 0.0008);
-        BEGIN
-            IF hw.is_toll THEN
-                v_total_revenue := v_total_revenue + v_rev_cars + v_rev_trucks;
-            END IF;
+        <!-- Flotte, Services & Finances -->
+        <div class="card">
+            <h2>🏦 Services & Finances</h2>
+            <h3>Financement & Emprunts</h3>
+            <button onclick="takeLoan(2000000)" style="background-color: var(--accent-warning);">Emprunter 2.000.000 € (5%)</button>
 
-            -- Usure
-            UPDATE highways 
-            SET condition_pct = GREATEST(0, condition_pct - v_wear)
-            WHERE id = hw.id;
+            <h3 style="margin-top:20px;">Matériel & Entretien</h3>
+            <div id="fleet-catalog" class="item-list"></div>
+            
+            <h3 style="margin-top:20px;">Flotte possédée</h3>
+            <div id="fleet-player" class="item-list"></div>
+        </div>
+    </div>
+</div>
 
-            IF hw.condition_pct < 50 THEN
-                v_total_satisfaction := v_total_satisfaction - 15;
-            ELSE
-                v_total_satisfaction := v_total_satisfaction + 85;
-            END IF;
+<script>
+    // Configuration Supabase
+    const SUPABASE_URL = 'https://bqyodcxwbjpucpmudkmn.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_8h4cupw2ZGpslNlJ4BZ7Rg_UtPH5CPc';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            -- Services annexes
-            IF hw.has_service_area THEN
-                v_service_revenue := v_service_revenue + 15000;
-            END IF;
-            IF hw.has_ev_chargers THEN
-                v_service_revenue := v_service_revenue + 8000;
-            END IF;
-        END;
-    END LOOP;
+    const CITIES_COORDS = {
+        'Paris': [48.8566, 2.3522], 'Marseille': [43.2965, 5.3698], 'Lyon': [45.7640, 4.8357],
+        'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620], 'Nantes': [47.2184, -1.5536],
+        'Montpellier': [43.6108, 3.8767], 'Strasbourg': [48.5734, 7.7521], 'Bordeaux': [44.8378, -0.5792],
+        'Lille': [50.6292, 3.0573], 'Rennes': [48.1172, -1.6778], 'Grenoble': [45.1885, 5.7245],
+        'Chambéry': [45.5646, 5.9178], 'Perpignan': [42.6986, 2.8956], 'Nancy': [48.6921, 6.1844]
+    };
 
-    -- Gestion du prêt
-    IF v_loan_months > 0 AND v_loan_pay > 0 THEN
-        v_total_maintenance := v_total_maintenance + v_loan_pay;
-        UPDATE game_state 
-        SET loan_remaining_months = loan_remaining_months - 1
-        WHERE id = 1;
-    END IF;
+    let map, highwaysLayerGroup;
 
-    v_net := v_total_revenue + v_service_revenue - v_total_maintenance;
+    document.addEventListener('DOMContentLoaded', () => {
+        initMap();
+        loadGameState();
+        loadCities();
+        loadHighways();
+        loadFleet();
+        
+        // Boucle de mise à jour automatique en temps réel toutes les 5 secondes
+        setInterval(autoGameTick, 5000);
+    });
 
-    IF v_highway_count > 0 THEN
-        UPDATE game_state 
-        SET budget = budget + v_net,
-            satisfaction = GREATEST(0, LEAST(100, v_total_satisfaction / v_highway_count)),
-            ticker_message = 'Péages : ' || ROUND(v_total_revenue) || ' € | Services : ' || ROUND(v_service_revenue) || ' € | Entretien : ' || ROUND(v_total_maintenance) || ' €'
-        WHERE id = 1;
-    END IF;
+    function initMap() {
+        map = L.map('map').setView([46.6, 1.8], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        highwaysLayerGroup = L.layerGroup().addTo(map);
 
-    RETURN json_build_object('success', true, 'net', v_net);
-END;
-$$ LANGUAGE plpgsql;
+        Object.keys(CITIES_COORDS).forEach(cityName => {
+            L.circleMarker(CITIES_COORDS[cityName], { radius: 6, color: '#0284c7', fillColor: '#38bdf8', fillOpacity: 1, weight: 2 })
+             .bindTooltip(cityName, { permanent: true, direction: 'top', className: 'city-label' }).addTo(map);
+        });
+    }
+
+    async function loadGameState() {
+        const { data } = await supabaseClient.from('game_state').select('*').eq('id', 1).single();
+        if (!data) return;
+
+        document.getElementById('budget').innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.budget);
+        document.getElementById('toll-rate-display').innerText = `${data.toll_rate} €`;
+        document.getElementById('satisfaction').innerText = `${Math.round(data.satisfaction)} %`;
+        document.getElementById('ticker').innerText = data.ticker_message;
+        document.getElementById('input-toll-rate').value = data.toll_rate;
+        document.getElementById('loan-status').innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.loan_amount);
+    }
+
+    async function loadCities() {
+        const selectA = document.getElementById('city-a');
+        const selectB = document.getElementById('city-b');
+        selectA.innerHTML = ''; selectB.innerHTML = '';
+
+        Object.keys(CITIES_COORDS).sort().forEach(city => {
+            selectA.add(new Option(city, city));
+            selectB.add(new Option(city, city));
+        });
+    }
+
+    async function loadHighways() {
+        const { data } = await supabaseClient.from('highways').select('*');
+        const container = document.getElementById('highways-list');
+        container.innerHTML = '';
+        highwaysLayerGroup.clearLayers();
+
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">Aucune autoroute construite.</div>';
+            return;
+        }
+
+        data.forEach(async (hw) => {
+            let reliefBadge = '<span class="badge badge-toll">Plaine</span>';
+            if (hw.relief_type === 'mountain') reliefBadge = '<span class="badge badge-mountain">Montagne</span>';
+            if (hw.relief_type === 'valley') reliefBadge = '<span class="badge badge-valley">Vallée</span>';
+
+            container.innerHTML += `
+                <div class="item-row">
+                    <div>
+                        <strong>${hw.name}</strong> ${reliefBadge}<br>
+                        <small style="color:var(--text-muted)">Usure: ${Math.round(hw.condition_pct)}% | 🚗 ${hw.car_traffic} | 🚚 ${hw.truck_traffic}</small><br>
+                        <div style="margin-top:5px; display:flex; gap:5px;">
+                            <button style="padding:4px 8px; font-size:0.75rem; width:auto;" onclick="toggleService(${hw.id}, 'area')">🏪 Aire (${hw.has_service_area ? 'ON' : 'OFF'})</button>
+                            <button style="padding:4px 8px; font-size:0.75rem; width:auto;" onclick="toggleService(${hw.id}, 'ev')">⚡ Bornes (${hw.has_ev_chargers ? 'ON' : 'OFF'})</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (CITIES_COORDS[hw.city_a] && CITIES_COORDS[hw.city_b]) {
+                const color = hw.condition_pct < 50 ? '#ef4444' : (hw.is_toll ? '#22c55e' : '#38bdf8');
+                L.polyline([CITIES_COORDS[hw.city_a], CITIES_COORDS[hw.city_b]], { color: color, weight: 5 })
+                 .bindPopup(`<b>${hw.name}</b><br>État de la chaussée : ${Math.round(hw.condition_pct)}%`).addTo(highwaysLayerGroup);
+            }
+        });
+    }
+
+    async function loadFleet() {
+        const { data: catalog } = await supabaseClient.from('fleet_catalog').select('*');
+        const { data: player } = await supabaseClient.from('fleet_player').select('*');
+        
+        const catContainer = document.getElementById('fleet-catalog');
+        const playContainer = document.getElementById('fleet-player');
+        catContainer.innerHTML = ''; playContainer.innerHTML = '';
+
+        if (catalog) {
+            catalog.forEach(item => {
+                const price = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(item.price);
+                catContainer.innerHTML += `
+                    <div class="item-row">
+                        <div><strong>${item.name}</strong><br><small style="color:var(--text-muted)">${price}</small></div>
+                        <button style="width:auto; padding:6px 12px;" onclick="buyVehicle('${item.vehicle_key}')">Acheter</button>
+                    </div>
+                `;
+            });
+        }
+
+        if (player && catalog) {
+            player.forEach(item => {
+                const info = catalog.find(c => c.vehicle_key === item.vehicle_key);
+                if (item.count > 0) {
+                    playContainer.innerHTML += `
+                        <div class="item-row">
+                            <div><strong>${info ? info.name : item.vehicle_key}</strong></div>
+                            <span style="font-weight:bold; color:var(--accent); font-size:1.1rem;">x${item.count}</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+    }
+
+    async function buildHighway() {
+        const cityA = document.getElementById('city-a').value;
+        const cityB = document.getElementById('city-b').value;
+        const isToll = document.getElementById('is-toll').value === 'true';
+
+        if (cityA === cityB) return alert("Choisissez deux villes différentes.");
+
+        const { data, error } = await supabaseClient.rpc('create_highway', { p_city_a: cityA, p_city_b: cityB, p_is_toll: isToll });
+        if (error || (data && !data.success)) return alert(error ? error.message : data.message);
+
+        alert(data.message);
+        loadGameState();
+        loadHighways();
+    }
+
+    async function updateTollRate() {
+        const newRate = parseFloat(document.getElementById('input-toll-rate').value);
+        await supabaseClient.from('game_state').update({ toll_rate: newRate }).eq('id', 1);
+        alert("Tarif du péage mis à jour !");
+        loadGameState();
+    }
+
+    async function takeLoan(amount) {
+        const { data, error } = await supabaseClient.rpc('take_loan', { p_amount: amount });
+        if (error) return alert("Erreur lors de l'emprunt.");
+        alert(data.message);
+        loadGameState();
+    }
+
+    async function buyVehicle(key) {
+        const { data, error } = await supabaseClient.rpc('buy_vehicle', { p_vehicle_key: key });
+        if (error || !data.success) return alert(error ? error.message : data.message);
+        alert(data.message);
+        loadGameState();
+        loadFleet();
+    }
+
+    async function toggleService(id, type) {
+        const { data: hw } = await supabaseClient.from('highways').select('*').eq('id', id).single();
+        if (!hw) return;
+
+        let updateData = {};
+        if (type === 'area') updateData = { has_service_area: !hw.has_service_area };
+        if (type === 'ev') updateData = { has_ev_chargers: !hw.has_ev_chargers };
+
+        await supabaseClient.from('highways').update(updateData).eq('id', id);
+        loadHighways();
+    }
+
+    async function autoGameTick() {
+        const { error } = await supabaseClient.rpc('process_game_tick');
+        if (!error) {
+            loadGameState();
+        }
+    }
+</script>
+
+</body>
+</html>
