@@ -3,586 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon — Gestion Stratégique & Économique</title>
-    <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Leaflet CSS & JS -->
+    <title>Autoroute Tycoon - Gestion du Réseau</title>
+    <!-- Leaflet CSS pour la carte -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg-main: #0b1329;
-            --bg-sidebar: #070d1d;
-            --bg-card: #131c38;
-            --bg-card-hover: #1a2547;
-            --accent: #38bdf8;
-            --accent-success: #22c55e;
-            --accent-warning: #f59e0b;
-            --accent-danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: #1e293b;
+            --border: #334155;
+            --success: #22c55e;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Barre de navigation latérale */
+        sidebar { width: 80px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 20px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: var(--text-muted); cursor: pointer; padding: 10px; border-radius: 8px; width: 60px; transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
+        .nav-item span { font-size: 1.5rem; margin-bottom: 4px; }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+        /* Contenu principal */
+        .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; }
+        header { height: 60px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .top-stats { display: flex; gap: 20px; font-size: 0.9rem; font-weight: 600; }
+        .stat-badge { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); padding: 5px 12px; border-radius: 20px; color: var(--primary); }
 
-        sidebar {
-            width: 80px;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-            gap: 20px;
-            z-index: 10;
-        }
+        .content-body { flex: 1; display: flex; overflow: hidden; }
+        .left-panel { width: 450px; background: var(--bg-dark); border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; }
+        .right-map { flex: 1; position: relative; }
+        #map { width: 100%; height: 100%; background: #111; }
 
-        .nav-item {
-            color: var(--text-muted);
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.7rem;
-            gap: 5px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
+        /* Composants UI */
+        .card-panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 20px; }
+        .card-panel h3 { font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        
+        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; }
+        select, input { width: 100%; padding: 8px 12px; background: var(--bg-dark); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 12px; }
+        button { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button:hover { background: var(--primary-hover); }
 
-        .nav-item:hover, .nav-item.active {
-            color: var(--accent);
-        }
-
-        .nav-item span {
-            font-size: 1.2rem;
-        }
-
-        .main-layout {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .dashboard-col {
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .map-col {
-            background-color: var(--bg-card);
-            border-left: 1px solid var(--border);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #map {
-            flex: 1;
-            width: 100%;
-            height: 100%;
-            background: #aad3df;
-            z-index: 1;
-        }
-
-        .top-stats-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--bg-card);
-            padding: 12px 20px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            font-size: 0.9rem;
-        }
-
-        .top-stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        .tab-bar {
-            display: flex;
-            gap: 10px;
-            background-color: var(--bg-card);
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-        }
-
-        .tab-btn {
-            background: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.85rem;
-            width: auto;
-            margin: 0;
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active, .tab-btn:hover {
-            background-color: var(--accent);
-            color: #000;
-            border-color: var(--accent);
-        }
-
-        .tab-content {
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .tab-content.active {
-            display: flex;
-        }
-
-        .welcome-card {
-            background: linear-gradient(135deg, #131c38 0%, #1e293b 100%);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .welcome-title {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-        }
-
-        .stat-card {
-            background-color: var(--bg-card);
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            box-sizing: border-box;
-        }
-
-        .stat-card-title {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .stat-card-value {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: var(--text-main);
-        }
-
-        .card-panel {
-            background-color: var(--bg-card);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .card-panel h3 {
-            margin-top: 0;
-            font-size: 1rem;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-        }
-
-        button {
-            background-color: var(--accent);
-            color: #000;
-            font-weight: bold;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            width: 100%;
-            margin-top: 5px;
-        }
-
-        button:hover { opacity: 0.9; }
-
-        select, input {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 6px;
-            width: 100%;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-
-        .item-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        .item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.02);
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            font-size: 0.85rem;
-        }
-
-        .badge {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-        .badge-toll { background-color: var(--accent-success); color: #000; }
-        .badge-phase { background-color: var(--accent-warning); color: #000; }
-
-        .leaflet-tooltip.city-label {
-            background: #ffffff;
-            border: 1px solid #0284c7;
-            color: #0f172a;
-            font-size: 10px;
-            font-weight: bold;
-            border-radius: 4px;
-            padding: 2px 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
+        .item-list { display: flex; flex-direction: column; gap: 10px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
+    <!-- SIDEBAR -->
     <sidebar>
-        <div class="nav-item active" onclick="switchMainView('home')"><span>🏠</span>Accueil</div>
-        <div class="nav-item" onclick="switchMainView('network')"><span>🛣️</span>Lignes</div>
-        <div class="nav-item" onclick="switchMainView('fleet')"><span>🚚</span>Flotte</div>
-        <div class="nav-item" onclick="switchMainView('bank')"><span>🏦</span>Banque</div>
+        <div class="nav-item active" onclick="switchMainView('dashboard', this)"><span>📊</span>Chantiers</div>
+        <div class="nav-item" onclick="switchMainView('hq', this)"><span>🏢</span>Siège</div>
+        <div class="nav-item" onclick="switchMainView('hr', this)"><span>👥</span>RH</div>
     </sidebar>
 
-    <div class="main-layout">
-        
-        <div class="dashboard-col">
-            
-            <div class="top-stats-bar">
-                <div>Statut : <span style="color:var(--accent-success)">● Simulation active</span></div>
-                <div class="top-stat-item">💶 <span id="top-budget">- €</span></div>
-                <div style="color:var(--text-muted)">Satisfaction : <strong id="satisfaction">-%</strong></div>
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        <header>
+            <div style="font-weight: bold; font-size: 1.1rem;">🚗 Autoroute Tycoon</div>
+            <div class="top-stats">
+                <div class="stat-badge" id="stat-budget">Trésorerie : 0 €</div>
+                <div class="stat-badge" style="border-color: var(--success); color: var(--success);">Statut : Simulation active</div>
             </div>
+        </header>
 
-            <!-- VUE ACCUEIL -->
-            <div id="view-home" class="dashboard-view">
-                <div class="welcome-card" style="margin-bottom: 20px;">
-                    <div class="welcome-title">Tableau de Bord Exécutif</div>
-                    <div style="color: var(--text-muted); font-size: 0.9rem;" id="ticker">Chargement du réseau...</div>
-                </div>
-
-                <!-- Chantiers en cours (5 Phases) -->
-                <div class="card-panel" style="margin-bottom: 20px;">
-                    <h3>🏗️ Suivi des Chantiers (Parcours en 5 Phases)</h3>
-                    <div id="projects-list" class="item-list" style="margin-bottom: 15px;">
-                        <div style="color:var(--text-muted); text-align:center; padding:10px;">Aucun chantier en cours.</div>
+        <div class="content-body">
+            <!-- PANNEAU LATÉRAL DYNAMIQUE -->
+            <div class="left-panel">
+                
+                <!-- VUE CHANTIERS -->
+                <div id="view-dashboard" class="dashboard-view">
+                    <div class="card-panel">
+                        <h3>🏗️ Lancer un nouveau tracé</h3>
+                        <label>Ville de départ</label>
+                        <select id="city-a">
+                            <option value="Paris">Paris</option>
+                            <option value="Lyon">Lyon</option>
+                            <option value="Marseille">Marseille</option>
+                            <option value="Bordeaux">Bordeaux</option>
+                            <option value="Lille">Lille</option>
+                            <option value="Strasbourg">Strasbourg</option>
+                            <option value="Nantes">Nantes</option>
+                        </select>
+                        <label>Ville d'arrivée</label>
+                        <select id="city-b">
+                            <option value="Lyon">Lyon</option>
+                            <option value="Marseille">Marseille</option>
+                            <option value="Bordeaux">Bordeaux</option>
+                            <option value="Lille">Lille</option>
+                            <option value="Strasbourg">Strasbourg</option>
+                            <option value="Nantes">Nantes</option>
+                            <option value="Toulouse">Toulouse</option>
+                        </select>
+                        <button onclick="launchProject()">Lancer les Études & Phase 1 (DUP)</button>
                     </div>
 
-                    <label style="font-size:0.85rem; color:var(--text-muted);">Ville de départ</label>
-                    <select id="city-a"></select>
-                    
-                    <label style="font-size:0.85rem; color:var(--text-muted);">Ville d'arrivée</label>
-                    <select id="city-b"></select>
-
-                    <label style="font-size:0.85rem; color:var(--text-muted);">Type de liaison</label>
-                    <select id="is-toll">
-                        <option value="true">🟢 Autoroute concédée (Péage)</option>
-                        <option value="false">🔵 Voie express (Gratuite)</option>
-                    </select>
-
-                    <button onclick="startProject()">Lancer les Études & Phase 1 (DUP)</button>
-                </div>
-            </div>
-
-            <!-- VUE RÉSEAU -->
-            <div id="view-network" class="dashboard-view" style="display:none;">
-                <div class="card-panel">
-                    <h3>🛣️ Réseau Autoroutier Exploité</h3>
-                    <div id="highways-list" class="item-list"></div>
-                </div>
-            </div>
-
-            <!-- VUE FLOTTE -->
-            <div id="view-fleet" class="dashboard-view" style="display:none;">
-                <div class="card-panel">
-                    <h3>🚚 Gestion de la Flotte & Maintenance</h3>
-                    <div style="font-size:0.85rem; font-weight:bold; margin-bottom:8px;">Catalogue d'acquisition :</div>
-                    <div id="fleet-catalog" class="item-list"></div>
-                    
-                    <div style="font-size:0.85rem; font-weight:bold; margin-top:15px; margin-bottom:8px;">Parc possédé :</div>
-                    <div id="fleet-player" class="item-list"></div>
-                </div>
-            </div>
-
-            <!-- VUE BANQUE -->
-            <div id="view-bank" class="dashboard-view" style="display:none;">
-                <div class="card-panel">
-                    <h3>🏦 Trésorerie & Financements</h3>
-                    
-                    <div class="tab-bar">
-                        <button class="tab-btn active" onclick="switchBankTab(event, 'bank-loans')">Prêts Bancaires</button>
+                    <div class="card-panel">
+                        <h3>🚧 Suivi des Chantiers en Cours</h3>
+                        <div id="projects-container" style="font-size: 0.85rem; color: var(--text-muted);">Chargement...</div>
                     </div>
+                </div>
 
-                    <div id="bank-loans" class="tab-content active" style="margin-top:15px;">
-                        <div style="background-color: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                            <label style="font-size:0.85rem; color:var(--text-muted);">Montant du prêt (€)</label>
-                            <input type="number" id="loan-amount-input" value="5000000" step="1000000" min="1000000" max="20000000">
-                            <button onclick="takeLoan()" style="background-color: var(--accent-success);">Contracter l'emprunt</button>
+                <!-- VUE SIÈGE SOCIAL -->
+                <div id="view-hq" class="dashboard-view" style="display:none;">
+                    <div class="card-panel">
+                        <h3>🏢 Direction & R&D</h3>
+                        <div id="hq-status-info" style="font-size:0.9rem; margin-bottom:15px; color:var(--text-muted)">Chargement...</div>
+                        
+                        <div class="item-list">
+                            <div class="item-row">
+                                <div><strong>Département R&D</strong><br><small style="color:var(--text-muted)">Accélère les technologies</small></div>
+                                <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('rd')">Améliorer (1.5M €)</button>
+                            </div>
+                            <div class="item-row">
+                                <div><strong>Service Juridique</strong><br><small style="color:var(--text-muted)">Fluidifie les procédures</small></div>
+                                <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('legal')">Améliorer (1.5M €)</button>
+                            </div>
+                            <div class="item-row">
+                                <div><strong>Centre des Opérations</strong><br><small style="color:var(--text-muted)">Améliore la maintenance</small></div>
+                                <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('ops')">Améliorer (1.5M €)</button>
+                            </div>
                         </div>
-                        <div style="margin-top:15px; font-weight:bold; font-size:0.9rem;">Encours total :</div>
-                        <div id="loan-status" style="font-size: 1.2rem; color: var(--accent-warning); margin-top:5px;">0 €</div>
                     </div>
                 </div>
+
+                <!-- VUE RESSOURCES HUMAINES -->
+                <div id="view-hr" class="dashboard-view" style="display:none;">
+                    <div class="card-panel">
+                        <h3>👥 Gestion du Personnel</h3>
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Embauchez des spécialistes pour booster vos performances.</div>
+                        <div id="hr-departments-list" class="item-list"></div>
+                    </div>
+                </div>
+
             </div>
 
-        </div>
-
-        <div class="map-col">
-            <div style="padding: 12px 20px; background-color: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                <strong>CARTE OFFICIELLE DE LA FRANCE</strong>
-                <button onclick="resetMapFrance()" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">Centrer</button>
+            <!-- CARTE INTERACTIVE -->
+            <div class="right-map">
+                <div id="map"></div>
             </div>
-            <div id="map"></div>
         </div>
-
     </div>
 
-<script>
-    const SUPABASE_URL = 'https://bqyodcxwbjpucpmudkmn.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_8h4cupw2ZGpslNlJ4BZ7Rg_UtPH5CPc';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // CONFIGURATION SUPABASE (Remplace par tes clés)
+        const SUPABASE_URL = 'VOTRE_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'VOTRE_SUPABASE_ANON_KEY';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const CITIES_COORDS = {
-        'Paris': [48.8566, 2.3522], 'Marseille': [43.2965, 5.3698], 'Lyon': [45.7640, 4.8357],
-        'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620], 'Nantes': [47.2184, -1.5536],
-        'Montpellier': [43.6108, 3.8767], 'Strasbourg': [48.5734, 7.7521], 'Bordeaux': [44.8378, -0.5792],
-        'Lille': [50.6292, 3.0573], 'Rennes': [48.1172, -1.6778], 'Grenoble': [45.1885, 5.7245]
-    };
-
-    let map, highwaysLayerGroup;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        initMap();
-        loadGameState();
-        loadCities();
-        loadHighways();
-        loadProjects();
-        loadFleet();
-        setInterval(autoGameTick, 6000);
-    });
-
-    function initMap() {
-        map = L.map('map', { zoomControl: false }).setView([46.6033, 1.8883], 6);
-        L.control.zoom({ position: 'topright' }).addTo(map);
-
+        // Initialisation de la carte Leaflet centrée sur la France
+        const map = L.map('map').setView([46.6033, 1.8883], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
+            maxZoom: 18,
+            attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        highwaysLayerGroup = L.layerGroup().addTo(map);
-
-        Object.keys(CITIES_COORDS).forEach(cityName => {
-            L.circleMarker(CITIES_COORDS[cityName], { radius: 6, color: '#0284c7', fillColor: '#38bdf8', fillOpacity: 1, weight: 2 })
-             .bindTooltip(cityName, { permanent: true, direction: 'top', className: 'city-label' }).addTo(map);
-        });
-    }
-
-    function resetMapFrance() { map.setView([46.6033, 1.8883], 6); }
-
-    function switchMainView(viewName) {
-        document.querySelectorAll('.dashboard-view').forEach(v => v.style.display = 'none');
-        document.querySelectorAll('sidebar .nav-item').forEach(n => n.classList.remove('active'));
-
-        document.getElementById(`view-${viewName}`).style.display = 'block';
-        event.currentTarget.classList.add('active');
-    }
-
-    function switchBankTab(event, tabId) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
-    }
-
-    async function loadGameState() {
-        const { data } = await supabaseClient.from('game_state').select('*').eq('id', 1).single();
-        if (!data) return;
-
-        document.getElementById('top-budget').innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.budget);
-        document.getElementById('satisfaction').innerText = `${Math.round(data.satisfaction)} %`;
-        document.getElementById('ticker').innerText = data.ticker_message;
-        document.getElementById('loan-status').innerText = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.loan_amount);
-    }
-
-    async function loadCities() {
-        const selectA = document.getElementById('city-a');
-        const selectB = document.getElementById('city-b');
-        selectA.innerHTML = ''; selectB.innerHTML = '';
-        Object.keys(CITIES_COORDS).sort().forEach(city => {
-            selectA.add(new Option(city, city));
-            selectB.add(new Option(city, city));
-        });
-    }
-
-    async function loadProjects() {
-        const { data } = await supabaseClient.from('construction_projects').select('*');
-        const container = document.getElementById('projects-list');
-        container.innerHTML = '';
-
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px; font-size:0.85rem;">Aucun chantier en cours.</div>';
-            return;
-        }
-
-        const phaseNames = {
-            1: 'Phase 1 : Études & DUP',
-            2: 'Phase 2 : Concertation / ZAD',
-            3: 'Phase 3 : Foncier & Archéologie',
-            4: 'Phase 4 : Travaux de Génie Civil',
-            5: 'Phase 5 : Compensations & Mise en service'
+        const cityCoords = {
+            'Paris': [48.8566, 2.3522],
+            'Lyon': [45.7640, 4.8357],
+            'Marseille': [43.2965, 5.3698],
+            'Bordeaux': [44.8378, -0.5792],
+            'Lille': [50.6292, 3.0573],
+            'Strasbourg': [48.5734, 7.7521],
+            'Nantes': [47.2184, -1.5536],
+            'Toulouse': [43.6047, 1.4442]
         };
 
-        data.forEach(p => {
-            container.innerHTML += `
-                <div class="item-row">
-                    <div>
-                        <strong>${p.highway_name}</strong><br>
-                        <span class="badge badge-phase">${phaseNames[p.current_phase]}</span>
-                        <small style="color:var(--text-muted)">Avancée : ${p.phase_progress}%</small>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    async function loadHighways() {
-        const { data } = await supabaseClient.from('highways').select('*');
-        const container = document.getElementById('highways-list');
-        container.innerHTML = '';
-        highwaysLayerGroup.clearLayers();
-
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:15px; font-size:0.85rem;">Aucune autoroute en service.</div>';
-            return;
+        // Navigation entre onglets
+        function switchMainView(viewName, element) {
+            document.querySelectorAll('.dashboard-view').forEach(el => el.style.display = 'none');
+            document.getElementById(`view-${viewName}`).style.display = 'block';
+            document.querySelectorAll('sidebar .nav-item').forEach(el => el.classList.remove('active'));
+            if(element) element.classList.add('active');
         }
 
-        data.forEach(async (hw) => {
-            container.innerHTML += `
-                <div class="item-row">
-                    <div>
-                        <strong>${hw.name}</strong><br>
-                        <small style="color:var(--text-muted)">État chaussée: ${Math.round(hw.condition_pct)}% | Trafic 🚗 ${hw.car_traffic} 🚚 ${hw.truck_traffic}</small>
-                    </div>
-                </div>
-            `;
-
-            if (CITIES_COORDS[hw.city_a] && CITIES_COORDS[hw.city_b]) {
-                L.polyline([CITIES_COORDS[hw.city_a], CITIES_COORDS[hw.city_b]], { color: '#16a34a', weight: 5 }).addTo(highwaysLayerGroup);
+        // Chargement de l'état global du jeu
+        async function loadGameState() {
+            const { data } = await supabaseClient.from('game_state').select('*').eq('id', 1).single();
+            if (data) {
+                document.getElementById('stat-budget').innerText = `Trésorerie : ${Number(data.budget).toLocaleString()} €`;
             }
-        });
-    }
+            loadProjects();
+            loadHqAndHr();
+            loadMapHighways();
+        }
 
-    async function loadFleet() {
-        const { data: catalog } = await supabaseClient.from('fleet_catalog').select('*');
-        const { data: player } = await supabaseClient.from('fleet_player').select('*');
-        
-        const catContainer = document.getElementById('fleet-catalog');
-        const playContainer = document.getElementById('fleet-player');
-        catContainer.innerHTML = ''; playContainer.innerHTML = '';
+        async function loadMapHighways() {
+            // Affichage des autoroutes sur la carte
+            const { data: highways } = await supabaseClient.from('highways').select('*');
+            if (highways) {
+                highways.forEach(hw => {
+                    if (cityCoords[hw.city_a] && cityCoords[hw.city_b]) {
+                        L.polyline([cityCoords[hw.city_a], cityCoords[hw.city_b]], {color: '#3b82f6', weight: 4, opacity: 0.8})
+                         .addTo(map)
+                         .bindPopup(`<b>${hw.name}</b><br>État : ${hw.condition_pct.toFixed(1)}%`);
+                    }
+                });
+            }
+        }
 
-        if (catalog) {
-            catalog.forEach(item => {
-                catContainer.innerHTML += `
-                    <div class="item-row">
-                        <div><strong>${item.name}</strong><br><small style="color:var(--text-muted)">${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(item.price)}</small></div>
-                        <button style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="buyVehicle('${item.vehicle_key}')">Acquérir</button>
+        async function loadProjects() {
+            const { data } = await supabaseClient.from('construction_projects').select('*');
+            const container = document.getElementById('projects-container');
+            if (!data || data.length === 0) {
+                container.innerHTML = 'Aucun chantier en cours.';
+                return;
+            }
+            container.innerHTML = '';
+            data.forEach(p => {
+                container.innerHTML += `
+                    <div class="item-row" style="margin-bottom:8px;">
+                        <div>
+                            <strong>${p.highway_name}</strong><br>
+                            <small>Phase ${p.current_phase}/5 — Avancée : ${p.phase_progress}%</small>
+                        </div>
                     </div>
                 `;
             });
         }
 
-        if (player) {
-            player.forEach(item => {
-                if (item.count > 0) {
-                    playContainer.innerHTML += `
+        async function loadHqAndHr() {
+            const { data: hq } = await supabaseClient.from('headquarters').select('*').eq('id', 1).single();
+            if (hq) {
+                document.getElementById('hq-status-info').innerHTML = `
+                    <strong>${hq.hq_name}</strong><br>
+                    • R&D : Niv. ${hq.rd_level}<br>
+                    • Juridique : Niv. ${hq.legal_level}<br>
+                    • Opérations : Niv. ${hq.ops_level}
+                `;
+            }
+
+            const { data: depts } = await supabaseClient.from('employee_departments').select('*');
+            const hrContainer = document.getElementById('hr-departments-list');
+            hrContainer.innerHTML = '';
+            if (depts) {
+                depts.forEach(d => {
+                    hrContainer.innerHTML += `
                         <div class="item-row">
-                            <div><strong>${item.vehicle_key}</strong></div>
-                            <span style="font-weight:bold; color:var(--accent);">x${item.count}</span>
+                            <div>
+                                <strong>${d.name}</strong><br>
+                                <small style="color:var(--text-muted)">Effectif : ${d.staff_count} | Salaire : ${d.monthly_salary} €/m</small>
+                            </div>
+                            <button style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="hireStaff('${d.dept_key}')">+5</button>
                         </div>
                     `;
-                }
-            });
+                });
+            }
         }
-    }
 
-    async function startProject() {
-        const cityA = document.getElementById('city-a').value;
-        const cityB = document.getElementById('city-b').value;
-        const isToll = document.getElementById('is-toll').value === 'true';
+        async function launchProject() {
+            const cityA = document.getElementById('city-a').value;
+            const cityB = document.getElementById('city-b').value;
+            if (cityA === cityB) return alert('La ville de départ et d’arrivée doivent être différentes.');
 
-        if (cityA === cityB) return alert("Sélectionnez deux villes différentes.");
+            const { data, error } = await supabaseClient.rpc('start_highway_project', { p_city_a: cityA, p_city_b: cityB, p_is_toll: true });
+            if (error || !data.success) return alert(error ? error.message : data.message);
+            alert(data.message);
+            loadGameState();
+        }
 
-        const { data, error } = await supabaseClient.rpc('start_highway_project', { p_city_a: cityA, p_city_b: cityB, p_is_toll: isToll });
-        if (error || !data.success) return alert(error ? error.message : data.message);
+        async function upgradeHq(dept) {
+            const { data, error } = await supabaseClient.rpc('upgrade_hq_department', { p_dept: dept });
+            if (error || !data.success) return alert(error ? error.message : data.message);
+            alert(data.message);
+            loadGameState();
+        }
 
-        alert(data.message);
-        loadGameState();
-        loadProjects();
-    }
+        async function hireStaff(deptKey) {
+            const { data, error } = await supabaseClient.rpc('hire_employees', { p_dept_key: deptKey, p_amount: 5 });
+            if (error || !data.success) return alert(error ? error.message : data.message);
+            alert(data.message);
+            loadGameState();
+        }
 
-    async function takeLoan() {
-        const amount = parseFloat(document.getElementById('loan-amount-input').value);
-        await supabaseClient.rpc('take_loan', { p_amount: amount });
-        loadGameState();
-    }
+        // Boucle de simulation automatique (Toutes les 4 secondes)
+        setInterval(async () => {
+            await supabaseClient.rpc('process_game_tick');
+            loadGameState();
+        }, 4000);
 
-    async function buyVehicle(key) {
-        const { data } = await supabaseClient.rpc('buy_vehicle', { p_vehicle_key: key });
-        alert(data.message);
-        loadGameState();
-        loadFleet();
-    }
-
-    async function autoGameTick() {
-        await supabaseClient.rpc('process_game_tick');
-        loadGameState();
-        loadProjects();
-        loadHighways();
-    }
-</script>
-
+        // Chargement initial au démarrage de la page
+        window.onload = () => {
+            loadGameState();
+        };
+    </script>
 </body>
 </html>
