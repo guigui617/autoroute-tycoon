@@ -125,11 +125,11 @@
                 </div>
             </div>
 
-            <!-- VUE : LIGNES (Processus en 5 phases pour nouveau tronçon) -->
+            <!-- VUE : LIGNES -->
             <div id="view-lignes" class="app-view">
                 <div class="welcome-header">
                     <div class="welcome-title">Tracé des Autoroutes & Procédure</div>
-                    <div class="company-subtitle">Respectez les 5 phases administratives, foncières et de génie civil.</div>
+                    <div class="company-subtitle">Coûts calculés dynamiquement selon la distance kilométrique et le terrain.</div>
                 </div>
 
                 <div class="panel-box">
@@ -138,8 +138,14 @@
                     <select id="city-a" class="city-select"></select>
                     <label>Ville d'arrivée</label>
                     <select id="city-b" class="city-select"></select>
+                    
+                    <div id="route-estimate-box" style="background:var(--bg-card); padding:10px; border-radius:6px; border:1px solid var(--border); margin: 10px 0; font-size: 0.8rem;">
+                        <div>Distance estimée : <strong id="est-distance">0 km</strong></div>
+                        <div>Coût calculé (Terrain & Km) : <strong id="est-cost" style="color:var(--warning);">0 $US</strong></div>
+                    </div>
+
                     <button class="primary-btn" onclick="launchRealHighwayProject()">Lancer la Phase 1 (DUP & Administrative)</button>
-                    <div id="loading-route" style="display:none; font-size:0.75rem; color:var(--warning); margin-top:5px;">Calcul du tracé OpenStreetMap...</div>
+                    <div id="loading-route" style="display:none; font-size:0.75rem; color:var(--warning); margin-top:5px;">Calcul du tracé OpenStreetMap & Analyse topographique...</div>
                 </div>
 
                 <div class="panel-box">
@@ -161,7 +167,7 @@
                 </div>
             </div>
 
-            <!-- VUE : TECHNOLOGIES / R&D (ARBRE HIÉRARCHIQUE COMPLET) -->
+            <!-- VUE : TECHNOLOGIES / R&D -->
             <div id="view-tech" class="app-view">
                 <div class="welcome-header">
                     <div class="welcome-title">Arbre de Recherche & Développement (R&D)</div>
@@ -169,7 +175,6 @@
                 </div>
 
                 <div class="rd-container">
-                    <!-- Boutons de catégories -->
                     <div class="rd-categories">
                         <button class="rd-cat-btn active" onclick="filterTechCategory('all', this)">🌐 Tout afficher</button>
                         <button class="rd-cat-btn" onclick="filterTechCategory('voies', this)">🛣️ Voies & Capacité</button>
@@ -177,8 +182,6 @@
                         <button class="rd-cat-btn" onclick="filterTechCategory('services', this)">⚡ Écologie & Services</button>
                         <button class="rd-cat-btn" onclick="filterTechCategory('innovation', this)">💡 Innovations & Tech</button>
                     </div>
-
-                    <!-- Grille des technologies hiérarchiques -->
                     <div id="rd-grid-container" class="rd-grid"></div>
                 </div>
             </div>
@@ -193,7 +196,6 @@
                     <div style="font-size: 0.9rem; font-weight: bold; color: var(--warning);">🪙 1748</div>
                 </div>
 
-                <!-- Sous-onglets du Siège -->
                 <div class="sub-tabs">
                     <button class="sub-tab-btn active" onclick="switchSiegeTab('organigramme', this)">Organigramme</button>
                     <button class="sub-tab-btn" onclick="switchSiegeTab('rh', this)">RH</button>
@@ -202,25 +204,22 @@
                     <button class="sub-tab-btn" onclick="switchSiegeTab('marque', this)">Marque</button>
                 </div>
 
-                <!-- SOUS-ONGLET : ORGANIGRAMME -->
                 <div id="siege-sub-organigramme" class="siege-subview active">
                     <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez et achetez les niveaux de vos directeurs (salaires et frais de fonctionnement).</p>
                     <div id="directors-list-container"></div>
                 </div>
 
-                <!-- SOUS-ONGLET : RH -->
                 <div id="siege-sub-rh" class="siege-subview">
                     <div class="panel-box">
                         <h3>Auto-embauche</h3>
-                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Le DRH maintient vos effectifs (patrouilleurs, opérateurs PC sécurité, agents d'entretien).</p>
                         <label>Budget mensuel max ($)</label>
                         <input type="number" value="0">
                         <button class="primary-btn">Enregistrer</button>
                     </div>
                 </div>
 
-                <div id="siege-sub-rd" class="siege-subview"><div class="panel-box"><h3>Recherche & Développement</h3><p style="font-size:0.8rem; color:var(--text-muted);">Consultez l'onglet R&D dans la barre latérale.</p></div></div>
-                <div id="siege-sub-marketing" class="siege-subview"><div class="panel-box"><h3>Redevances Publiques & Publicitaires</h3><button class="primary-btn" onclick="launchMarketingCampaign()">Lancer une campagne publicitaire (500 000 $US)</button></div></div>
+                <div id="siege-sub-rd" class="siege-subview"><div class="panel-box"><h3>Recherche & Développement</h3></div></div>
+                <div id="siege-sub-marketing" class="siege-subview"><div class="panel-box"><h3>Redevances Publiques & Publicitaires</h3><button class="primary-btn" onclick="launchMarketingCampaign()">Lancer une campagne (500 000 $US)</button></div></div>
                 <div id="siege-sub-marque" class="siege-subview"><div class="panel-box"><h3>Réputation de la Marque</h3><p style="font-size:0.8rem; color:var(--text-muted);">Satisfaction usagers : <strong style="color:var(--success);">94%</strong></p></div></div>
 
             </div>
@@ -234,16 +233,25 @@
 
     </div>
 
-    <!-- Conteneur de Notifications -->
     <div id="toast-container"></div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Liste complète des principales villes de France avec coordonnées géographiques précises
         const frenchCities = {
             'Paris': [48.8566, 2.3522], 'Lyon': [45.7640, 4.8357], 'Marseille': [43.2965, 5.3698],
             'Bordeaux': [44.8378, -0.5792], 'Lille': [50.6292, 3.0573], 'Strasbourg': [48.5734, 7.7521],
-            'Nantes': [47.2184, -1.5536], 'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620]
+            'Nantes': [47.2184, -1.5536], 'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620],
+            'Rennes': [48.1173, -1.6778], 'Montpellier': [43.6108, 3.8767], 'Grenoble': [45.1885, 5.7245],
+            'Rouen': [49.4432, 1.0999], 'Toulon': [43.1242, 5.9280], 'Douai': [50.3667, 3.0833],
+            'Loos-en-Gohelle': [50.4500, 2.7833], 'Saint-Germain-en-Laye': [48.8986, 2.0937], 'Val-de-Marne': [48.7833, 2.4500],
+            'Reims': [49.2583, 4.0317], 'Dijon': [47.3220, 5.0415], 'Clermont-Ferrand': [45.7772, 3.0870],
+            'Tours': [47.3941, 0.6848], 'Orléans': [47.9029, 1.9090], 'Angers': [47.4784, -0.5632],
+            'Brest': [48.3904, -4.4861], 'Le Havre': [49.4944, 0.1079], 'Limoges': [45.8336, 1.2611],
+            'Aix-en-Provence': [43.5297, 5.4474], 'Perpignan': [42.6986, 2.8956], 'Metz': [49.1193, 6.1757],
+            'Besançon': [47.2378, 6.0241], 'Orléans': [47.9029, 1.9090], 'Caen': [49.1829, -0.3707],
+            'Nancy': [48.6921, 6.1844], 'Pau': [43.2951, -0.3708], 'Bayonne': [43.4929, -1.4748]
         };
 
         const restAreasDatabase = [
@@ -251,34 +259,25 @@
             { id: 'aire-lille-paris', routeKey: 'Lille-Paris', name: 'Aire de Repos de Vémars', lat: 49.0558, lng: 2.5511, desc: 'Carburant & Hubs énergétiques', level: 1, cost: 2000000 }
         ];
 
-        // Arbre de recherche hiérarchique avec prérequis stricts
         let technologies = [
-            // Voies & Capacité
-            { id: 'voies_2x2', category: 'voies', name: 'Élargissement 2 x 2 voies', desc: 'Passe les autoroutes à 2x2 voies. Capacité et flux augmentés.', cost: 3000000, unlocked: false, prereq: null, multiplierBonus: 1.25 },
-            { id: 'voies_2x3', category: 'voies', name: 'Élargissement 2 x 3 voies', desc: 'Aménagement à 3 voies par sens pour résorber la congestion.', cost: 10000000, unlocked: false, prereq: 'voies_2x2', multiplierBonus: 1.40 },
-            { id: 'voies_2x4', category: 'voies', name: 'Autoroute XXL : 2 x 4 voies', desc: 'Le summum de l artère autoroutière. Passage à 4 voies par sens (+75% revenus).', cost: 25000000, unlocked: false, prereq: 'voies_2x3', multiplierBonus: 1.75 },
-
-            // Infrastructures & Génie Civil
-            { id: 'bitume', category: 'infrastructure', name: 'Bitume Haute Résistance & Drainant', desc: 'Réduit les coûts de maintenance de 25% et évacue rapidement l eau.', cost: 8000000, unlocked: false, prereq: null },
-            { id: 'ponts_suspendus', category: 'infrastructure', name: 'Génie Civil Avancé (Ponts & Tunnels)', desc: 'Franchissement des reliefs complexes et réduction des coûts de construction de 15%.', cost: 15000000, unlocked: false, prereq: 'bitume' },
-
-            // Écologie & Services
-            { id: 'eclairage_solaire', category: 'services', name: 'Éclairage Solaire & Murs anti-bruit', desc: 'Protection des riverains et sécurisation nocturne des axes.', cost: 6000000, unlocked: false, prereq: null },
-            { id: 'bornes_ev', category: 'services', name: 'Bornes Électriques Ultra-rapides & Hydrogène', desc: 'Améliore les revenus des aires de repos et des stations de recharge.', cost: 12000000, unlocked: false, prereq: 'eclairage_solaire' },
-            { id: 'ecoponts', category: 'services', name: 'Écoponts & Passages à Faune', desc: 'Préservation de la biodiversité et prévention des collisions sauvages.', cost: 22000000, unlocked: false, prereq: 'bornes_ev' },
-
-            // Innovations & Technologies
-            { id: 'telepeage', category: 'innovation', name: 'Télépéage sans arrêt & PMV', desc: 'Fluidifie le passage et équipe les voies de Panneaux à Message Variable.', cost: 5000000, unlocked: false, prereq: null },
-            { id: 'ia_trafic', category: 'innovation', name: 'Régulation Dynamique par IA', desc: 'Gestion intelligente des vitesses et des flux en temps réel.', cost: 18000000, unlocked: false, prereq: 'telepeage' },
-            { id: 'flux_libre', category: 'innovation', name: 'Péage en Flux Libre (LPR)', desc: 'Remplacement des barrières par des portiques électroniques de lecture automatique.', cost: 30000000, unlocked: false, prereq: 'ia_trafic' }
+            { id: 'voies_2x2', category: 'voies', name: 'Élargissement 2 x 2 voies', desc: 'Passe les autoroutes à 2x2 voies.', cost: 3000000, unlocked: false, prereq: null, multiplierBonus: 1.25 },
+            { id: 'voies_2x3', category: 'voies', name: 'Élargissement 2 x 3 voies', desc: 'Aménagement à 3 voies par sens.', cost: 10000000, unlocked: false, prereq: 'voies_2x2', multiplierBonus: 1.40 },
+            { id: 'voies_2x4', category: 'voies', name: 'Autoroute XXL : 2 x 4 voies', desc: 'Passage à 4 voies par sens (+75% revenus).', cost: 25000000, unlocked: false, prereq: 'voies_2x3', multiplierBonus: 1.75 },
+            { id: 'bitume', category: 'infrastructure', name: 'Bitume Haute Résistance & Drainant', desc: 'Réduit les coûts de maintenance de 25%.', cost: 8000000, unlocked: false, prereq: null },
+            { id: 'ponts_suspendus', category: 'infrastructure', name: 'Génie Civil Avancé (Ponts & Tunnels)', desc: 'Franchissement des reliefs complexes (-15% coût construction).', cost: 15000000, unlocked: false, prereq: 'bitume' },
+            { id: 'eclairage_solaire', category: 'services', name: 'Éclairage Solaire & Murs anti-bruit', desc: 'Protection des riverains.', cost: 6000000, unlocked: false, prereq: null },
+            { id: 'bornes_ev', category: 'services', name: 'Bornes Électriques Ultra-rapides & Hydrogène', desc: 'Améliore les revenus des aires.', cost: 12000000, unlocked: false, prereq: 'eclairage_solaire' },
+            { id: 'ecoponts', category: 'services', name: 'Écoponts & Passages à Faune', desc: 'Préservation de la biodiversité.', cost: 22000000, unlocked: false, prereq: 'bornes_ev' },
+            { id: 'telepeage', category: 'innovation', name: 'Télépéage sans arrêt & PMV', desc: 'Fluidifie le passage.', cost: 5000000, unlocked: false, prereq: null },
+            { id: 'ia_trafic', category: 'innovation', name: 'Régulation Dynamique par IA', desc: 'Gestion intelligente des flux.', cost: 18000000, unlocked: false, prereq: 'telepeage' },
+            { id: 'flux_libre', category: 'innovation', name: 'Péage en Flux Libre (LPR)', desc: 'Suppression des barrières physiques.', cost: 30000000, unlocked: false, prereq: 'ia_trafic' }
         ];
 
         let currentTechFilter = 'all';
-
         let directors = [
-            { id: 'rh', name: 'Directeur des Ressources Humaines', desc: 'Recrute patrouilleurs, opérateurs PC et agents d entretien.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
-            { id: 'tech', name: 'Directeur Technique', desc: 'Supervise le génie civil, l entretien des chaussées et la R&D.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
-            { id: 'fin', name: 'Directeur Financier', desc: 'Optimise la gestion de la dette, les subventions d État et les péages.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 }
+            { id: 'rh', name: 'Directeur des Ressources Humaines', desc: 'Recrute patrouilleurs et agents.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
+            { id: 'tech', name: 'Directeur Technique', desc: 'Supervise le génie civil et la R&D.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
+            { id: 'fin', name: 'Directeur Financier', desc: 'Optimise la gestion de la dette et subventions.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 }
         ];
 
         let budget = 88697775519;
@@ -290,14 +289,11 @@
         const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
         
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(mapFullscreen);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(mapFullscreen);
 
         Object.keys(frenchCities).forEach(cityName => {
             const coords = frenchCities[cityName];
-            L.circleMarker(coords, { radius: 4, color: '#1e293b', fillColor: '#3b82f6', fillOpacity: 1, weight: 1.5 })
+            L.circleMarker(coords, { radius: 3.5, color: '#1e293b', fillColor: '#3b82f6', fillOpacity: 1, weight: 1 })
              .addTo(mapFullscreen)
              .bindPopup(`<b>${cityName}</b>`);
         });
@@ -324,16 +320,45 @@
                 });
             });
             if(selects.length > 1) selects[1].value = 'Lyon';
+            updateRouteEstimation();
         }
+
+        async function updateRouteEstimation() {
+            const cA = document.getElementById('city-a').value;
+            const cB = document.getElementById('city-b').value;
+            if(!cA || !cB || cA === cB) return;
+
+            const coordsA = frenchCities[cA];
+            const coordsB = frenchCities[cB];
+
+            try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=false`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if(data.routes && data.routes.length > 0) {
+                    const distanceKm = Math.round(data.routes[0].distance / 1000);
+                    // Coût variable selon le terrain et la distance : ex 150,000 $US par kilomètre de base + modificateur de relief fictif/régional
+                    const costPerKm = (cA.includes('Grenoble') || cA.includes('Nice') || cB.includes('Grenoble') || cB.includes('Nice')) ? 350000 : 180000;
+                    const totalCost = distanceKm * costPerKm;
+
+                    document.getElementById('est-distance').innerText = distanceKm + ' km';
+                    document.getElementById('est-cost').innerText = totalCost.toLocaleString() + ' $US';
+                }
+            } catch(e) {
+                document.getElementById('est-distance').innerText = 'Calcul en cours...';
+            }
+        }
+
+        document.querySelectorAll('.city-select').forEach(sel => {
+            sel.addEventListener('change', updateRouteEstimation);
+        });
 
         function switchTab(tabName, element) {
             document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
             const targetView = document.getElementById(`view-${tabName}`);
             if(targetView) targetView.classList.add('active');
-            
             document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
-            
             setTimeout(() => { mapFullscreen.invalidateSize(); }, 150);
         }
 
@@ -341,7 +366,6 @@
             document.querySelectorAll('.siege-subview').forEach(el => el.classList.remove('active'));
             const targetSub = document.getElementById(`siege-sub-${subName}`);
             if(targetSub) targetSub.classList.add('active');
-            
             document.querySelectorAll('.sub-tab-btn').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
         }
@@ -356,7 +380,7 @@
                 container.innerHTML += `
                     <div class="director-card">
                         <div style="font-weight:bold; font-size:0.9rem; margin-bottom:4px;">${dir.name} <span style="font-size:0.7rem; background:var(--primary); padding:2px 6px; border-radius:4px;">Niv. ${dir.level} / ${dir.maxLevel}</span></div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${dir.desc}<br>Salaire actuel : <strong style="color:var(--success);">${Math.round(currentSalary).toLocaleString()} $US/mois</strong></div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${dir.desc}<br>Salaire : <strong style="color:var(--success);">${Math.round(currentSalary).toLocaleString()} $US/mois</strong></div>
                         ${isMax ? '<button class="primary-btn" style="width:auto; padding:5px 12px; background:var(--border);" disabled>Niveau max</button>' : `<button class="primary-btn" style="width:auto; padding:5px 12px;" onclick="upgradeDirector('${dir.id}')">${dir.level === 0 ? 'Recruter' : 'Améliorer'} (${dir.upgradeCost.toLocaleString()} $US)</button>`}
                     </div>
                 `;
@@ -371,7 +395,7 @@
             dir.upgradeCost = Math.round(dir.upgradeCost * 1.6);
             document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
             renderDirectors();
-            showToast(`${dir.name} mis à niveau (Niv. ${dir.level}) !`);
+            showToast(`${dir.name} mis à niveau !`);
         }
 
         function filterTechCategory(category, element) {
@@ -385,10 +409,7 @@
             const container = document.getElementById('rd-grid-container');
             if(!container) return;
             container.innerHTML = '';
-
-            const filteredTechs = currentTechFilter === 'all' 
-                ? technologies 
-                : technologies.filter(t => t.category === currentTechFilter);
+            const filteredTechs = currentTechFilter === 'all' ? technologies : technologies.filter(t => t.category === currentTechFilter);
 
             filteredTechs.forEach(tech => {
                 let isPrereqMet = true;
@@ -398,7 +419,6 @@
                     prereqName = prereqObj ? prereqObj.name : '';
                     if(prereqObj && !prereqObj.unlocked) isPrereqMet = false;
                 }
-
                 let cardClass = tech.unlocked ? 'rd-card unlocked' : (isPrereqMet ? 'rd-card' : 'rd-card locked');
 
                 container.innerHTML += `
@@ -406,19 +426,13 @@
                         <div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
                                 <h3 style="font-size:0.9rem; color:white;">${tech.name}</h3>
-                                ${tech.unlocked ? '<span style="color:var(--success); font-size:0.75rem; font-weight:bold; background:rgba(34,197,94,0.1); padding:2px 6px; border-radius:4px;">Acquis</span>' : ''}
+                                ${tech.unlocked ? '<span style="color:var(--success); font-size:0.75rem; font-weight:bold;">Acquis</span>' : ''}
                             </div>
-                            <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:6px;">${tech.desc}</p>
+                            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">${tech.desc}</p>
                             ${tech.prereq && !tech.unlocked ? `<div style="font-size:0.7rem; color:var(--warning);">Prérequis : ${prereqName}</div>` : ''}
                         </div>
                         <div>
-                            ${tech.unlocked 
-                                ? '<button class="primary-btn" style="background:var(--border); color:var(--text-muted); cursor:default;" disabled>Maîtrisé</button>' 
-                                : (isPrereqMet 
-                                    ? `<button class="primary-btn" onclick="unlockTech('${tech.id}')">Rechercher (${tech.cost.toLocaleString()} $US)</button>`
-                                    : `<button class="primary-btn" style="background:var(--border); cursor:not-allowed;" disabled>Verrouillé</button>`
-                                  )
-                            }
+                            ${tech.unlocked ? '<button class="primary-btn" style="background:var(--border); color:var(--text-muted);" disabled>Maîtrisé</button>' : (isPrereqMet ? `<button class="primary-btn" onclick="unlockTech('${tech.id}')">Rechercher (${tech.cost.toLocaleString()} $US)</button>` : `<button class="primary-btn" style="background:var(--border);" disabled>Verrouillé</button>`)}
                         </div>
                     </div>
                 `;
@@ -433,59 +447,54 @@
             document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
             renderTechTree();
             updateDashboardStats();
-            showToast(`Technologie "${tech.name}" débloquée avec succès !`);
+            showToast(`Technologie "${tech.name}" débloquée !`);
         }
 
-        // Processus en 5 phases administratives & de construction
         async function launchRealHighwayProject() {
             const cA = document.getElementById('city-a').value;
             const cB = document.getElementById('city-b').value;
             if(cA === cB) return alert('Choisissez deux villes différentes !');
-            if(budget < 12500000) return alert('Fonds insuffisants pour lancer le projet (12.5M $US requis) !');
+
+            const coordsA = frenchCities[cA];
+            const coordsB = frenchCities[cB];
 
             const loadingEl = document.getElementById('loading-route');
             if(loadingEl) loadingEl.style.display = 'block';
 
-            showToast('Phase 1 & 2 : Enquête publique, Étude d impact & DUP en cours...');
+            try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=full&geometries=geojson`;
+                const response = await fetch(url);
+                const data = await response.json();
 
-            setTimeout(async () => {
-                showToast('Phase 3 : Acquisitions foncières, exprop. & archéologie préventive validées.');
-                setTimeout(async () => {
-                    const coordsA = frenchCities[cA];
-                    const coordsB = frenchCities[cB];
+                if(loadingEl) loadingEl.style.display = 'none';
 
-                    try {
-                        const url = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=full&geometries=geojson`;
-                        const response = await fetch(url);
-                        const data = await response.json();
+                if(data.routes && data.routes.length > 0) {
+                    const distanceKm = Math.round(data.routes[0].distance / 1000);
+                    const costPerKm = (cA.includes('Grenoble') || cA.includes('Nice') || cB.includes('Grenoble') || cB.includes('Nice')) ? 350000 : 180000;
+                    const totalCost = distanceKm * costPerKm;
 
-                        if(loadingEl) loadingEl.style.display = 'none';
+                    if(budget < totalCost) return alert(`Fonds insuffisants ! Ce projet coûte ${totalCost.toLocaleString()} $US (${distanceKm} km).`);
 
-                        if(data.routes && data.routes.length > 0) {
-                            budget -= 12500000;
-                            document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
-                            
-                            const routeCoordinates = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                            L.polyline(routeCoordinates, { color: '#3b82f6', weight: 5, opacity: 0.85 })
-                             .addTo(mapFullscreen)
-                             .bindPopup(`<b>Autoroute ${cA} ⇄ ${cB} (Phases 4 & 5 achevées)</b>`);
+                    budget -= totalCost;
+                    document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+                    
+                    const routeCoordinates = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                    L.polyline(routeCoordinates, { color: '#3b82f6', weight: 5, opacity: 0.85 })
+                     .addTo(mapFullscreen)
+                     .bindPopup(`<b>Autoroute ${cA} ⇄ ${cB} (${distanceKm} km)</b>`);
 
-                            constructedRoutes.push({ from: cA, to: cB, tollCar: 15, tollTruck: 35 });
-                            constructedRoutes.push({ from: cB, to: cA, tollCar: 15, tollTruck: 35 });
+                    constructedRoutes.push({ from: cA, to: cB, distance: distanceKm, tollCar: 15, tollTruck: 35 });
+                    constructedRoutes.push({ from: cB, to: cA, distance: distanceKm, tollCar: 15, tollTruck: 35 });
 
-                            updateAiresDisplay();
-                            updateTollsManagement();
-                            updateDashboardStats();
-                            showToast(`Inauguration officielle du tronçon ${cA} - ${cB} !`);
-                        } else {
-                            alert('Erreur lors du calcul du tracé routier.');
-                        }
-                    } catch (error) {
-                        if(loadingEl) loadingEl.style.display = 'none';
-                        alert('Impossible de joindre le service de routage.');
-                    }
-                }, 2000);
-            }, 2000);
+                    updateAiresDisplay();
+                    updateTollsManagement();
+                    updateDashboardStats();
+                    showToast(`Inauguration du tronçon ${cA} - ${cB} (${distanceKm} km) !`);
+                }
+            } catch (error) {
+                if(loadingEl) loadingEl.style.display = 'none';
+                alert('Erreur lors du calcul du tracé.');
+            }
         }
 
         function updateTollsManagement() {
@@ -505,7 +514,7 @@
             uniqueRoutes.forEach((route) => {
                 container.innerHTML += `
                     <div class="item-row">
-                        <div><strong>${route.from} ⇄ ${route.to}</strong></div>
+                        <div><strong>${route.from} ⇄ ${route.to}</strong> (${route.distance} km)</div>
                         <div style="display:flex; gap:10px; align-items:center;">
                             <label>Voiture ($): <input type="number" value="${route.tollCar}" style="width:60px; margin:0;" onchange="updateTollValue('${route.from}', '${route.to}', 'car', this.value)"></label>
                             <label>Poids Lourd ($): <input type="number" value="${route.tollTruck}" style="width:60px; margin:0;" onchange="updateTollValue('${route.from}', '${route.to}', 'truck', this.value)"></label>
@@ -522,50 +531,31 @@
                     if(type === 'truck') r.tollTruck = parseFloat(val);
                 }
             });
-            showToast(`Tarifs dynamiques mis à jour pour ${from}-${to}`);
+            showToast(`Tarifs mis à jour pour ${from}-${to}`);
         }
 
         function updateAiresDisplay() {
             const container = document.getElementById('aires-list-container');
             if(!container) return;
             container.innerHTML = '';
-
             activeMarkers.forEach(m => mapFullscreen.removeLayer(m));
             activeMarkers = [];
 
-            let unlockedCount = 0;
-
             restAreasDatabase.forEach(aire => {
                 const isBuilt = constructedRoutes.some(route => aire.routeKey.includes(route.from) && aire.routeKey.includes(route.to));
-
                 if (isBuilt) {
-                    unlockedCount++;
-                    const marker = L.circleMarker([aire.lat, aire.lng], {
-                        radius: 7,
-                        color: '#b45309',
-                        fillColor: '#f59e0b',
-                        fillOpacity: 1,
-                        weight: 2
-                    }).addTo(mapFullscreen);
-
-                    marker.bindPopup(`<b>⛽ ${aire.name}</b><br>${aire.desc} (Niveau ${aire.level})`);
+                    const marker = L.circleMarker([aire.lat, aire.lng], { radius: 7, color: '#b45309', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 }).addTo(mapFullscreen);
+                    marker.bindPopup(`<b>⛽ ${aire.name}</b>`);
                     activeMarkers.push(marker);
 
                     container.innerHTML += `
                         <div class="item-row">
-                            <div><strong>${aire.name}</strong> (Niveau ${aire.level})<br><small style="color:var(--text-muted)">${aire.desc}</small></div>
-                            <div style="display:flex; gap:8px; align-items:center;">
-                                <button class="primary-btn" style="padding:4px 8px; font-size:0.75rem;" onclick="upgradeAire('${aire.id}')">Améliorer (${aire.cost.toLocaleString()} $US)</button>
-                                <button class="primary-btn" style="padding:4px 8px; font-size:0.75rem; background:var(--border);" onclick="mapFullscreen.setView([${aire.lat}, ${aire.lng}], 10);">Voir</button>
-                            </div>
+                            <div><strong>${aire.name}</strong><br><small style="color:var(--text-muted)">${aire.desc}</small></div>
+                            <button class="primary-btn" style="padding:4px 8px; font-size:0.75rem;" onclick="upgradeAire('${aire.id}')">Améliorer (${aire.cost.toLocaleString()} $US)</button>
                         </div>
                     `;
                 }
             });
-
-            if (unlockedCount === 0) {
-                container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Aucune aire de repos disponible. Construisez les liaisons routières requises.</p>';
-            }
         }
 
         function upgradeAire(aireId) {
@@ -576,14 +566,14 @@
             aire.cost = Math.round(aire.cost * 1.5);
             document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
             updateAiresDisplay();
-            showToast(`Aire ${aire.name} améliorée au niveau ${aire.level} !`);
+            showToast(`Aire ${aire.name} améliorée !`);
         }
 
         function launchMarketingCampaign() {
             if(budget < 500000) return alert('Fonds insuffisants !');
             budget -= 500000;
             document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
-            showToast('Campagne publicitaire et redevances de concessions perçues !');
+            showToast('Campagne publicitaire lancée !');
         }
 
         function updateDashboardStats() {
@@ -624,7 +614,6 @@
             currentWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
             const weatherEl = document.getElementById('weather-status');
             if(weatherEl) weatherEl.innerText = currentWeather;
-            showToast(`Alerte Météo / Gestion de Crise : ${currentWeather}`);
         }, 45000);
 
         window.onload = () => {
