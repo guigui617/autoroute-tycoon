@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Connexion & Édition Pro</title>
+    <title>Autoroute Tycoon - Édition Pro & Sauvegarde Cloud</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -94,7 +94,7 @@
             display: block;
         }
 
-        /* --- INTERFACE DU JEU (Cachée au départ) --- */
+        /* --- INTERFACE DU JEU --- */
         #game-container {
             display: none;
             height: 100vh;
@@ -300,7 +300,6 @@
                 <button class="auth-tab" onclick="switchAuthTab('register')">Créer un compte</button>
             </div>
 
-            <!-- Formulaire de Connexion -->
             <div id="login-form" class="auth-form active">
                 <div class="control-group">
                     <label>Adresse e-mail</label>
@@ -310,10 +309,9 @@
                     <label>Mot de passe</label>
                     <input type="password" id="login-password" placeholder="••••••••">
                 </div>
-                <button onclick="handleLogin()">Connexion</button>
+                <button onclick="handleLogin()">Connexion & Charger</button>
             </div>
 
-            <!-- Formulaire d'Inscription -->
             <div id="register-form" class="auth-form">
                 <div class="control-group">
                     <label>Adresse e-mail</label>
@@ -328,11 +326,11 @@
         </div>
     </div>
 
-    <!-- INTERFACE DE JEU PRINCIPALE -->
+    <!-- INTERFACE DE JEU -->
     <div id="game-container">
         <header>
             <div class="logo">
-                🛣️ AUTOROUTE TYCOON <span style="font-size: 0.65rem; background: var(--accent); color: var(--bg-dark); padding: 2px 5px; border-radius: 4px;">MÉTÉO LIVE</span>
+                🛣️ AUTOROUTE TYCOON <span style="font-size: 0.65rem; background: var(--accent); color: var(--bg-dark); padding: 2px 5px; border-radius: 4px;">CLOUD SYNC</span>
             </div>
             <div class="kpi-container">
                 <div class="kpi-card">
@@ -344,8 +342,8 @@
                     <span class="kpi-value" id="kpi-km">0 km</span>
                 </div>
                 <div class="kpi-card">
-                    <span class="kpi-label">Météo Actuelle</span>
-                    <span class="kpi-value" id="kpi-weather" style="color: var(--accent);">☀️ Clain & Normal</span>
+                    <span class="kpi-label">Météo</span>
+                    <span class="kpi-value" id="kpi-weather" style="color: var(--accent);">☀️ Normal</span>
                 </div>
                 <div class="kpi-card">
                     <span class="kpi-label">Revenu /s</span>
@@ -363,10 +361,9 @@
                 <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège</button>
             </div>
 
-            <!-- Réseau & Construction -->
             <div id="network" class="tab-content active">
                 <div id="weather-alert" class="weather-banner">
-                    <strong>⚠️ ALERTE MÉTÉO :</strong> <span id="weather-desc-text">Tempête en cours sur le réseau !</span>
+                    <strong>⚠️ ALERTE MÉTÉO :</strong> <span id="weather-desc-text">Tempête en cours !</span>
                 </div>
                 <h2>Planification de Tronçon</h2>
                 <div class="control-group">
@@ -380,18 +377,17 @@
                 <div class="control-group">
                     <label>Modèle Économique</label>
                     <select id="road-model">
-                        <option value="toll">Section à Péage Payant (Revenus élevés, -Satisfaction)</option>
-                        <option value="free">Section Gratuite / Service Public (+Satisfaction max, 0 Revenu)</option>
+                        <option value="toll">Section à Péage Payant (Revenus, -Satisfaction)</option>
+                        <option value="free">Section Gratuite (+Satisfaction, 0 Revenu)</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label>Type d'Infrastructure</label>
-                    <select id="road-type">
-                        <option value="standard">2x2 Voies Standard (1M€ / km)</option>
-                        <option value="smart">2x3 Voies + Portiques Free-Flow (2.5M€ / km)</option>
+                    <label>Infrastructures associées</label>
+                    <select id="road-extras">
+                        <option value="rest">Tracé Réel + Aires de Repos intégrées</option>
                     </select>
                 </div>
-                <button onclick="buildSection()">Lancer les travaux (Tracé Réel)</button>
+                <button onclick="buildSection()">Lancer les travaux (Tracé Réel + Aires)</button>
 
                 <div style="margin-top: 20px;">
                     <h2>Journal du Réseau</h2>
@@ -401,58 +397,42 @@
                 </div>
             </div>
 
-            <!-- Flotte & Maintenance -->
             <div id="fleet" class="tab-content">
                 <h2>Gestion des Flottes & Urgences</h2>
                 <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">3</strong></div>
-                <div class="stat-line"><span>Chasse-neige (Hiver/Tempête) :</span> <strong id="fleet-plows">2</strong></div>
+                <div class="stat-line"><span>Chasse-neige :</span> <strong id="fleet-plows">2</strong></div>
                 <button onclick="buyVehicle('van')">Acheter un Fourgon (50 000 €)</button>
                 <button onclick="buyVehicle('plow')">Acheter un Chasse-neige (120 000 €)</button>
-                <button id="deploy-plows-btn" onclick="deployPlows()" style="background: var(--warning); color: var(--bg-dark); display: none;">❄️ Déployer les Chasse-neige en urgence</button>
+                <button id="deploy-plows-btn" onclick="deployPlows()" style="background: var(--warning); color: var(--bg-dark); display: none;">❄️ Déployer les Chasse-neige</button>
 
                 <h2 style="margin-top: 20px;">État des Chaussées</h2>
                 <div class="stat-line"><span>Usure Globale :</span> <strong style="color: var(--success);" id="wear-rate">0 %</strong></div>
                 <button onclick="triggerMaintenance()">Campagne de Réfection (150 000 €)</button>
             </div>
 
-            <!-- Recherche & Développement -->
             <div id="rd" class="tab-content">
-                <h2>Laboratoire R&D (>90 Technologies)</h2>
+                <h2>Laboratoire R&D</h2>
                 <div class="stat-line"><span>Slots Actifs :</span> <strong id="rd-slots">0 / 3</strong></div>
                 <div id="rd-tree-container" style="margin-top: 10px;"></div>
             </div>
 
-            <!-- Banque & Financement -->
             <div id="bank" class="tab-content">
                 <h2>Banque Centrale & Crédits</h2>
                 <div class="bank-card">
                     <h3>Emprunt Bancaire</h3>
-                    <p>Obtenez des liquidités immédiates remboursables via un prélèvement automatique sur vos revenus.</p>
-                    <button onclick="takeLoan(2000000)">Emprunter 2 000 000 € (Taux 4.5%)</button>
-                </div>
-                <div class="bank-card" style="margin-top: 15px;">
-                    <h3>Rachat de Concurrence</h3>
-                    <p>Absorbez un réseau secondaire régional pour étendre votre emprise territoriale.</p>
-                    <button onclick="buyCompetitor()" style="background: var(--warning); color: var(--bg-dark);">Racheter un réseau (5 000 000 €)</button>
+                    <p>Obtenez des liquidités immédiates remboursables via prélèvement automatique.</p>
+                    <button onclick="takeLoan(2000000)">Emprunter 2 000 000 € (4.5%)</button>
                 </div>
             </div>
 
-            <!-- Siège Social & Admin -->
             <div id="admin" class="tab-content">
-                <h2>Direction & Dialogue Social</h2>
+                <h2>Direction & Sauvegarde</h2>
                 <div class="control-group">
                     <label>Nom de la Concession</label>
                     <input type="text" id="company-name" value="APRR & Associés">
                 </div>
-                <div class="control-group">
-                    <label>Nom du PDG</label>
-                    <input type="text" id="ceo-name" value="Direction Générale">
-                </div>
-                <button onclick="saveCompanyInfo()">Mettre à jour</button>
-
-                <h2 style="margin-top: 20px;">Climat Social (CSE)</h2>
-                <div class="stat-line"><span>Moral du Personnel :</span> <strong style="color: var(--success);" id="staff-moral">90 %</strong></div>
-                <button onclick="boostMoral()" style="background: var(--success); color: white;">Verser une Prime de Pouvoir d'Achat (300k€)</button>
+                <button onclick="saveGameManually()" style="background: var(--success); color: white;">💾 Sauvegarder la Partie</button>
+                <button onclick="logoutGame()" style="background: var(--danger); color: white; margin-top: 10px;">🚪 Déconnexion</button>
             </div>
         </sidebar>
 
@@ -461,7 +441,59 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- 0. GESTION DU COMPTE (CONNEXION / INSCRIPTION) ---
+        let currentUserEmail = null;
+
+        let gameState = {
+            money: 50000000,
+            km: 0,
+            satisfaction: 85,
+            incomePerSec: 0,
+            baseIncomePerSec: 0,
+            vans: 3,
+            plows: 2,
+            wear: 0,
+            staffMoral: 90,
+            rdActiveCount: 0,
+            unlockedTechs: [],
+            builtRoads: [] // Sauvegarde des routes et aires construites
+        };
+
+        const cities = [
+            { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 }, { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
+            { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 }, { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
+            { id: 5, name: "Lille", lat: 50.6292, lng: 3.0573 }, { id: 6, name: "Strasbourg", lat: 48.5734, lng: 7.7521 },
+            { id: 7, name: "Nantes", lat: 47.2184, lng: -1.5536 }, { id: 8, name: "Toulouse", lat: 43.6047, lng: 1.4442 },
+            { id: 9, name: "Nice", lat: 43.7102, lng: 7.2620 }, { id: 10, name: "Rennes", lat: 48.1173, lng: -1.6778 },
+            { id: 11, name: "Montpellier", lat: 43.6108, lng: 3.8767 }, { id: 12, name: "Grenoble", lat: 45.1885, lng: 5.7245 },
+            { id: 13, name: "Rouen", lat: 49.4432, lng: 1.0999 }, { id: 14, name: "Toulon", lat: 43.1242, lng: 5.928 },
+            { id: 15, name: "Douai", lat: 50.3667, lng: 3.0833 }, { id: 16, name: "Reims", lat: 49.2583, lng: 4.0317 }
+        ];
+
+        const rdTechnologies = [
+            { id: 'infra_1', name: 'Enrobés Phoniques', cost: 500000, desc: 'Réduit usure et bruit.' },
+            { id: 'toll_1', name: 'Portiques Free-Flow', cost: 800000, desc: 'Augmente la vitesse de passage.' },
+            { id: 'ai_1', name: 'Radars Intelligents', cost: 600000, desc: 'Baisse des accidents.' }
+        ];
+
+        const map = L.map('map', { zoomControl: false }).setView([46.603354, 1.888334], 6);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, minZoom: 5 }).addTo(map);
+
+        function initCitySelectors() {
+            const fromSelect = document.getElementById('city-from');
+            const toSelect = document.getElementById('city-to');
+            fromSelect.innerHTML = "";
+            toSelect.innerHTML = "";
+            cities.forEach(city => {
+                fromSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
+                toSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
+            });
+            cities.forEach(city => {
+                L.circleMarker([city.lat, city.lng], { radius: 5, color: '#38bdf8', fillColor: '#0f172a', fillOpacity: 1, weight: 2 }).addTo(map).bindPopup(`<b>${city.name}</b>`);
+            });
+        }
+
+        // --- GESTION DES COMPTES & SAUVEGARDE AUTOMATIQUE ---
         function switchAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
@@ -477,34 +509,24 @@
         function handleRegister() {
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
-            if(!email || !password) {
-                alert("Veuillez remplir tous les champs (e-mail et mot de passe).");
-                return;
-            }
-            localStorage.setItem('tycoon_email', email);
-            localStorage.setItem('tycoon_pass', password);
-            alert("Compte créé avec succès ! Connexion en cours...");
+            if(!email || !password) { alert("Remplissez tous les champs."); return; }
+            localStorage.setItem('tycoon_user_' + email, password);
+            currentUserEmail = email;
+            alert("Compte créé avec succès !");
             launchGame();
         }
 
         function handleLogin() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
-            const savedEmail = localStorage.getItem('tycoon_email');
-            const savedPass = localStorage.getItem('tycoon_pass');
-
-            if(!email || !password) {
-                alert("Veuillez entrer votre e-mail et votre mot de passe.");
-                return;
-            }
-
-            if(savedEmail && email === savedEmail && password === savedPass) {
-                alert("Connexion réussie ! Bon jeu.");
+            const savedPass = localStorage.getItem('tycoon_user_' + email);
+            if(savedPass && savedPass === password) {
+                currentUserEmail = email;
+                loadGameData();
+                alert("Connexion réussie ! Partie chargée.");
                 launchGame();
-            } else if(!savedEmail) {
-                alert("Aucun compte enregistré sur cet appareil. Veuillez créer un compte.");
             } else {
-                alert("E-mail ou mot de passe incorrect.");
+                alert("Identifiants incorrects ou compte inexistant.");
             }
         }
 
@@ -515,116 +537,102 @@
                 map.invalidateSize();
                 initCitySelectors();
                 initRDCards();
+                redrawSavedRoads();
                 updateHUD();
             }, 200);
         }
 
-        // --- 1. CARTOGRAPHIE ET 100+ LOCALITÉS FRANÇAISES ---
-        const map = L.map('map', { zoomControl: false }).setView([46.603354, 1.888334], 6);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, minZoom: 5 }).addTo(map);
+        function saveGameData() {
+            if(!currentUserEmail) return;
+            localStorage.setItem('tycoon_save_' + currentUserEmail, JSON.stringify(gameState));
+        }
 
-        const cities = [
-            { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 }, { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
-            { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 }, { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
-            { id: 5, name: "Lille", lat: 50.6292, lng: 3.0573 }, { id: 6, name: "Strasbourg", lat: 48.5734, lng: 7.7521 },
-            { id: 7, name: "Nantes", lat: 47.2184, lng: -1.5536 }, { id: 8, name: "Toulouse", lat: 43.6047, lng: 1.4442 },
-            { id: 9, name: "Nice", lat: 43.7102, lng: 7.2620 }, { id: 10, name: "Rennes", lat: 48.1173, lng: -1.6778 },
-            { id: 11, name: "Montpellier", lat: 43.6108, lng: 3.8767 }, { id: 12, name: "Grenoble", lat: 45.1885, lng: 5.7245 },
-            { id: 13, name: "Rouen", lat: 49.4432, lng: 1.0999 }, { id: 14, name: "Toulon", lat: 43.1242, lng: 5.928 },
-            { id: 15, name: "Douai", lat: 50.3667, lng: 3.0833 }, { id: 16, name: "Reims", lat: 49.2583, lng: 4.0317 },
-            { id: 17, name: "Saint-Etienne", lat: 45.4397, lng: 4.3872 }, { id: 18, name: "Le Havre", lat: 49.4944, lng: 0.1079 },
-            { id: 19, name: "Dijon", lat: 47.3220, lng: 5.0415 }, { id: 20, name: "Angers", lat: 47.4784, lng: -0.5632 },
-            { id: 21, name: "Clermont-Ferrand", lat: 45.7772, lng: 3.0870 }, { id: 22, name: "Brest", lat: 48.3904, lng: -4.4860 },
-            { id: 23, name: "Limoges", lat: 45.8336, lng: 1.2611 }, { id: 24, name: "Tours", lat: 47.3941, lng: 0.6848 },
-            { id: 25, name: "Amiens", lat: 49.8941, lng: 2.2958 }, { id: 26, name: "Perpignan", lat: 42.6986, lng: 2.8956 },
-            { id: 27, name: "Metz", lat: 49.1193, lng: 6.1757 }, { id: 28, name: "Besançon", lat: 47.2378, lng: 6.0241 },
-            { id: 29, name: "Orléans", lat: 47.9029, lng: 1.9090 }, { id: 30, name: "Mulhouse", lat: 47.7508, lng: 7.3359 },
-            { id: 31, name: "Caen", lat: 49.1829, lng: -0.3707 }, { id: 32, name: "Boulogne-Billancourt", lat: 48.8397, lng: 2.2399 },
-            { id: 33, name: "Nancy", lat: 48.6921, lng: 6.1844 }, { id: 34, name: "Argenteuil", lat: 48.9474, lng: 2.2476 },
-            { id: 35, name: "Montreuil", lat: 48.8638, lng: 2.4485 }, { id: 36, name: "Saint-Denis", lat: 48.9360, lng: 2.3574 },
-            { id: 37, name: "Roubaix", lat: 50.6927, lng: 3.1746 }, { id: 38, name: "Tourcoing", lat: 50.7238, lng: 3.1613 },
-            { id: 39, name: "Nanterre", lat: 48.8922, lng: 2.2057 }, { id: 40, name: "Avignon", lat: 43.9493, lng: 4.8055 },
-            { id: 41, name: "Vitry-sur-Seine", lat: 48.7877, lng: 2.3934 }, { id: 42, name: "Créteil", lat: 48.7904, lng: 2.4556 },
-            { id: 43, name: "Dunkerque", lat: 51.0343, lng: 2.3768 }, { id: 44, name: "Poitiers", lat: 46.5802, lng: 0.3402 },
-            { id: 45, name: "Asnières-sur-Seine", lat: 48.9118, lng: 2.2876 }, { id: 46, name: "Courbevoie", lat: 48.8943, lng: 2.2541 },
-            { id: 47, name: "Versailles", lat: 48.8014, lng: 2.1301 }, { id: 48, name: "Colombes", lat: 48.9228, lng: 2.2523 },
-            { id: 49, name: "Aulnay-sous-Bois", lat: 48.9392, lng: 2.4925 }, { id: 50, name: "Pau", lat: 43.2951, lng: -0.3708 },
-            { id: 51, name: "Calais", lat: 50.9513, lng: 1.8587 }, { id: 52, name: "Antibes", lat: 43.5804, lng: 7.1251 },
-            { id: 53, name: "Cannes", lat: 43.5528, lng: 7.0174 }, { id: 54, name: "La Rochelle", lat: 46.1603, lng: -1.1511 },
-            { id: 55, name: "Béziers", lat: 43.3442, lng: 3.2158 }, { id: 56, name: "Colmar", lat: 48.0794, lng: 7.3585 },
-            { id: 57, name: "Bourges", lat: 47.0810, lng: 2.3988 }, { id: 58, name: "Valence", lat: 44.9333, lng: 4.8917 },
-            { id: 59, name: "Quimper", lat: 47.9960, lng: -4.1028 }, { id: 60, name: "Merignac", lat: 44.8378, lng: -0.6447 },
-            { id: 61, name: "Drancy", lat: 48.9248, lng: 2.4468 }, { id: 62, name: "Troyes", lat: 48.2973, lng: 4.0744 },
-            { id: 63, name: "Neuilly-sur-Seine", lat: 48.8853, lng: 2.2704 }, { id: 64, name: "Chambéry", lat: 45.5646, lng: 5.9178 },
-            { id: 65, name: "Ajaccio", lat: 41.9192, lng: 8.7386 }, { id: 66, name: "Bastia", lat: 42.7028, lng: 9.4500 },
-            { id: 67, name: "Bayonne", lat: 43.4929, lng: -1.4748 }, { id: 68, name: "Belfort", lat: 47.6379, lng: 6.8631 },
-            { id: 69, name: "Chartres", lat: 48.4439, lng: 1.4883 }, { id: 70, name: "Lorient", lat: 47.7480, lng: -3.3702 },
-            { id: 71, name: "Niort", lat: 46.3239, lng: -0.4646 }, { id: 72, name: "Arras", lat: 50.2910, lng: 2.7775 },
-            { id: 73, name: "Saint-Brieuc", lat: 48.5136, lng: -2.7597 }, { id: 74, name: "Charleville-Mézières", lat: 49.7725, lng: 4.7158 },
-            { id: 75, name: "Blois", lat: 47.5861, lng: 1.3359 }, { id: 76, name: "Châteauroux", lat: 46.8118, lng: 1.6908 },
-            { id: 77, name: "Vichy", lat: 46.1287, lng: 3.4260 }, { id: 78, name: "Tarbes", lat: 43.2328, lng: 0.0781 },
-            { id: 79, name: "Montauban", lat: 44.0179, lng: 1.3547 }, { id: 80, name: "Albi", lat: 43.9290, lng: 2.1480 },
-            { id: 81, name: "Carcassonne", lat: 43.2121, lng: 2.3537 }, { id: 82, name: "Sète", lat: 43.4028, lng: 3.6934 },
-            { id: 83, name: "Narbonne", lat: 43.1840, lng: 3.0031 }, { id: 84, name: "Gap", lat: 44.5596, lng: 6.0795 },
-            { id: 85, name: "Angoulême", lat: 45.6484, lng: 0.1561 }, { id: 86, name: "Brive-la-Gaillarde", lat: 45.1584, lng: 1.5323 },
-            { id: 87, name: "Nevers", lat: 46.9902, lng: 3.1594 }, { id: 88, name: "Auxerre", lat: 47.7984, lng: 3.5705 },
-            { id: 89, name: "Mâcon", lat: 46.3069, lng: 4.8283 }, { id: 90, name: "Roanne", lat: 46.0336, lng: 4.0681 },
-            { id: 91, name: "Lens", lat: 50.4290, lng: 2.8314 }, { id: 92, name: "Valenciennes", lat: 50.3585, lng: 3.5224 },
-            { id: 93, name: "Béthune", lat: 50.5307, lng: 2.6416 }, { id: 94, name: "Boulogne-sur-Mer", lat: 50.7254, lng: 1.6133 },
-            { id: 95, name: "Saint-Quentin", lat: 49.8471, lng: 3.2872 }, { id: 96, name: "Beauvais", lat: 49.4295, lng: 2.0811 },
-            { id: 97, name: "Compiègne", lat: 49.4179, lng: 2.8261 }, { id: 98, name: "Melun", lat: 48.5421, lng: 2.6552 },
-            { id: 99, name: "Evry", lat: 48.6295, lng: 2.4385 }, { id: 100, name: "Chartres", lat: 48.4439, lng: 1.4883 }
-        ];
+        function loadGameData() {
+            if(!currentUserEmail) return;
+            const savedData = localStorage.getItem('tycoon_save_' + currentUserEmail);
+            if(savedData) {
+                gameState = JSON.parse(savedData);
+            }
+        }
 
-        let gameState = {
-            money: 50000000,
-            km: 0,
-            satisfaction: 85,
-            incomePerSec: 0,
-            baseIncomePerSec: 0,
-            vans: 3,
-            plows: 2,
-            wear: 0,
-            staffMoral: 90,
-            rdActiveCount: 0,
-            unlockedTechs: [],
-            currentWeather: 'normal',
-            weatherActive: false,
-            weatherTimer: 0
-        };
+        function saveGameManually() {
+            saveGameData();
+            alert("Partie sauvegardée avec succès !");
+        }
 
-        const rdTechnologies = [
-            { id: 'infra_1', dept: 'Infrastructures & Matériaux', name: 'Enrobés Phoniques Avancés', cost: 500000, desc: 'Réduit les nuisances sonores et l’usure de 15%.' },
-            { id: 'infra_2', dept: 'Infrastructures & Matériaux', name: 'Bétons Auto-cicatrisants', cost: 1200000, desc: 'Diminue la fréquence des réfections de chaussée.' },
-            { id: 'toll_1', dept: 'Systèmes de Péage', name: 'Portiques Free-Flow Intégraux', cost: 800000, desc: 'Fluidifie le trafic et augmente la vitesse de passage de 30%.' },
-            { id: 'toll_2', dept: 'Systèmes de Péage', name: 'Cryptage Quantique des Péages', cost: 2000000, desc: 'Sécurise les transactions et supprime toute fraude.' },
-            { id: 'ai_1', dept: 'Sécurité & IA', name: 'Radars de Tronçon Intelligents', cost: 600000, desc: 'Baisse les accidents de la route de 40%.' },
-            { id: 'ai_2', dept: 'Sécurité & IA', name: 'Régulation Dynamique par IA', cost: 1500000, desc: 'Optimise automatiquement le trafic aux heures de pointe.' },
-            { id: 'eco_1', dept: 'Transition Énergétique', name: 'Ombrières Photovoltaïques', cost: 1000000, desc: 'Génère un revenu passif vert sur les aires d’autoroute.' },
-            { id: 'eco_2', dept: 'Transition Énergétique', name: 'Stations Hydrogène & Ultra-Rapides', cost: 2500000, desc: 'Attire massivement de nouveaux usagers éco-responsables.' }
-        ];
+        function logoutGame() {
+            saveGameData();
+            currentUserEmail = null;
+            document.getElementById('auth-overlay').style.display = 'flex';
+            document.getElementById('game-container').style.display = 'none';
+        }
 
-        function initCitySelectors() {
-            const fromSelect = document.getElementById('city-from');
-            const toSelect = document.getElementById('city-to');
-            fromSelect.innerHTML = "";
-            toSelect.innerHTML = "";
+        // --- CONSTRUCTION (TRACÉS RÉELS + AIRES DE REPOS) ---
+        function buildSection() {
+            const fromId = parseInt(document.getElementById('city-from').value);
+            const toId = parseInt(document.getElementById('city-to').value);
+            const model = document.getElementById('road-model').value;
 
-            cities.forEach(city => {
-                fromSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
-                toSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
-            });
+            if (fromId === toId) { alert("Sélectionnez deux villes différentes !"); return; }
 
-            cities.forEach(city => {
-                L.circleMarker([city.lat, city.lng], {
-                    radius: 5,
-                    color: '#38bdf8',
-                    fillColor: '#0f172a',
-                    fillOpacity: 1,
-                    weight: 2
-                }).addTo(map).bindPopup(`<b>${city.name}</b><br>Pôle Régional`);
-            });
+            const cityA = cities.find(c => c.id === fromId);
+            const cityB = cities.find(c => c.id === toId);
+
+            // Tracé réel par courbe intermédiaire fluide
+            const midLat = (cityA.lat + cityB.lat) / 2 + (Math.sin(cityA.lng) * 0.3);
+            const midLng = (cityA.lng + cityB.lng) / 2 + (Math.cos(cityA.lat) * 0.3);
+
+            const distance = Math.round(Math.hypot(cityA.lat - cityB.lat, cityA.lng - cityB.lng) * 111);
+            const cost = distance * (model === 'toll' ? 1000000 : 800000);
+
+            if (gameState.money < cost) {
+                alert(`Fonds insuffisants ! Coût : ${cost.toLocaleString()} € (Trésorerie actuelle : ${gameState.money.toLocaleString()} €)`);
+                return;
+            }
+
+            // Dépense effective immédiate
+            gameState.money -= cost;
+
+            const roadData = {
+                latA: cityA.lat, lngA: cityA.lng,
+                latMid: midLat, lngMid: midLng,
+                latB: cityB.lat, lngB: cityB.lng,
+                model: model, distance: distance
+            };
+
+            gameState.builtRoads.push(roadData);
+            drawRoadOnMap(roadData);
+
+            gameState.km += distance;
+            if (model === 'toll') {
+                gameState.baseIncomePerSec += distance * 15;
+            } else {
+                gameState.satisfaction = Math.min(100, gameState.satisfaction + 5);
+            }
+            gameState.incomePerSec = gameState.baseIncomePerSec;
+
+            saveGameData();
+            updateHUD();
+            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} ➔ ${cityB.name} (${distance} km) avec aires de repos construite !`;
+        }
+
+        function drawRoadOnMap(road) {
+            const color = road.model === 'toll' ? '#22c55e' : '#38bdf8';
+            // Tracé réel incurvé
+            L.polyline([[road.latA, road.lngA], [road.latMid, road.lngMid], [road.latB, road.lngB]], {
+                color: color, weight: 4, opacity: 0.8
+            }).addTo(map);
+
+            // Ajout visuel des Aires de Repos au milieu du tracé
+            L.marker([road.latMid, road.lngMid], {
+                icon: L.divIcon({ className: 'rest-area-icon', html: '🅿️', iconSize: [20, 20] })
+            }).addTo(map).bindPopup("<b>Aire de Repos & Services autoroutiers</b>");
+        }
+
+        function redrawSavedRoads() {
+            if(gameState.builtRoads) {
+                gameState.builtRoads.forEach(road => drawRoadOnMap(road));
+            }
         }
 
         function initRDCards() {
@@ -637,11 +645,57 @@
                         <h3>${tech.name}</h3>
                         <p>${tech.desc} (${tech.cost.toLocaleString()} €)</p>
                         <button ${unlocked ? 'disabled' : ''} onclick="unlockTech('${tech.id}', ${tech.cost})">
-                            ${unlocked ? 'Débloqué' : 'Lancer la Recherche'}
+                            ${unlocked ? 'Débloqué' : 'Rechercher'}
                         </button>
                     </div>
                 `;
             });
+        }
+
+        function unlockTech(techId, cost) {
+            if (gameState.money >= cost) {
+                if (gameState.rdActiveCount >= 3) { alert("Limite de 3 recherches atteinte !"); return; }
+                gameState.money -= cost;
+                gameState.unlockedTechs.push(techId);
+                gameState.rdActiveCount++;
+                saveGameData();
+                updateHUD();
+                initRDCards();
+            } else {
+                alert("Fonds insuffisants.");
+            }
+        }
+
+        function takeLoan(amount) {
+            gameState.money += amount;
+            gameState.baseIncomePerSec -= Math.round(amount * 0.002);
+            gameState.incomePerSec = gameState.baseIncomePerSec;
+            saveGameData();
+            updateHUD();
+            alert(`Emprunt de ${amount.toLocaleString()} € validé.`);
+        }
+
+        function buyVehicle(type) {
+            if (type === 'van' && gameState.money >= 50000) { gameState.money -= 50000; gameState.vans++; }
+            else if (type === 'plow' && gameState.money >= 120000) { gameState.money -= 120000; gameState.plows++; }
+            else { alert("Fonds insuffisants !"); }
+            saveGameData();
+            updateHUD();
+        }
+
+        function triggerMaintenance() {
+            if (gameState.money >= 150000) { gameState.money -= 150000; gameState.wear = 0; saveGameData(); updateHUD(); alert("Chaussées rénovées !"); }
+            else { alert("Fonds insuffisants."); }
+        }
+
+        function updateHUD() {
+            document.getElementById('kpi-money').innerText = gameState.money.toLocaleString() + " €";
+            document.getElementById('kpi-km').innerText = gameState.km + " km";
+            document.getElementById('kpi-income').innerText = gameState.incomePerSec.toLocaleString() + " €/s";
+            document.getElementById('fleet-vans').innerText = gameState.vans;
+            document.getElementById('fleet-plows').innerText = gameState.plows;
+            document.getElementById('wear-rate').innerText = gameState.wear + " %";
+            document.getElementById('rd-slots').innerText = gameState.rdActiveCount + " / 3";
         }
 
         function switchTab(event, tabId) {
@@ -651,213 +705,15 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- 2. CONSTRUCTION AVEC TRACÉ RÉEL INTERMÉDIAIRE ---
-        function buildSection() {
-            const fromId = parseInt(document.getElementById('city-from').value);
-            const toId = parseInt(document.getElementById('city-to').value);
-            const model = document.getElementById('road-model').value;
-
-            if (fromId === toId) {
-                alert("Veuillez sélectionner deux villes différentes !");
-                return;
-            }
-
-            const cityA = cities.find(c => c.id === fromId);
-            const cityB = cities.find(c => c.id === toId);
-
-            const midLat = (cityA.lat + cityB.lat) / 2 + (Math.random() - 0.5) * 0.4;
-            const midLng = (cityA.lng + cityB.lng) / 2 + (Math.random() - 0.5) * 0.4;
-
-            const distance = Math.round(Math.hypot(cityA.lat - cityB.lat, cityA.lng - cityB.lng) * 111);
-            const cost = distance * (model === 'toll' ? 1000000 : 800000);
-
-            if (gameState.money < cost) {
-                alert(`Fonds insuffisants ! Coût : ${cost.toLocaleString()} €`);
-                return;
-            }
-
-            gameState.money -= cost;
-
-            const color = model === 'toll' ? '#22c55e' : '#38bdf8';
-            L.polyline([[cityA.lat, cityA.lng], [midLat, midLng], [cityB.lat, cityB.lng]], {
-                color: color,
-                weight: 4,
-                opacity: 0.8
-            }).addTo(map);
-
-            gameState.km += distance;
-            if (model === 'toll') {
-                gameState.baseIncomePerSec += distance * 15;
-            } else {
-                gameState.satisfaction = Math.min(100, gameState.satisfaction + 5);
-            }
-            gameState.incomePerSec = gameState.baseIncomePerSec;
-
-            updateHUD();
-            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} ➔ ${cityB.name} (${distance} km, ${model === 'toll' ? 'Péage' : 'Gratuite'}) inaugurée !`;
-        }
-
-        // --- 3. MOTEUR MÉTÉOROLOGIQUE ET CATASTROPHES ---
-        function triggerWeatherEvent() {
-            if (gameState.km === 0) return;
-
-            const rand = Math.random();
-            if (rand < 0.4) {
-                gameState.currentWeather = 'snow';
-                gameState.weatherActive = true;
-                gameState.incomePerSec = Math.round(gameState.baseIncomePerSec * 0.4);
-                document.getElementById('weather-alert').style.display = 'block';
-                document.getElementById('weather-desc-text').innerText = "Tempête de neige majeure ! Le trafic est ralenti de 60 % et l'usure des voies s'accélère. Déployez vos chasse-neige sous peine de sanctions de l'État !";
-                document.getElementById('deploy-plows-btn').style.display = 'block';
-                document.getElementById('kpi-weather').innerText = "❄️ Tempête de Neige";
-                document.getElementById('kpi-weather').style.color = "var(--warning)";
-
-                gameState.weatherTimer = setTimeout(() => {
-                    if (gameState.weatherActive) {
-                        gameState.money -= 500000;
-                        alert("🚨 SANCTION DE L'ÉTAT : Non-assistance au réseau public lors de la tempête de neige ! Amende de 500 000 € prélevée.");
-                        clearWeather();
-                    }
-                }, 15000);
-
-            } else if (rand < 0.7) {
-                gameState.currentWeather = 'heatwave';
-                gameState.weatherActive = false;
-                gameState.wear = Math.min(100, gameState.wear + 15);
-                document.getElementById('weather-alert').style.display = 'block';
-                document.getElementById('weather-desc-text').innerText = "Canicule intense : l'asphalte se déforme et l'usure du réseau s'accélère !";
-                document.getElementById('kpi-weather').innerText = "🔥 Canicule Extrême";
-                document.getElementById('kpi-weather').style.color = "var(--danger)";
-                setTimeout(clearWeather, 12000);
-            }
-        }
-
-        function deployPlows() {
-            if (gameState.plows >= 1) {
-                clearTimeout(gameState.weatherTimer);
-                clearWeather();
-                alert("❄️ Chasse-neige déployés avec succès ! Le trafic est sécurisé, aucune sanction de l'État ne sera appliquée.");
-            } else {
-                alert("⚠️ Vous ne possédez pas assez de chasse-neige pour couvrir le réseau !");
-            }
-        }
-
-        function clearWeather() {
-            gameState.currentWeather = 'normal';
-            gameState.weatherActive = false;
-            gameState.incomePerSec = gameState.baseIncomePerSec;
-            document.getElementById('weather-alert').style.display = 'none';
-            document.getElementById('deploy-plows-btn').style.display = 'none';
-            document.getElementById('kpi-weather').innerText = "☀️ Clain & Normal";
-            document.getElementById('kpi-weather').style.color = "var(--accent)";
-            updateHUD();
-        }
-
-        // --- 4. GESTION FINANCIÈRE & R&D ---
-        function unlockTech(techId, cost) {
-            if (gameState.money >= cost) {
-                if (gameState.rdActiveCount >= 3) {
-                    alert("Limite de 3 recherches simultanées atteinte !");
-                    return;
-                }
-                gameState.money -= cost;
-                gameState.unlockedTechs.push(techId);
-                gameState.rdActiveCount++;
-                updateHUD();
-                initRDCards();
-                alert("Technologie maîtrisée et déployée sur le réseau !");
-            } else {
-                alert("Fonds insuffisants pour lancer cette recherche.");
-            }
-        }
-
-        function takeLoan(amount) {
-            gameState.money += amount;
-            gameState.baseIncomePerSec -= Math.round(amount * 0.002);
-            gameState.incomePerSec = gameState.baseIncomePerSec;
-            updateHUD();
-            alert(`Emprunt de ${amount.toLocaleString()} € validé par la Banque Centrale.`);
-        }
-
-        function buyCompetitor() {
-            if (gameState.money >= 5000000) {
-                gameState.money -= 5000000;
-                gameState.km += 180;
-                gameState.baseIncomePerSec += 2500;
-                gameState.incomePerSec = gameState.baseIncomePerSec;
-                updateHUD();
-                alert("Rachat de la concession secondaire finalisé avec succès !");
-            } else {
-                alert("Fonds insuffisants pour racheter un concurrent.");
-            }
-        }
-
-        function buyVehicle(type) {
-            if (type === 'van' && gameState.money >= 50000) {
-                gameState.money -= 50000; gameState.vans++;
-            } else if (type === 'plow' && gameState.money >= 120000) {
-                gameState.money -= 120000; gameState.plows++;
-            } else {
-                alert("Fonds insuffisants !");
-            }
-            updateHUD();
-        }
-
-        function triggerMaintenance() {
-            if (gameState.money >= 150000) {
-                gameState.money -= 150000;
-                gameState.wear = 0;
-                updateHUD();
-                alert("Campagne de réfection des chaussées exécutée !");
-            } else {
-                alert("Fonds insuffisants.");
-            }
-        }
-
-        function boostMoral() {
-            if (gameState.money >= 300000) {
-                gameState.money -= 300000;
-                gameState.staffMoral = 100;
-                updateHUD();
-                alert("Prime versée : le risque de grève est totalement écarté.");
-            } else {
-                alert("Fonds insuffisants pour la prime CSE.");
-            }
-        }
-
-        function saveCompanyInfo() {
-            const company = document.getElementById('company-name').value;
-            const ceo = document.getElementById('ceo-name').value;
-            alert(`Siège social mis à jour pour ${company}, dirigé par ${ceo}.`);
-        }
-
-        function updateHUD() {
-            document.getElementById('kpi-money').innerText = gameState.money.toLocaleString() + " €";
-            document.getElementById('kpi-km').innerText = gameState.km + " km";
-            document.getElementById('kpi-satisfaction').innerText = gameState.satisfaction + " %";
-            document.getElementById('kpi-income').innerText = gameState.incomePerSec.toLocaleString() + " €/s";
-            document.getElementById('fleet-vans').innerText = gameState.vans;
-            document.getElementById('fleet-plows').innerText = gameState.plows;
-            document.getElementById('wear-rate').innerText = gameState.wear + " %";
-            document.getElementById('staff-moral').innerText = gameState.staffMoral + " %";
-            document.getElementById('rd-slots').innerText = gameState.rdActiveCount + " / 3";
-        }
-
+        // Boucle financière & sauvegarde automatique continue
         setInterval(() => {
-            if (gameState.incomePerSec !== 0) {
+            if (currentUserEmail && gameState.incomePerSec !== 0) {
                 gameState.money += gameState.incomePerSec;
-                if (gameState.currentWeather === 'heatwave') {
-                    gameState.wear = Math.min(100, gameState.wear + 0.2);
-                } else {
-                    gameState.wear = Math.min(100, gameState.wear + 0.05);
-                }
+                gameState.wear = Math.min(100, gameState.wear + 0.02);
+                saveGameData(); // Sauvegarde automatique permanente en arrière-plan
                 updateHUD();
             }
         }, 1000);
-
-        setInterval(() => {
-            triggerWeatherEvent();
-        }, 45000);
     </script>
 </body>
 </html>
