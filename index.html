@@ -250,22 +250,17 @@
             { id: 'aire-lille-paris', routeKey: 'Lille-Paris', name: 'Aire de Repos de Vémars', lat: 49.0558, lng: 2.5511, desc: 'Carburant & Bornes électriques', level: 1, cost: 2000000 }
         ];
 
-        // Arbre Technologique complet enrichi (avec les extensions de voies jusqu'à 2 x 4 voies)
         let technologies = [
-            // Catégorie Voies & Capacité
             { id: 'voies_2x2', category: 'voies', name: 'Élargissement 2 x 2 voies', desc: 'Passe les autoroutes à 2x2 voies. Capacité et flux de trafic augmentés de 25%.', cost: 3000000, unlocked: false, multiplierBonus: 1.25 },
             { id: 'voies_2x3', category: 'voies', name: 'Élargissement 2 x 3 voies', desc: 'Aménagement à 3 voies par sens. Réduit les congestions et booste les revenus de 40%.', cost: 10000000, unlocked: false, multiplierBonus: 1.40 },
             { id: 'voies_2x4', category: 'voies', name: 'Autoroute XXL : 2 x 4 voies', desc: 'Le summum de l artère autoroutière. Passage à 4 voies par sens pour un trafic maximal (+75% revenus).', cost: 25000000, unlocked: false, multiplierBonus: 1.75 },
 
-            // Catégorie Infrastructure
             { id: 'bitume', category: 'infrastructure', name: 'Bitume Haute Résistance', desc: 'Réduit les coûts de maintenance globale et l usure des routes de 25%.', cost: 8000000, unlocked: false },
             { id: 'ponts_suspendus', category: 'infrastructure', name: 'Génie Civil Avancé (Ponts & Tunnels)', desc: 'Permet de franchir les reliefs complexes plus rapidement et réduit le coût de construction des routes de 15%.', cost: 15000000, unlocked: false },
             
-            // Catégorie Écologie & Services
             { id: 'bornes_ev', category: 'services', name: 'Bornes Électriques Ultra-rapides', desc: 'Améliore les revenus des aires de repos et des stations de recharge de 30%.', cost: 12000000, unlocked: false },
             { id: 'eclairage_solaire', category: 'services', name: 'Éclairage Autoroutier Solaire', desc: 'Améliore la sécurité nocturne, réduit la baisse de trafic par temps couvert de 50%.', cost: 6000000, unlocked: false },
 
-            // Catégorie Innovations & Tech
             { id: 'telepeage', category: 'innovation', name: 'Télépéage sans arrêt', desc: 'Fluidifie le passage aux barrières de péage et augmente les revenus de 15%.', cost: 5000000, unlocked: false },
             { id: 'ia_trafic', category: 'innovation', name: 'Régulation Dynamique par IA', desc: 'Gestion intelligente des vitesses et des flux en temps réel (+20% de bonus de productivité global).', cost: 18000000, unlocked: false }
         ];
@@ -284,7 +279,6 @@
         let weatherConditions = ['Grand Soleil', 'Pluie fine', 'Temps couvert'];
         let currentWeather = 'Grand Soleil';
 
-        // Initialisation propre de la carte Leaflet
         const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
         
@@ -372,7 +366,6 @@
             showToast(`${dir.name} mis à niveau (Niv. ${dir.level}) !`);
         }
 
-        // Rendu de l'Arbre R&D Pleine Page avec filtres par catégorie
         function filterTechCategory(category, element) {
             currentTechFilter = category;
             document.querySelectorAll('.rd-cat-btn').forEach(btn => btn.classList.remove('active'));
@@ -401,7 +394,7 @@
                         </div>
                         <div>
                             ${tech.unlocked 
-                                <button class="primary-btn" style="background:var(--border); color:var(--text-muted); cursor:default;" disabled>Technologie Maîtrisée</button> 
+                                ? '<button class="primary-btn" style="background:var(--border); color:var(--text-muted); cursor:default;" disabled>Technologie Maîtrisée</button>'
                                 : `<button class="primary-btn" onclick="unlockTech('${tech.id}')">Rechercher (${tech.cost.toLocaleString()} $US)</button>`
                             }
                         </div>
@@ -569,7 +562,6 @@
             const revenueRateEl = document.getElementById('stat-revenue-rate');
             if(routesCountEl) routesCountEl.innerText = uniqueRoutesCount;
             
-            // Calcul du multiplicateur basé sur les technos de voies débloquées
             let laneMultiplier = 1.0;
             technologies.filter(t => t.category === 'voies' && t.unlocked).forEach(t => {
                 laneMultiplier = Math.max(laneMultiplier, t.multiplierBonus);
