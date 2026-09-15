@@ -3,83 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Gestion du Réseau</title>
+    <title>Autoroute Tycoon</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --bg-panel: #1e293b;
+            --bg-dark: #0b1120;
+            --bg-panel: #111c30;
+            --bg-card: #152238;
+            --border: #1e293b;
+            --border-hover: #334155;
             --primary: #3b82f6;
             --primary-hover: #2563eb;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: #334155;
             --success: #22c55e;
             --warning: #f59e0b;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Barre latérale gauche (style exact Airline) */
+        sidebar { width: 80px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 8px; z-index: 10; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: var(--text-muted); cursor: pointer; padding: 8px 4px; border-radius: 8px; width: 66px; transition: 0.2s; text-align: center; font-weight: 500; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+        .nav-item.active { background: var(--primary); color: white; }
+        .nav-item span { font-size: 1.3rem; margin-bottom: 3px; }
+
+        /* Conteneur principal */
+        .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Barre latérale */
-        sidebar { width: 80px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 20px; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: var(--text-muted); cursor: pointer; padding: 10px; border-radius: 8px; width: 60px; transition: 0.2s; text-align: center; }
-        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
-        .nav-item span { font-size: 1.5rem; margin-bottom: 4px; }
+        /* Barre du haut */
+        header { height: 60px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+        .brand-title { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; color: white; }
+        .top-stats { display: flex; gap: 15px; align-items: center; }
+        .stat-badge { background: var(--bg-card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: var(--primary); }
 
-        .main-container { flex: 1; display: flex; flex-direction: column; height: 100vh; }
-        header { height: 60px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
-        .top-stats { display: flex; gap: 20px; font-size: 0.9rem; font-weight: 600; }
-        .stat-badge { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); padding: 5px 12px; border-radius: 20px; color: var(--primary); }
-
+        /* Corps de la page */
         .content-body { flex: 1; display: flex; overflow: hidden; }
-        .left-panel { width: 480px; background: var(--bg-dark); border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; }
+        .left-panel { width: 520px; background: var(--bg-dark); border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; }
         .right-map { flex: 1; position: relative; }
-        #map { width: 100%; height: 100%; background: #111; }
+        #map { width: 100%; height: 100%; background: #0b1120; }
 
-        .card-panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 20px; }
-        .card-panel h3 { font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        /* Cartes de style "Dashboard" */
+        .card-panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+        .card-panel h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: white; }
+
+        /* Formulaires & Boutons */
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+        select, input { width: 100%; padding: 9px 12px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 14px; font-size: 0.9rem; outline: none; transition: 0.2s; }
+        select:focus, input:focus { border-color: var(--primary); }
         
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; }
-        select, input { width: 100%; padding: 8px 12px; background: var(--bg-dark); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 12px; }
-        button { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
         button:hover { background: var(--primary-hover); }
 
+        /* Listes et lignes d'éléments */
         .item-list { display: flex; flex-direction: column; gap: 10px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; border: 1px solid var(--border); }
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
         
-        .project-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-        .progress-bar-bg { width: 100%; background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        /* Projets chantiers */
+        .project-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+        .progress-bar-bg { width: 100%; background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 10px; }
         .progress-bar-fill { background: var(--success); height: 100%; transition: width 0.4s ease; }
     </style>
 </head>
 <body>
 
-    <!-- BARRE LATÉRALE CORRIGÉE AVEC TOUS LES BOUTONS -->
+    <!-- BARRE LATÉRALE STYLE AIRLINE -->
     <sidebar>
-        <div class="nav-item active" onclick="switchMainView('dashboard', this)"><span>📊</span>Chantiers</div>
+        <div class="nav-item active" onclick="switchMainView('dashboard', this)"><span>🏗️</span>Chantiers</div>
         <div class="nav-item" onclick="switchMainView('hq-hr', this)"><span>🏢</span>Siège & RH</div>
         <div class="nav-item" onclick="switchMainView('bank', this)"><span>🏦</span>Banque</div>
     </sidebar>
 
     <div class="main-container">
+        <!-- HEADER -->
         <header>
-            <div style="font-weight: bold; font-size: 1.1rem;">🚗 Autoroute Tycoon</div>
+            <div class="brand-title">🚗 Autoroute Tycoon</div>
             <div class="top-stats">
                 <div class="stat-badge" id="stat-budget">Trésorerie : 0 €</div>
-                <div class="stat-badge" style="border-color: var(--success); color: var(--success);">Simulation active</div>
+                <div class="stat-badge" style="border-color: rgba(34, 197, 94, 0.3); color: var(--success);">Simulation active</div>
             </div>
         </header>
 
+        <!-- CONTENU -->
         <div class="content-body">
             <div class="left-panel">
                 
                 <!-- 1. VUE CHANTIERS -->
                 <div id="view-dashboard" class="dashboard-view">
                     <div class="card-panel">
-                        <h3>🏗️ Lancer un nouveau tracé</h3>
+                        <h3>🗺️ Lancer un nouveau tracé</h3>
                         <label>Ville de départ</label>
                         <select id="city-a">
                             <option value="Paris">Paris</option>
@@ -109,11 +126,11 @@
                     </div>
                 </div>
 
-                <!-- 2. VUE SIÈGE SOCIAL & RH (FUSIONNÉS ENSEMBLE) -->
+                <!-- 2. VUE SIÈGE & RH -->
                 <div id="view-hq-hr" class="dashboard-view" style="display:none;">
                     <div class="card-panel">
                         <h3>🏢 Direction & Siège Social</h3>
-                        <div id="hq-status-info" style="font-size:0.9rem; margin-bottom:15px; color:var(--text-muted)">Chargement...</div>
+                        <div id="hq-status-info" style="font-size:0.85rem; margin-bottom:15px; color:var(--text-muted)">Chargement...</div>
                         
                         <div class="item-list">
                             <div class="item-row">
@@ -121,11 +138,11 @@
                                 <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('rd')">Améliorer (1.5M €)</button>
                             </div>
                             <div class="item-row">
-                                <div><strong>Service Juridique</strong><br><small style="color:var(--text-muted)">Accélère les Phases DUP & Enquêtes</small></div>
+                                <div><strong>Service Juridique</strong><br><small style="color:var(--text-muted)">Accélère les Phases DUP</small></div>
                                 <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('legal')">Améliorer (1.5M €)</button>
                             </div>
                             <div class="item-row">
-                                <div><strong>Centre des Opérations</strong><br><small style="color:var(--text-muted)">Optimise l'entretien du réseau</small></div>
+                                <div><strong>Centre des Opérations</strong><br><small style="color:var(--text-muted)">Optimise l'entretien</small></div>
                                 <button style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="upgradeHq('ops')">Améliorer (1.5M €)</button>
                             </div>
                         </div>
@@ -133,7 +150,6 @@
 
                     <div class="card-panel">
                         <h3>👥 Gestion du Personnel & Recrutement</h3>
-                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Vos juristes accélèrent les procédures, vos ingénieurs accélèrent les chantiers.</div>
                         <div id="hr-departments-list" class="item-list"></div>
                     </div>
                 </div>
@@ -142,10 +158,10 @@
                 <div id="view-bank" class="dashboard-view" style="display:none;">
                     <div class="card-panel">
                         <h3>🏦 Gestion Bancaire & Finances</h3>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Gérez les tarifs de péage et consultez la santé financière de votre compagnie.</p>
-                        <div id="bank-info" style="font-size: 0.9rem; color: white;">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Gérez les tarifs de péage et consultez la santé financière.</p>
+                        <div id="bank-info" style="font-size: 0.85rem; color: white;">
                             • Tarif actuel des péages : <strong>0.08 € / km</strong><br>
-                            • Emprunts et subventions disponibles prochainement.
+                            • Emprunts et subventions bientôt disponibles.
                         </div>
                     </div>
                 </div>
@@ -166,10 +182,13 @@
         const SUPABASE_ANON_KEY = 'VOTRE_SUPABASE_ANON_KEY';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const map = L.map('map').setView([46.6033, 1.8883], 6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const map = L.map('map', { zoomControl: false }).setView([46.6033, 1.8883], 6);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // Tuiles sombres personnalisées pour coller au design Airline
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 18,
-            attribution: '© OpenStreetMap'
+            attribution: '© OpenStreetMap, © CARTO'
         }).addTo(map);
 
         const cityCoords = {
@@ -196,7 +215,6 @@
             document.getElementById(`view-${viewName}`).style.display = 'block';
             document.querySelectorAll('sidebar .nav-item').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
-            // Force le redimensionnement de la carte pour éviter les bugs d'affichage
             setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
@@ -236,7 +254,7 @@
                 container.innerHTML += `
                     <div class="project-card">
                         <div style="font-weight: 600; margin-bottom: 4px; color: white;">${p.highway_name}</div>
-                        <div style="font-size: 0.8rem; color: var(--warning); margin-bottom: 6px;">${phaseText}</div>
+                        <div style="font-size: 0.75rem; color: var(--warning); margin-bottom: 6px;">${phaseText}</div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
                             <span>Progression de l'étape</span>
                             <span>${p.phase_progress}%</span>
@@ -254,9 +272,7 @@
             if (hq) {
                 document.getElementById('hq-status-info').innerHTML = `
                     <strong>${hq.hq_name}</strong><br>
-                    • R&D : Niv. ${hq.rd_level}<br>
-                    • Juridique : Niv. ${hq.legal_level}<br>
-                    • Opérations : Niv. ${hq.ops_level}
+                    • R&D : Niv. ${hq.rd_level} | Juridique : Niv. ${hq.legal_level} | Opérations : Niv. ${hq.ops_level}
                 `;
             }
 
@@ -268,10 +284,10 @@
                     hrContainer.innerHTML += `
                         <div class="item-row">
                             <div>
-                                <strong>${d.name}</strong><br>
-                                <small style="color:var(--text-muted)">Effectif : ${d.staff_count} | Salaire : ${d.monthly_salary} €/m</small>
+                                <strong style="font-size:0.85rem;">${d.name}</strong><br>
+                                <small style="color:var(--text-muted)">Effectif : ${d.staff_count} | ${d.monthly_salary} €/m</small>
                             </div>
-                            <button style="width:auto; padding:5px 10px; font-size:0.8rem;" onclick="hireStaff('${d.dept_key}')">+5</button>
+                            <button style="width:auto; padding:5px 10px; font-size:0.75rem;" onclick="hireStaff('${d.dept_key}')">+5</button>
                         </div>
                     `;
                 });
@@ -303,15 +319,12 @@
             loadGameState();
         }
 
-        // Boucle de simulation automatique toutes les 4 secondes
         setInterval(async () => {
             await supabaseClient.rpc('process_game_tick');
             loadGameState();
         }, 4000);
 
-        window.onload = () => {
-            loadGameState();
-        };
+        window.onload = () => { loadGameState(); };
     </script>
 </body>
 </html>
