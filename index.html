@@ -50,8 +50,9 @@
         .panel-box h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; color: white; }
         label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px; }
         select, input[type="number"] { width: 100%; padding: 7px 10px; background: var(--bg-card); border: 1px solid var(--border); color: white; border-radius: 6px; margin-bottom: 10px; font-size: 0.8rem; outline: none; }
-        button.primary-btn { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
+        button.primary-btn { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
         button.primary-btn:hover { background: var(--primary-hover); }
+        button.primary-btn:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
 
         /* Siège Social Onglets & Style */
         .sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg-panel); padding: 6px; border-radius: 8px; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
@@ -63,6 +64,16 @@
         .director-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; font-size: 0.8rem; }
         
+        /* Styles spécifiques pour l'Arbre R&D Pleine Page */
+        .rd-container { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .rd-categories { display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .rd-cat-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .rd-cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        .rd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+        .rd-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+        .rd-card.unlocked { border-color: var(--success); }
+
         /* Notifications Toast */
         #toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
         .toast { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: fadeIn 0.3s ease; }
@@ -149,13 +160,26 @@
                 </div>
             </div>
 
-            <!-- VUE : TECHNOLOGIES / R&D -->
+            <!-- VUE : TECHNOLOGIES / R&D (PLEINE LARGEUR & MULTI-CATÉGORIES) -->
             <div id="view-tech" class="app-view">
                 <div class="welcome-header">
-                    <div class="welcome-title">Arbre Technologique (R&D)</div>
-                    <div class="company-subtitle">Recherchez des innovations pour booster vos profits et réduire la maintenance.</div>
+                    <div class="welcome-title">Arbre Technologique Complet (R&D)</div>
+                    <div class="company-subtitle">Développez de nouvelles capacités pour accroître la capacité de vos autoroutes et vos profits.</div>
                 </div>
-                <div id="tech-tree-container"></div>
+
+                <div class="rd-container">
+                    <!-- Boutons de catégories -->
+                    <div class="rd-categories">
+                        <button class="rd-cat-btn active" onclick="filterTechCategory('all', this)">🌐 Tout afficher</button>
+                        <button class="rd-cat-btn" onclick="filterTechCategory('voies', this)">🛣️ Voies & Capacité</button>
+                        <button class="rd-cat-btn" onclick="filterTechCategory('infrastructure', this)">🏗️ Infrastructures</button>
+                        <button class="rd-cat-btn" onclick="filterTechCategory('services', this)">⚡ Écologie & Services</button>
+                        <button class="rd-cat-btn" onclick="filterTechCategory('innovation', this)">💡 Innovations & Tech</button>
+                    </div>
+
+                    <!-- Grille des technologies -->
+                    <div id="rd-grid-container" class="rd-grid"></div>
+                </div>
             </div>
 
             <!-- VUE : SIÈGE SOCIAL -->
@@ -180,7 +204,6 @@
                 <!-- SOUS-ONGLET : ORGANIGRAMME -->
                 <div id="siege-sub-organigramme" class="siege-subview active">
                     <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Recrutez et achetez les niveaux de vos directeurs. Plus le niveau monte, plus le salaire augmente (départ à 10 000 $US).</p>
-                    
                     <div id="directors-list-container"></div>
                 </div>
 
@@ -195,7 +218,7 @@
                     </div>
                 </div>
 
-                <div id="siege-sub-rd" class="siege-subview"><div class="panel-box"><h3>Recherche & Développement</h3><p style="font-size:0.8rem; color:var(--text-muted);">Consultez l'onglet dédié R&D dans la barre latérale pour lancer des technologies.</p></div></div>
+                <div id="siege-sub-rd" class="siege-subview"><div class="panel-box"><h3>Recherche & Développement</h3><p style="font-size:0.8rem; color:var(--text-muted);">Consultez l'onglet dédié R&D dans la barre latérale pour accéder à l'arbre technologique complet.</p></div></div>
                 <div id="siege-sub-marketing" class="siege-subview"><div class="panel-box"><h3>Marketing & Campagnes</h3><button class="primary-btn" onclick="launchMarketingCampaign()">Lancer une campagne nationale (500 000 $US)</button></div></div>
                 <div id="siege-sub-marque" class="siege-subview"><div class="panel-box"><h3>Réputation de la Marque</h3><p style="font-size:0.8rem; color:var(--text-muted);">Niveau de satisfaction global des usagers : <strong style="color:var(--success);">94%</strong></p></div></div>
 
@@ -227,11 +250,27 @@
             { id: 'aire-lille-paris', routeKey: 'Lille-Paris', name: 'Aire de Repos de Vémars', lat: 49.0558, lng: 2.5511, desc: 'Carburant & Bornes électriques', level: 1, cost: 2000000 }
         ];
 
-        const technologies = [
-            { id: 'telepeage', name: 'Télépéage sans arrêt', desc: 'Augmente la fluidité et les revenus de 15%.', cost: 5000000, unlocked: false },
-            { id: 'bitume', name: 'Bitume Haute Résistance', desc: 'Réduit les coûts de maintenance de 25%.', cost: 8000000, unlocked: false },
-            { id: 'bornes_ev', name: 'Bornes Électriques Ultra-rapides', desc: 'Améliore les revenus des aires de repos de 30%.', cost: 12000000, unlocked: false }
+        // Arbre Technologique complet enrichi (avec les extensions de voies jusqu'à 2 x 4 voies)
+        let technologies = [
+            // Catégorie Voies & Capacité
+            { id: 'voies_2x2', category: 'voies', name: 'Élargissement 2 x 2 voies', desc: 'Passe les autoroutes à 2x2 voies. Capacité et flux de trafic augmentés de 25%.', cost: 3000000, unlocked: false, multiplierBonus: 1.25 },
+            { id: 'voies_2x3', category: 'voies', name: 'Élargissement 2 x 3 voies', desc: 'Aménagement à 3 voies par sens. Réduit les congestions et booste les revenus de 40%.', cost: 10000000, unlocked: false, multiplierBonus: 1.40 },
+            { id: 'voies_2x4', category: 'voies', name: 'Autoroute XXL : 2 x 4 voies', desc: 'Le summum de l artère autoroutière. Passage à 4 voies par sens pour un trafic maximal (+75% revenus).', cost: 25000000, unlocked: false, multiplierBonus: 1.75 },
+
+            // Catégorie Infrastructure
+            { id: 'bitume', category: 'infrastructure', name: 'Bitume Haute Résistance', desc: 'Réduit les coûts de maintenance globale et l usure des routes de 25%.', cost: 8000000, unlocked: false },
+            { id: 'ponts_suspendus', category: 'infrastructure', name: 'Génie Civil Avancé (Ponts & Tunnels)', desc: 'Permet de franchir les reliefs complexes plus rapidement et réduit le coût de construction des routes de 15%.', cost: 15000000, unlocked: false },
+            
+            // Catégorie Écologie & Services
+            { id: 'bornes_ev', category: 'services', name: 'Bornes Électriques Ultra-rapides', desc: 'Améliore les revenus des aires de repos et des stations de recharge de 30%.', cost: 12000000, unlocked: false },
+            { id: 'eclairage_solaire', category: 'services', name: 'Éclairage Autoroutier Solaire', desc: 'Améliore la sécurité nocturne, réduit la baisse de trafic par temps couvert de 50%.', cost: 6000000, unlocked: false },
+
+            // Catégorie Innovations & Tech
+            { id: 'telepeage', category: 'innovation', name: 'Télépéage sans arrêt', desc: 'Fluidifie le passage aux barrières de péage et augmente les revenus de 15%.', cost: 5000000, unlocked: false },
+            { id: 'ia_trafic', category: 'innovation', name: 'Régulation Dynamique par IA', desc: 'Gestion intelligente des vitesses et des flux en temps réel (+20% de bonus de productivité global).', cost: 18000000, unlocked: false }
         ];
+
+        let currentTechFilter = 'all';
 
         let directors = [
             { id: 'rh', name: 'Directeur des Ressources Humaines', desc: 'Recrute automatiquement les équipes et supervise les directeurs de ligne.', level: 0, maxLevel: 5, baseSalary: 10000, upgradeCost: 50000 },
@@ -293,7 +332,6 @@
             document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
             if(element) element.classList.add('active');
             
-            // Correction affichage carte lors du changement d'onglet
             setTimeout(() => { mapFullscreen.invalidateSize(); }, 150);
         }
 
@@ -332,6 +370,55 @@
             document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
             renderDirectors();
             showToast(`${dir.name} mis à niveau (Niv. ${dir.level}) !`);
+        }
+
+        // Rendu de l'Arbre R&D Pleine Page avec filtres par catégorie
+        function filterTechCategory(category, element) {
+            currentTechFilter = category;
+            document.querySelectorAll('.rd-cat-btn').forEach(btn => btn.classList.remove('active'));
+            if(element) element.classList.add('active');
+            renderTechTree();
+        }
+
+        function renderTechTree() {
+            const container = document.getElementById('rd-grid-container');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const filteredTechs = currentTechFilter === 'all' 
+                ? technologies 
+                : technologies.filter(t => t.category === currentTechFilter);
+
+            filteredTechs.forEach(tech => {
+                container.innerHTML += `
+                    <div class="rd-card ${tech.unlocked ? 'unlocked' : ''}">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                                <h3 style="font-size:0.9rem; color:white;">${tech.name}</h3>
+                                ${tech.unlocked ? '<span style="color:var(--success); font-size:0.7rem; font-weight:bold; background:rgba(34,197,94,0.1); padding:2px 6px; border-radius:4px;">Acquis</span>' : ''}
+                            </div>
+                            <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4;">${tech.desc}</p>
+                        </div>
+                        <div>
+                            ${tech.unlocked 
+                                <button class="primary-btn" style="background:var(--border); color:var(--text-muted); cursor:default;" disabled>Technologie Maîtrisée</button> 
+                                : `<button class="primary-btn" onclick="unlockTech('${tech.id}')">Rechercher (${tech.cost.toLocaleString()} $US)</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function unlockTech(techId) {
+            const tech = technologies.find(t => t.id === techId);
+            if(budget < tech.cost) return alert('Fonds insuffisants pour lancer cette recherche !');
+            budget -= tech.cost;
+            tech.unlocked = true;
+            document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+            renderTechTree();
+            updateDashboardStats();
+            showToast(`Technologie "${tech.name}" débloquée avec succès !`);
         }
 
         async function launchRealHighwayProject() {
@@ -469,35 +556,6 @@
             showToast(`Aire ${aire.name} améliorée au niveau ${aire.level} !`);
         }
 
-        function renderTechTree() {
-            const container = document.getElementById('tech-tree-container');
-            if(!container) return;
-            container.innerHTML = '';
-            technologies.forEach(tech => {
-                container.innerHTML += `
-                    <div class="panel-box" style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <h3>${tech.name} ${tech.unlocked ? '<span style="color:var(--success); font-size:0.75rem;">(Débloqué)</span>' : ''}</h3>
-                            <p style="font-size:0.75rem; color:var(--text-muted);">${tech.desc}</p>
-                        </div>
-                        <div>
-                            ${tech.unlocked ? '<span style="color:var(--success); font-weight:bold; font-size:0.8rem;">Acquis</span>' : `<button class="primary-btn" onclick="unlockTech('${tech.id}')">Rechercher (${tech.cost.toLocaleString()} $US)</button>`}
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function unlockTech(techId) {
-            const tech = technologies.find(t => t.id === techId);
-            if(budget < tech.cost) return alert('Fonds insuffisants pour cette recherche !');
-            budget -= tech.cost;
-            tech.unlocked = true;
-            document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
-            renderTechTree();
-            showToast(`Technologie "${tech.name}" débloquée avec succès !`);
-        }
-
         function launchMarketingCampaign() {
             if(budget < 500000) return alert('Fonds insuffisants !');
             budget -= 500000;
@@ -510,7 +568,14 @@
             const routesCountEl = document.getElementById('stat-routes-count');
             const revenueRateEl = document.getElementById('stat-revenue-rate');
             if(routesCountEl) routesCountEl.innerText = uniqueRoutesCount;
-            const revenueRate = uniqueRoutesCount * 45000;
+            
+            // Calcul du multiplicateur basé sur les technos de voies débloquées
+            let laneMultiplier = 1.0;
+            technologies.filter(t => t.category === 'voies' && t.unlocked).forEach(t => {
+                laneMultiplier = Math.max(laneMultiplier, t.multiplierBonus);
+            });
+
+            const revenueRate = Math.round(uniqueRoutesCount * 45000 * laneMultiplier);
             if(revenueRateEl) revenueRateEl.innerText = `+${revenueRate.toLocaleString()} $US / min`;
         }
 
@@ -520,7 +585,13 @@
                 let multiplier = currentWeather === 'Pluie fine' ? 0.8 : 1.0;
                 let telepeageTech = technologies.find(t => t.id === 'telepeage');
                 let techBonus = (telepeageTech && telepeageTech.unlocked) ? 1.15 : 1.0;
-                let income = Math.round(uniqueRoutesCount * 750 * multiplier * techBonus);
+                
+                let laneMultiplier = 1.0;
+                technologies.filter(t => t.category === 'voies' && t.unlocked).forEach(t => {
+                    laneMultiplier = Math.max(laneMultiplier, t.multiplierBonus);
+                });
+
+                let income = Math.round(uniqueRoutesCount * 750 * multiplier * techBonus * laneMultiplier);
                 budget += income;
                 const budgetEl = document.getElementById('top-budget');
                 if(budgetEl) budgetEl.innerText = budget.toLocaleString() + ' $US';
