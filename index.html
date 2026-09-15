@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - OpenStreetMap & Siège Social</title>
+    <title>Autoroute Tycoon - Édition Ultime OpenStreetMap</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -54,14 +54,19 @@
         button.primary-btn:hover { background: var(--primary-hover); }
 
         /* Siège Social Onglets & Style */
-        .sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg-panel); padding: 6px; border-radius: 8px; border: 1px solid var(--border); width: fit-content; }
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg-panel); padding: 6px; border-radius: 8px; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
         .sub-tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
         .sub-tab-btn.active { background: var(--bg-card); color: white; border: 1px solid var(--border); }
         .siege-subview { display: none; }
         .siege-subview.active { display: block; }
 
         .director-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 6px; font-size: 0.8rem; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; font-size: 0.8rem; }
+        
+        /* Notifications Toast */
+        #toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -71,6 +76,7 @@
         <div class="nav-item active" onclick="switchTab('dashboard', this)"><span class="icon">🏠</span>Accueil</div>
         <div class="nav-item" onclick="switchTab('lignes', this)"><span class="icon">🛣️</span>Lignes</div>
         <div class="nav-item" onclick="switchTab('aires', this)"><span class="icon">⛽</span>Aires</div>
+        <div class="nav-item" onclick="switchTab('tech', this)"><span class="icon">🔬</span>R&D</div>
         <div class="nav-item" onclick="switchTab('siege', this)"><span class="icon">🏢</span>Siège</div>
     </div>
 
@@ -80,7 +86,8 @@
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; background: var(--bg-panel); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);">
                 <div style="font-size: 0.8rem; color: var(--text-muted);">Sanef Réseau · <span style="color:white; font-weight:600;">Niveau 24</span></div>
-                <div style="display: flex; gap: 16px; font-size: 0.8rem;">
+                <div style="display: flex; gap: 16px; font-size: 0.8rem; align-items: center;">
+                    <div>🌤️ Météo : <span id="weather-status" style="color:var(--primary); font-weight:bold;">Grand Soleil</span></div>
                     <div>💰 <span id="top-budget" style="color:var(--success); font-weight:bold;">88 697 775 519 $US</span></div>
                 </div>
             </div>
@@ -88,8 +95,21 @@
             <!-- VUE : ACCUEIL -->
             <div id="view-dashboard" class="app-view active">
                 <div class="welcome-header">
-                    <div class="welcome-title">Tableau de bord</div>
-                    <div class="company-subtitle">Bienvenue sur votre réseau autoroutier.</div>
+                    <div class="welcome-title">Tableau de bord Général</div>
+                    <div class="company-subtitle">Pilotez votre réseau national d'autoroutes en temps réel.</div>
+                </div>
+                <div class="panel-box">
+                    <h3>📊 Indicateurs Clés</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div style="background:var(--bg-card); padding:10px; border-radius:6px; border:1px solid var(--border);">
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Tronçons construits</div>
+                            <div id="stat-routes-count" style="font-size:1.1rem; font-weight:bold; color:white;">0</div>
+                        </div>
+                        <div style="background:var(--bg-card); padding:10px; border-radius:6px; border:1px solid var(--border);">
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Revenus par minute</div>
+                            <div id="stat-revenue-rate" style="font-size:1.1rem; font-weight:bold; color:var(--success);">+0 $US</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -109,16 +129,34 @@
                     <button class="primary-btn" onclick="launchRealHighwayProject()">Construire la liaison (12.5M $US)</button>
                     <div id="loading-route" style="display:none; font-size:0.75rem; color:var(--warning); margin-top:5px;">Calcul du tracé OpenStreetMap...</div>
                 </div>
+
+                <div class="panel-box">
+                    <h3>⚙️ Gestion des Péages par Tracé</h3>
+                    <div id="tolls-management-list">
+                        <p style="font-size:0.8rem; color:var(--text-muted);">Aucune route active pour configurer les péages.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- VUE : AIRES DE REPOS -->
             <div id="view-aires" class="app-view">
                 <div class="welcome-header">
-                    <div class="welcome-title">Aires de Repos</div>
-                    <div class="company-subtitle">Disponibles uniquement sur les axes construits.</div>
+                    <div class="welcome-title">Aires de Repos & Services</div>
+                    <div class="company-subtitle">Disponibles et améliorables uniquement sur les axes construits.</div>
                 </div>
                 <div id="aires-list-container">
                     <p style="font-size:0.8rem; color:var(--text-muted);">Aucune aire de repos disponible. Construisez des liaisons routières pour voir apparaître les aires associées.</p>
+                </div>
+            </div>
+
+            <!-- VUE : TECHNOLOGIES / R&D -->
+            <div id="view-tech" class="app-view">
+                <div class="welcome-header">
+                    <div class="welcome-title">Arbre Technologique (R&D)</div>
+                    <div class="company-subtitle">Recherchez des innovations pour booster vos profits et réduire la maintenance.</div>
+                </div>
+                <div id="tech-tree-container">
+                    <!-- Généré par script -->
                 </div>
             </div>
 
@@ -175,9 +213,9 @@
                     </div>
                 </div>
 
-                <div id="siege-sub-rd" class="siege-subview"><div class="panel-box"><h3>Recherche & Développement</h3><p style="font-size:0.8rem; color:var(--text-muted);">Améliorations technologiques en cours...</p></div></div>
-                <div id="siege-sub-marketing" class="siege-subview"><div class="panel-box"><h3>Marketing</h3><p style="font-size:0.8rem; color:var(--text-muted);">Campagnes publicitaires du réseau.</p></div></div>
-                <div id="siege-sub-marque" class="siege-subview"><div class="panel-box"><h3>Marque</h3><p style="font-size:0.8rem; color:var(--text-muted);">Gestion de la réputation nationale.</p></div></div>
+                <div id="siege-sub-rd" class="siege-subview"><div class="panel-box"><h3>Recherche & Développement</h3><p style="font-size:0.8rem; color:var(--text-muted);">Consultez l'onglet dédié R&D dans la barre latérale pour lancer des technologies.</p></div></div>
+                <div id="siege-sub-marketing" class="siege-subview"><div class="panel-box"><h3>Marketing & Campagnes</h3><button class="primary-btn" onclick="launchMarketingCampaign()">Lancer une campagne nationale (500 000 $US)</button></div></div>
+                <div id="siege-sub-marque" class="siege-subview"><div class="panel-box"><h3>Réputation de la Marque</h3><p style="font-size:0.8rem; color:var(--text-muted);">Niveau de satisfaction global des usagers : <strong style="color:var(--success);">94%</strong></p></div></div>
 
             </div>
 
@@ -190,6 +228,9 @@
 
     </div>
 
+    <!-- Conteneur de Notifications -->
+    <div id="toast-container"></div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -199,22 +240,29 @@
             'Nantes': [47.2184, -1.5536], 'Toulouse': [43.6047, 1.4442], 'Nice': [43.7102, 7.2620]
         };
 
-        // Aires de repos rattachées à des liaisons précises
         const restAreasDatabase = [
-            { id: 'aire-paris-lyon', routeKey: 'Paris-Lyon', name: 'Aire de Repos de Beaune', lat: 47.0261, lng: 4.8415, desc: 'Station-service & Restauration' },
-            { id: 'aire-lille-paris', routeKey: 'Lille-Paris', name: 'Aire de Repos de Vémars', lat: 49.0558, lng: 2.5511, desc: 'Carburant & Bornes électriques' }
+            { id: 'aire-paris-lyon', routeKey: 'Paris-Lyon', name: 'Aire de Repos de Beaune', lat: 47.0261, lng: 4.8415, desc: 'Station-service & Restauration', level: 1, cost: 2000000 },
+            { id: 'aire-lille-paris', routeKey: 'Lille-Paris', name: 'Aire de Repos de Vémars', lat: 49.0558, lng: 2.5511, desc: 'Carburant & Bornes électriques', level: 1, cost: 2000000 }
+        ];
+
+        const technologies = [
+            { id: 'telepeage', name: 'Télépéage sans arrêt', desc: 'Augmente la fluidité et les revenus de 15%.', cost: 5000000, unlocked: false },
+            { id: 'bitume', name: 'Bitume Haute Résistance', desc: 'Réduit les coûts de maintenance de 25%.', cost: 8000000, unlocked: false },
+            { id: 'bornes_ev', name: 'Bornes Électriques Ultra-rapides', desc: 'Améliore les revenus des aires de repos de 30%.', cost: 12000000, unlocked: false }
         ];
 
         let budget = 88697775519;
-        let constructedRoutes = [];
+        let constructedRoutes = []; // Stocke {from, to, tollCar, tollTruck}
         let activeMarkers = [];
+        let weatherConditions = ['Grand Soleil', 'Pluie fine', 'Temps couvert'];
+        let currentWeather = 'Grand Soleil';
 
         const mapFullscreen = L.map('map-fullscreen', { zoomControl: false }).setView([46.6033, 1.8883], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(mapFullscreen);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; OpenStreetMap'
         }).addTo(mapFullscreen);
 
         Object.keys(frenchCities).forEach(cityName => {
@@ -223,6 +271,15 @@
              .addTo(mapFullscreen)
              .bindPopup(`<b>${cityName}</b>`);
         });
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
 
         function populateCitySelectors() {
             const selects = document.querySelectorAll('.city-select');
@@ -280,12 +337,13 @@
                      .addTo(mapFullscreen)
                      .bindPopup(`<b>Autoroute ${cA} ⇄ ${cB}</b>`);
 
-                    // Enregistrer la route construite (dans les deux sens)
-                    constructedRoutes.push(`${cA}-${cB}`);
-                    constructedRoutes.push(`${cB}-${cA}`);
+                    constructedRoutes.push({ from: cA, to: cB, tollCar: 15, tollTruck: 35 });
+                    constructedRoutes.push({ from: cB, to: cA, tollCar: 15, tollTruck: 35 });
 
                     updateAiresDisplay();
-                    alert(`Tronçon ${cA} - ${cB} construit avec succès ! Les aires de repos associées sont désormais débloquées.`);
+                    updateTollsManagement();
+                    updateDashboardStats();
+                    showToast(`Tronçon ${cA} - ${cB} construit avec succès !`);
                 } else {
                     alert('Erreur lors du calcul du tracé routier.');
                 }
@@ -295,23 +353,57 @@
             }
         }
 
+        function updateTollsManagement() {
+            const container = document.getElementById('tolls-management-list');
+            container.innerHTML = '';
+            
+            // Filtrer pour n'afficher que les routes uniques
+            const uniqueRoutes = constructedRoutes.filter((r, index, self) => 
+                index === self.findIndex(t => (t.from === r.from && t.to === r.to) || (t.from === r.to && t.to === r.from))
+            );
+
+            if(uniqueRoutes.length === 0) {
+                container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Aucune route active.</p>';
+                return;
+            }
+
+            uniqueRoutes.forEach((route, idx) => {
+                container.innerHTML += `
+                    <div class="item-row">
+                        <div><strong>${route.from} ⇄ ${route.to}</strong></div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <label>Voiture ($): <input type="number" value="${route.tollCar}" style="width:60px; margin:0;" onchange="updateTollValue('${route.from}', '${route.to}', 'car', this.value)"></label>
+                            <label>Camion ($): <input type="number" value="${route.tollTruck}" style="width:60px; margin:0;" onchange="updateTollValue('${route.from}', '${route.to}', 'truck', this.value)"></label>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateTollValue(from, to, type, val) {
+            constructedRoutes.forEach(r => {
+                if((r.from === from && r.to === to) || (r.from === to && r.to === from)) {
+                    if(type === 'car') r.tollCar = parseFloat(val);
+                    if(type === 'truck') r.tollTruck = parseFloat(val);
+                }
+            });
+            showToast(`Tarifs de péage mis à jour pour ${from}-${to}`);
+        }
+
         function updateAiresDisplay() {
             const container = document.getElementById('aires-list-container');
             container.innerHTML = '';
 
-            // Nettoyer les anciens marqueurs d'aires sur la carte
             activeMarkers.forEach(m => mapFullscreen.removeLayer(m));
             activeMarkers = [];
 
             let unlockedCount = 0;
 
             restAreasDatabase.forEach(aire => {
-                // Vérifie si le tracé de la route correspondante a été construit
-                const isBuilt = constructedRoutes.some(route => aire.routeKey.includes(route.split('-')[0]) && aire.routeKey.includes(route.split('-')[1]));
+                const isBuilt = constructedRoutes.some(route => aire.routeKey.includes(route.from) && aire.routeKey.includes(route.to));
 
                 if (isBuilt) {
                     unlockedCount++;
-                    // Afficher sur la carte par un point spécifique (carré orange/jaune par exemple)
                     const marker = L.circleMarker([aire.lat, aire.lng], {
                         radius: 7,
                         color: '#b45309',
@@ -320,26 +412,101 @@
                         weight: 2
                     }).addTo(mapFullscreen);
 
-                    marker.bindPopup(`<b>⛽ ${aire.name}</b><br>${aire.desc}`);
+                    marker.bindPopup(`<b>⛽ ${aire.name}</b><br>${aire.desc} (Niveau ${aire.level})`);
                     activeMarkers.push(marker);
 
-                    // Ajouter dans la liste de l'onglet Aires
                     container.innerHTML += `
-                        <div class="item-row" style="cursor:pointer;" onclick="mapFullscreen.setView([${aire.lat}, ${aire.lng}], 10);">
-                            <div><strong>${aire.name}</strong><br><small style="color:var(--text-muted)">${aire.desc}</small></div>
-                            <span style="color:var(--success); font-size:0.75rem; font-weight:bold;">Opérationnel</span>
+                        <div class="item-row">
+                            <div><strong>${aire.name}</strong> (Niveau ${aire.level})<br><small style="color:var(--text-muted)">${aire.desc}</small></div>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <button class="primary-btn" style="padding:4px 8px; font-size:0.75rem;" onclick="upgradeAire('${aire.id}')">Améliorer (${aire.cost.toLocaleString()} $US)</button>
+                                <button class="primary-btn" style="padding:4px 8px; font-size:0.75rem; background:var(--border);" onclick="mapFullscreen.setView([${aire.lat}, ${aire.lng}], 10);">Voir</button>
+                            </div>
                         </div>
                     `;
                 }
             });
 
             if (unlockedCount === 0) {
-                container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Aucune aire de repos disponible pour le moment. Construisez les liaisons routières requises.</p>';
+                container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Aucune aire de repos disponible. Construisez les liaisons routières requises.</p>';
             }
         }
 
+        function upgradeAire(aireId) {
+            const aire = restAreasDatabase.find(a => a.id === aireId);
+            if(budget < aire.cost) return alert('Fonds insuffisants pour améliorer cette aire !');
+            budget -= aire.cost;
+            aire.level++;
+            aire.cost = Math.round(aire.cost * 1.5);
+            document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+            updateAiresDisplay();
+            showToast(`Aire ${aire.name} améliorée au niveau ${aire.level} !`);
+        }
+
+        function renderTechTree() {
+            const container = document.getElementById('tech-tree-container');
+            container.innerHTML = '';
+            technologies.forEach(tech => {
+                container.innerHTML += `
+                    <div class="panel-box" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h3>${tech.name} ${tech.unlocked ? '<span style="color:var(--success); font-size:0.75rem;">(Débloqué)</span>' : ''}</h3>
+                            <p style="font-size:0.75rem; color:var(--text-muted);">${tech.desc}</p>
+                        </div>
+                        <div>
+                            ${tech.unlocked ? '<span style="color:var(--success); font-weight:bold; font-size:0.8rem;">Acquis</span>' : `<button class="primary-btn" onclick="unlockTech('${tech.id}')">Rechercher (${tech.cost.toLocaleString()} $US)</button>`}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function unlockTech(techId) {
+            const tech = technologies.find(t => t.id === techId);
+            if(budget < tech.cost) return alert('Fonds insuffisants pour cette recherche !');
+            budget -= tech.cost;
+            tech.unlocked = true;
+            document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+            renderTechTree();
+            showToast(`Technologie "${tech.name}" débloquée avec succès !`);
+        }
+
+        function launchMarketingCampaign() {
+            if(budget < 500000) return alert('Fonds insuffisants !');
+            budget -= 500000;
+            document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+            showToast('Campagne marketing lancée ! Fréquentation en hausse sur toutes vos routes.');
+        }
+
+        function updateDashboardStats() {
+            const uniqueRoutesCount = constructedRoutes.length / 2;
+            document.getElementById('stat-routes-count').innerText = uniqueRoutesCount;
+            const revenueRate = uniqueRoutesCount * 45000;
+            document.getElementById('stat-revenue-rate').innerText = `+${revenueRate.toLocaleString()} $US / min`;
+        }
+
+        // Boucle de revenus et de météo en temps réel
+        setInterval(() => {
+            const uniqueRoutesCount = constructedRoutes.length / 2;
+            if(uniqueRoutesCount > 0) {
+                let multiplier = currentWeather === 'Pluie fine' ? 0.8 : 1.0;
+                let techBonus = technologies.find(t => t.id === 'telepeage'] && technologies.find(t => t.id === 'telepeage').unlocked ? 1.15 : 1.0;
+                let income = Math.round(uniqueRoutesCount * 750 * multiplier * techBonus);
+                budget += income;
+                document.getElementById('top-budget').innerText = budget.toLocaleString() + ' $US';
+            }
+        }, 5000);
+
+        // Changement de météo aléatoire toutes les 45 secondes
+        setInterval(() => {
+            currentWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+            document.getElementById('weather-status').innerText = currentWeather;
+            showToast(`Bulletin météo : ${currentWeather}`);
+        }, 45000);
+
         window.onload = () => {
             populateCitySelectors();
+            renderTechTree();
         };
     </script>
 </body>
