@@ -97,7 +97,7 @@
             flex: 1;
             width: 100%;
             height: 100%;
-            background: #090e1a;
+            background: #aad3df; /* Couleur de fond par défaut OpenStreetMap */
             z-index: 1;
         }
 
@@ -272,13 +272,14 @@
         .badge-valley { background-color: var(--accent-warning); color: #000; }
 
         .leaflet-tooltip.city-label {
-            background: #131c38;
-            border: 1px solid var(--accent);
-            color: #ffffff;
+            background: #ffffff;
+            border: 1px solid #0284c7;
+            color: #0f172a;
             font-size: 10px;
             font-weight: bold;
             border-radius: 4px;
             padding: 2px 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -372,7 +373,7 @@
                 </div>
             </div>
 
-            <!-- VUE BANQUE (Financement style capture d'écran) -->
+            <!-- VUE BANQUE -->
             <div id="view-bank" class="dashboard-view" style="display:none;">
                 <div class="card-panel">
                     <h3>🏦 Banque & Finances</h3>
@@ -439,10 +440,10 @@
 
         </div>
 
-        <!-- Colonne de droite : Carte interactive centrée sur la France -->
+        <!-- Colonne de droite : Carte OpenStreetMap centrée sur la France -->
         <div class="map-col">
             <div style="padding: 12px 20px; background-color: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                <strong>CARTE DE LA FRANCE — RÉSEAU AUTOROUTIER</strong>
+                <strong>CARTE DE LA FRANCE — OPENSTREETMAP</strong>
                 <button onclick="resetMapFrance()" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">Centrer sur la France</button>
             </div>
             <div id="map"></div>
@@ -475,19 +476,21 @@
     });
 
     function initMap() {
+        // Initialisation de la carte centrée sur la France
         map = L.map('map', { zoomControl: false }).setView([46.6033, 1.8883], 6);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // Intégration officielle des tuiles OpenStreetMap standard
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            subdomains: 'abcd',
-            attribution: '&copy; OpenStreetMap & CARTO'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
         highwaysLayerGroup = L.layerGroup().addTo(map);
 
+        // Affichage des villes françaises sur la carte OpenStreetMap
         Object.keys(CITIES_COORDS).forEach(cityName => {
-            L.circleMarker(CITIES_COORDS[cityName], { radius: 5, color: '#38bdf8', fillColor: '#0284c7', fillOpacity: 1, weight: 2 })
+            L.circleMarker(CITIES_COORDS[cityName], { radius: 6, color: '#0284c7', fillColor: '#38bdf8', fillOpacity: 1, weight: 2 })
              .bindTooltip(cityName, { permanent: true, direction: 'top', className: 'city-label' }).addTo(map);
         });
     }
@@ -586,7 +589,7 @@
             if (CITIES_COORDS[hw.city_a] && CITIES_COORDS[hw.city_b]) {
                 const coordsA = CITIES_COORDS[hw.city_a];
                 const coordsB = CITIES_COORDS[hw.city_b];
-                const routeColor = hw.condition_pct < 50 ? '#ef4444' : (hw.is_toll ? '#22c55e' : '#38bdf8');
+                const routeColor = hw.condition_pct < 50 ? '#ef4444' : (hw.is_toll ? '#16a34a' : '#0284c7');
 
                 const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordsA[1]},${coordsA[0]};${coordsB[1]},${coordsB[0]}?overview=full&geometries=geojson`;
 
@@ -601,13 +604,13 @@
                         };
 
                         L.geoJSON(geojsonRoute, {
-                            style: { color: routeColor, weight: 4, opacity: 0.9 }
+                            style: { color: routeColor, weight: 5, opacity: 0.85 }
                         }).bindPopup(`<b>${hw.name}</b><br>État : ${Math.round(hw.condition_pct)}%`).addTo(highwaysLayerGroup);
                     } else {
-                        L.polyline([coordsA, coordsB], { color: routeColor, weight: 4 }).addTo(highwaysLayerGroup);
+                        L.polyline([coordsA, coordsB], { color: routeColor, weight: 5 }).addTo(highwaysLayerGroup);
                     }
                 } catch (e) {
-                    L.polyline([coordsA, coordsB], { color: routeColor, weight: 4 }).addTo(highwaysLayerGroup);
+                    L.polyline([coordsA, coordsB], { color: routeColor, weight: 5 }).addTo(highwaysLayerGroup);
                 }
             }
         });
