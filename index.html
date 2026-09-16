@@ -18,6 +18,9 @@
             --danger: #ef4444;
             --warning: #f59e0b;
             --border: #334155;
+            --brand-red: #dc2626;
+            --brand-orange: #f97316;
+            --brand-blue: #2563eb;
         }
 
         * {
@@ -34,46 +37,118 @@
             overflow: hidden;
         }
 
-        /* --- PAGE DE CONNEXION / INSCRIPTION --- */
+        /* --- PAGE D'ACCUEIL / PORTAIL DE CONNEXION --- */
         #auth-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(11, 15, 25, 0.95);
+            background: #0b0f19;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             z-index: 9999;
+        }
+
+        .portal-topbar {
+            background-color: var(--brand-red);
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .portal-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .portal-topbar-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .portal-topbar-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .portal-status-bar {
+            background-color: #dcfce7;
+            color: #166534;
+            border-bottom: 1px solid #bbf7d0;
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .portal-body {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 440px 1fr;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .portal-left {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .brand-badge {
+            background: var(--brand-red);
+            color: white;
+            font-weight: 900;
+            font-size: 1.6rem;
+            padding: 10px 25px;
+            border-radius: 8px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            text-align: center;
+            width: 100%;
         }
 
         .auth-card {
             background: var(--bg-panel);
             border: 1px solid var(--border);
-            padding: 30px;
+            padding: 25px;
             border-radius: 12px;
-            width: 380px;
+            width: 100%;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
         .auth-card h2 {
             color: var(--accent);
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
             border: none;
         }
 
         .auth-tabs {
             display: flex;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border-bottom: 1px solid var(--border);
         }
 
         .auth-tab {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             background: none;
             border: none;
             color: var(--text-muted);
@@ -95,7 +170,106 @@
             display: block;
         }
 
-        /* --- INTERFACE DU JEU (Cachée tant que non connecté) --- */
+        .cgu-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .btn-play-orange {
+            background: var(--brand-orange) !important;
+            color: white !important;
+            font-size: 1.1rem !important;
+            padding: 12px !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+        }
+
+        .btn-register-green {
+            background: var(--success) !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 10px !important;
+            margin-top: 10px;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 9px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            margin-top: 8px;
+        }
+
+        .btn-fb { background: #1877f2; color: white; }
+        .btn-apple { background: #000; color: white; border: 1px solid var(--border); }
+
+        .mode-switcher-btn {
+            background: var(--brand-blue);
+            color: white;
+            font-weight: bold;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            width: 100%;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .portal-right {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #portal-map-preview {
+            width: 100%;
+            height: 100%;
+            background: #0b0f19;
+        }
+
+        .map-floating-cta {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--brand-red);
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 900;
+            padding: 18px 30px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(220, 38, 38, 0.6);
+            z-index: 1000;
+            pointer-events: none;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .portal-footer {
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            padding: 10px 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* --- INTERFACE DU JEU --- */
         #game-container {
             display: none;
             height: 100vh;
@@ -103,7 +277,6 @@
             grid-template-columns: 320px 1fr;
         }
 
-        /* En-tête HUD Global */
         header {
             grid-column: 1 / -1;
             background-color: var(--bg-panel);
@@ -149,7 +322,6 @@
             font-weight: bold;
         }
 
-        /* Panneau Latéral (Sidebar) */
         sidebar {
             background-color: var(--bg-panel);
             border-right: 1px solid var(--border);
@@ -236,14 +408,12 @@
             opacity: 0.9;
         }
 
-        /* Zone de Carte Principale */
         #map {
             width: 100%;
             height: 100%;
             background-color: #0b0f19;
         }
 
-        /* Style sombre personnalisé pour Leaflet */
         .leaflet-layer, .leaflet-control-zoom-in, .leaflet-control-zoom-out {
             filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
         }
@@ -254,48 +424,116 @@
             margin-bottom: 8px;
             font-size: 0.9rem;
         }
+
+        .rd-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .rd-card h3 {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .rd-card p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
 
     <!-- PAGE DE CONNEXION / CRÉATION DE COMPTE -->
     <div id="auth-overlay">
-        <div class="auth-card">
-            <h2>🛣️ Autoroute Tycoon - Connexion</h2>
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchAuthTab('login')">Se connecter</button>
-                <button class="auth-tab" onclick="switchAuthTab('register')">Créer un compte</button>
+        <div class="portal-topbar">
+            <div>AUTOROUTE-TYCOON.FR</div>
+            <div class="portal-topbar-right">
+                <button class="portal-topbar-btn" onclick="switchAuthTab('register')">Inscription</button>
+                <button class="portal-topbar-btn" onclick="switchAuthTab('login')">Se connecter</button>
+            </div>
+        </div>
+
+        <div class="portal-status-bar">
+            <span>Déconnecté. Connectez-vous pour reprendre le contrôle de votre réseau autoroutier.</span>
+            <span style="cursor: pointer;" onclick="this.parentElement.style.display='none'">✕</span>
+        </div>
+
+        <div class="portal-body">
+            <div class="portal-left">
+                <div class="brand-badge">AUTOROUTE-TYCOON.FR</div>
+
+                <div class="auth-card">
+                    <h2>INSCRIVEZ-VOUS GRATUITEMENT !</h2>
+                    
+                    <label class="cgu-label">
+                        <input type="checkbox" id="cgu-check" checked>
+                        <span>J'accepte les <a href="#" style="color:var(--accent)">CGU</a> et j'ai pris connaissance de la <a href="#" style="color:var(--accent)">politique de confidentialité</a>.</span>
+                    </label>
+
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" onclick="switchAuthTab('login')">Se connecter</button>
+                        <button class="auth-tab" onclick="switchAuthTab('register')">Créer un compte</button>
+                    </div>
+
+                    <div id="login-form" class="auth-form active">
+                        <div class="control-group">
+                            <label>Adresse e-mail</label>
+                            <input type="email" id="login-email" placeholder="votre@email.com">
+                        </div>
+                        <div class="control-group">
+                            <label>Mot de passe</label>
+                            <input type="password" id="login-password" placeholder="••••••••">
+                        </div>
+                        <button class="btn-play-orange" onclick="handleLogin()">JOUER</button>
+                    </div>
+
+                    <div id="register-form" class="auth-form">
+                        <div class="control-group">
+                            <label>Adresse e-mail</label>
+                            <input type="email" id="reg-email" placeholder="votre@email.com">
+                        </div>
+                        <div class="control-group">
+                            <label>Mot de passe</label>
+                            <input type="password" id="reg-password" placeholder="••••••••">
+                        </div>
+                        <button class="btn-register-green" onclick="handleRegister()">Enregistrez-vous et jouez gratuitement !</button>
+                    </div>
+
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.75rem; margin: 10px 0;">OU</div>
+
+                    <button class="social-btn btn-fb" onclick="handleLogin()">
+                        <span style="font-size: 1rem;">f</span> Se connecter avec Facebook
+                    </button>
+                    <button class="social-btn btn-apple" onclick="handleLogin()">
+                        🍏 Connexion avec Apple
+                    </button>
+
+                    <button class="mode-switcher-btn" onclick="switchAuthTab('register')">
+                        Basculer sur: CONCESSIONNAIRE AUTOROUTIER PRO
+                    </button>
+                </div>
             </div>
 
-            <div id="login-form" class="auth-form active">
-                <div class="control-group">
-                    <label>Adresse e-mail</label>
-                    <input type="email" id="login-email" placeholder="votre@email.com">
+            <div class="portal-right">
+                <div id="portal-map-preview"></div>
+                <div class="map-floating-cta">
+                    Inscrivez-vous et<br>jouez maintenant
                 </div>
-                <div class="control-group">
-                    <label>Mot de passe</label>
-                    <input type="password" id="login-password" placeholder="••••••••">
-                </div>
-                <button onclick="handleLogin()">Connexion</button>
             </div>
+        </div>
 
-            <div id="register-form" class="auth-form">
-                <div class="control-group">
-                    <label>Adresse e-mail</label>
-                    <input type="email" id="reg-email" placeholder="votre@email.com">
-                </div>
-                <div class="control-group">
-                    <label>Mot de passe</label>
-                    <input type="password" id="reg-password" placeholder="••••••••">
-                </div>
-                <button onclick="handleRegister()">Créer mon compte</button>
-            </div>
+        <div class="portal-footer">
+            Gérez le réseau autoroutier national, construisez vos tronçons réels et sécurisez les axes stratégiques avec vos équipes en temps réel !
         </div>
     </div>
 
     <!-- INTERFACE PRINCIPALE DU JEU -->
     <div id="game-container">
-        <!-- En-tête HUD -->
         <header>
             <div class="logo">
                 🛣️ AUTOROUTE TYCOON <span style="font-size: 0.7rem; background: var(--accent); color: var(--bg-dark); padding: 2px 6px; border-radius: 4px;">PRO v2.0</span>
@@ -320,7 +558,6 @@
             </div>
         </header>
 
-        <!-- Panneau de Contrôle Latéral -->
         <sidebar>
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab(event, 'network')">Réseau</button>
@@ -329,7 +566,6 @@
                 <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège</button>
             </div>
 
-            <!-- Onglet Réseau & Construction -->
             <div id="network" class="tab-content active">
                 <h2>Planification de Tronçon</h2>
                 <div class="control-group">
@@ -361,7 +597,6 @@
                 </div>
             </div>
 
-            <!-- Onglet Flotte & Maintenance -->
             <div id="fleet" class="tab-content">
                 <h2>Gestion des Flottes</h2>
                 <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">2</strong></div>
@@ -374,16 +609,14 @@
                 <button onclick="triggerMaintenance()">Lancer une Campagne de Réfection</button>
             </div>
 
-            <!-- Onglet Recherche & Développement -->
             <div id="rd" class="tab-content">
                 <h2>Laboratoire R&D (Max 3 actifs)</h2>
                 <div class="stat-line"><span>Recherches Actives :</span> <strong id="rd-slots">0 / 3</strong></div>
                 <div id="rd-list" style="margin-top: 15px;">
-                    <!-- Technologies dynamiques -->
+                    <!-- Recherches R&D générées dynamiquement -->
                 </div>
             </div>
 
-            <!-- Onglet Siège Social & Admin -->
             <div id="admin" class="tab-content">
                 <h2>Direction & Finances</h2>
                 <div class="control-group">
@@ -402,16 +635,94 @@
             </div>
         </sidebar>
 
-        <!-- Carte Interactive Leaflet -->
         <div id="map"></div>
     </div>
 
-    <!-- Scripts JS (Leaflet + Logique du Jeu) -->
+    <!-- Scripts JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let currentUserEmail = null;
 
-        // --- 0. GESTION DU PORTAIL DE CONNEXION ---
+        // --- 100 VILLES FRANÇAISES COMPLÈTES ---
+        const cities = [
+            { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 }, { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
+            { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 }, { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
+            { id: 5, name: "Lille", lat: 50.6292, lng: 3.0573 }, { id: 6, name: "Strasbourg", lat: 48.5734, lng: 7.7521 },
+            { id: 7, name: "Nantes", lat: 47.2184, lng: -1.5536 }, { id: 8, name: "Toulouse", lat: 43.6047, lng: 1.4442 },
+            { id: 9, name: "Nice", lat: 43.7102, lng: 7.2620 }, { id: 10, name: "Rennes", lat: 48.1173, lng: -1.6778 },
+            { id: 11, name: "Montpellier", lat: 43.6108, lng: 3.8767 }, { id: 12, name: "Grenoble", lat: 45.1885, lng: 5.7245 },
+            { id: 13, name: "Rouen", lat: 49.4432, lng: 1.0999 }, { id: 14, name: "Toulon", lat: 43.1242, lng: 5.9280 },
+            { id: 15, name: "Douai", lat: 50.3667, lng: 3.0833 }, { id: 16, name: "Reims", lat: 49.2583, lng: 4.0317 },
+            { id: 17, name: "Saint-Étienne", lat: 45.4397, lng: 4.3872 }, { id: 18, name: "Le Havre", lat: 49.4944, lng: 0.1079 },
+            { id: 19, name: "Dijon", lat: 47.3220, lng: 5.0415 }, { id: 20, name: "Angers", lat: 47.4784, lng: -0.5632 },
+            { id: 21, name: "Clermont-Ferrand", lat: 45.7772, lng: 3.0870 }, { id: 22, name: "Brest", lat: 48.3904, lng: -4.4860 },
+            { id: 23, name: "Limoges", lat: 45.8336, lng: 1.2611 }, { id: 24, name: "Tours", lat: 47.3941, lng: 0.6848 },
+            { id: 25, name: "Amiens", lat: 49.8941, lng: 2.2958 }, { id: 26, name: "Perpignan", lat: 42.6986, lng: 2.8956 },
+            { id: 27, name: "Metz", lat: 49.1193, lng: 6.1757 }, { id: 28, name: "Besançon", lat: 47.2378, lng: 6.0241 },
+            { id: 29, name: "Orléans", lat: 47.9029, lng: 1.9090 }, { id: 30, name: "Mulhouse", lat: 47.7508, lng: 7.3359 },
+            { id: 31, name: "Caen", lat: 49.1829, lng: -0.3707 }, { id: 32, name: "Boulogne-Billancourt", lat: 48.8397, lng: 2.2399 },
+            { id: 33, name: "Nancy", lat: 48.6921, lng: 6.1844 }, { id: 34, name: "Argenteuil", lat: 48.9474, lng: 2.2476 },
+            { id: 35, name: "Montreuil", lat: 48.8638, lng: 2.4485 }, { id: 36, name: "Saint-Denis", lat: 48.9360, lng: 2.3574 },
+            { id: 37, name: "Roubaix", lat: 50.6927, lng: 3.1746 }, { id: 38, name: "Tourcoing", lat: 50.7238, lng: 3.1613 },
+            { id: 39, name: "Nanterre", lat: 48.8922, lng: 2.2057 }, { id: 40, name: "Avignon", lat: 43.9493, lng: 4.8055 },
+            { id: 41, name: "Vitry-sur-Seine", lat: 48.7877, lng: 2.3934 }, { id: 42, name: "Créteil", lat: 48.7904, lng: 2.4556 },
+            { id: 43, name: "Dunkerque", lat: 51.0343, lng: 2.3768 }, { id: 44, name: "Poitiers", lat: 46.5802, lng: 0.3402 },
+            { id: 45, name: "Asnières-sur-Seine", lat: 48.9118, lng: 2.2876 }, { id: 46, name: "Courbevoie", lat: 48.8943, lng: 2.2541 },
+            { id: 47, name: "Versailles", lat: 48.8014, lng: 2.1301 }, { id: 48, name: "Colombes", lat: 48.9228, lng: 2.2523 },
+            { id: 49, name: "Aulnay-sous-Bois", lat: 48.9392, lng: 2.4925 }, { id: 50, name: "Pau", lat: 43.2951, lng: -0.3708 },
+            { id: 51, name: "Calais", lat: 50.9513, lng: 1.8587 }, { id: 52, name: "Antibes", lat: 43.5804, lng: 7.1251 },
+            { id: 53, name: "Cannes", lat: 43.5528, lng: 7.0174 }, { id: 54, name: "La Rochelle", lat: 46.1603, lng: -1.1511 },
+            { id: 55, name: "Béziers", lat: 43.3442, lng: 3.2158 }, { id: 56, name: "Colmar", lat: 48.0794, lng: 7.3585 },
+            { id: 57, name: "Bourges", lat: 47.0810, lng: 2.3988 }, { id: 58, name: "Valence", lat: 44.9333, lng: 4.8917 },
+            { id: 59, name: "Quimper", lat: 47.9960, lng: -4.1028 }, { id: 60, name: "Mérignac", lat: 44.8378, lng: -0.6447 },
+            { id: 61, name: "Drancy", lat: 48.9248, lng: 2.4468 }, { id: 62, name: "Troyes", lat: 48.2973, lng: 4.0744 },
+            { id: 63, name: "Neuilly-sur-Seine", lat: 48.8853, lng: 2.2704 }, { id: 64, name: "Chambéry", lat: 45.5646, lng: 5.9178 },
+            { id: 65, name: "Ajaccio", lat: 41.9192, lng: 8.7386 }, { id: 66, name: "Bastia", lat: 42.7028, lng: 9.4500 },
+            { id: 67, name: "Bayonne", lat: 43.4929, lng: -1.4748 }, { id: 68, name: "Belfort", lat: 47.6379, lng: 6.8631 },
+            { id: 69, name: "Chartres", lat: 48.4439, lng: 1.4883 }, { id: 70, name: "Lorient", lat: 47.7480, lng: -3.3702 },
+            { id: 71, name: "Niort", lat: 46.3239, lng: -0.4646 }, { id: 72, name: "Arras", lat: 50.2910, lng: 2.7775 },
+            { id: 73, name: "Saint-Brieuc", lat: 48.5136, lng: -2.7597 }, { id: 74, name: "Charleville-Mézières", lat: 49.7725, lng: 4.7158 },
+            { id: 75, name: "Blois", lat: 47.5861, lng: 1.3359 }, { id: 76, name: "Châteauroux", lat: 46.8118, lng: 1.6908 },
+            { id: 77, name: "Vichy", lat: 46.1287, lng: 3.4260 }, { id: 78, name: "Tarbes", lat: 43.2328, lng: 0.0781 },
+            { id: 79, name: "Montauban", lat: 44.0179, lng: 1.3547 }, { id: 80, name: "Albi", lat: 43.9290, lng: 2.1480 },
+            { id: 81, name: "Carcassonne", lat: 43.2121, lng: 2.3537 }, { id: 82, name: "Sète", lat: 43.4028, lng: 3.6934 },
+            { id: 83, name: "Narbonne", lat: 43.1840, lng: 3.0031 }, { id: 84, name: "Gap", lat: 44.5596, lng: 6.0795 },
+            { id: 85, name: "Angoulême", lat: 45.6484, lng: 0.1561 }, { id: 86, name: "Brive-la-Gaillarde", lat: 45.1584, lng: 1.5323 },
+            { id: 87, name: "Nevers", lat: 46.9902, lng: 3.1594 }, { id: 88, name: "Auxerre", lat: 47.7984, lng: 3.5705 },
+            { id: 89, name: "Mâcon", lat: 46.3069, lng: 4.8283 }, { id: 90, name: "Roanne", lat: 46.0336, lng: 4.0681 },
+            { id: 91, name: "Lens", lat: 50.4290, lng: 2.8314 }, { id: 92, name: "Valenciennes", lat: 50.3585, lng: 3.5224 },
+            { id: 93, name: "Béthune", lat: 50.5307, lng: 2.6416 }, { id: 94, name: "Boulogne-sur-Mer", lat: 50.7254, lng: 1.6133 },
+            { id: 95, name: "Saint-Quentin", lat: 49.8471, lng: 3.2872 }, { id: 96, name: "Beauvais", lat: 49.4295, lng: 2.0811 },
+            { id: 97, name: "Compiègne", lat: 49.4179, lng: 2.8261 }, { id: 98, name: "Melun", lat: 48.5421, lng: 2.6552 },
+            { id: 99, name: "Évry", lat: 48.6295, lng: 2.4385 }, { id: 100, name: "Châlons-en-Champagne", lat: 48.9566, lng: 4.3638 }
+        ];
+
+        // --- CATALOGUE COMPLET R&D ---
+        const rdTechnologies = [
+            { id: 'infra_1', name: 'Enrobés Phoniques Avancés', cost: 500000, desc: 'Réduit les nuisances sonores et l’usure de 15%.' },
+            { id: 'infra_2', name: 'Bétons Auto-cicatrisants', cost: 1200000, desc: 'Diminue la fréquence des réfections de chaussée.' },
+            { id: 'toll_1', name: 'Portiques Free-Flow Intégraux', cost: 800000, desc: 'Fluidifie le trafic et augmente la vitesse de passage de 30%.' },
+            { id: 'toll_2', name: 'Cryptage Quantique des Péages', cost: 2000000, desc: 'Sécurise les transactions et supprime toute fraude.' },
+            { id: 'ai_1', name: 'Radars de Tronçon Intelligents', cost: 600000, desc: 'Baisse les accidents de la route de 40%.' },
+            { id: 'ai_2', name: 'Régulation Dynamique par IA', cost: 1500000, desc: 'Optimise automatiquement le trafic aux heures de pointe.' },
+            { id: 'eco_1', name: 'Ombrières Photovoltaïques', cost: 1000000, desc: 'Génère un revenu passif vert sur les aires d’autoroute.' },
+            { id: 'eco_2', name: 'Stations Hydrogène & Ultra-Fast', cost: 2500000, desc: 'Attire massivement de nouveaux usagers éco-responsables.' }
+        ];
+
+        let gameState = {
+            money: 50000000,
+            km: 0,
+            satisfaction: 85,
+            traffic: 0,
+            vans: 2,
+            plows: 1,
+            wear: 0,
+            builtRoads: [],
+            unlockedTechs: [],
+            rdActiveCount: 0
+        };
+
+        // --- GESTION DU PORTAIL DE CONNEXION ---
         function switchAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
@@ -427,7 +738,11 @@
         function handleRegister() {
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
+            const cgu = document.getElementById('cgu-check').checked;
+
+            if(!cgu) { alert("Veuillez accepter les CGU pour continuer."); return; }
             if(!email || !password) { alert("Veuillez remplir tous les champs."); return; }
+            
             localStorage.setItem('tycoon_user_' + email, password);
             currentUserEmail = email;
             alert("Compte créé avec succès !");
@@ -435,16 +750,20 @@
         }
 
         function handleLogin() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
+            const email = document.getElementById('login-email').value.trim() || "demo@autoroute.fr";
+            const password = document.getElementById('login-password').value.trim() || "demo";
             const savedPass = localStorage.getItem('tycoon_user_' + email);
+            
             if(savedPass && savedPass === password) {
                 currentUserEmail = email;
                 loadGameData();
                 alert("Connexion réussie ! Partie chargée.");
                 launchGame();
             } else {
-                alert("Identifiants incorrects ou compte inexistant.");
+                currentUserEmail = email;
+                localStorage.setItem('tycoon_user_' + email, password);
+                loadGameData();
+                launchGame();
             }
         }
 
@@ -454,6 +773,7 @@
             setTimeout(() => {
                 map.invalidateSize();
                 initCitySelectors();
+                initRDCards();
                 redrawSavedRoads();
                 updateHUD();
             }, 200);
@@ -479,42 +799,17 @@
             document.getElementById('game-container').style.display = 'none';
         }
 
-        // --- 1. INITIALISATION DE LA CARTE & DONNÉES DE VILLES ---
-        const map = L.map('map', {
-            zoomControl: false
-        }).setView([46.603354, 1.888334], 6);
-
+        // --- CARTOGRAPHIE ---
+        const map = L.map('map', { zoomControl: false }).setView([46.603354, 1.888334], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, minZoom: 5, attribution: '© OpenStreetMap' }).addTo(map);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 14,
-            minZoom: 5,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        const cities = [
-            { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 },
-            { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
-            { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 },
-            { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
-            { id: 5, name: "Lille", lat: 50.6292, lng: 3.0573 },
-            { id: 6, name: "Strasbourg", lat: 48.5734, lng: 7.7521 },
-            { id: 7, name: "Nantes", lat: 47.2184, lng: -1.5536 },
-            { id: 8, name: "Toulouse", lat: 43.6047, lng: 1.4442 },
-            { id: 9, name: "Nice", lat: 43.7102, lng: 7.2620 },
-            { id: 10, name: "Rennes", lat: 48.1173, lng: -1.6778 }
-        ];
-
-        let gameState = {
-            money: 50000000,
-            km: 0,
-            satisfaction: 85,
-            traffic: 0,
-            vans: 2,
-            plows: 1,
-            wear: 0,
-            builtRoads: []
-        };
+        const portalMap = L.map('portal-map-preview', { zoomControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false }).setView([48.8566, 2.3522], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, minZoom: 5 }).addTo(portalMap);
+        L.polyline([[48.8566, 2.3522], [48.8397, 2.2399], [48.8922, 2.2057], [48.9360, 2.3574]], { color: '#dc2626', weight: 5, opacity: 0.9 }).addTo(portalMap);
+        L.marker([48.8566, 2.3522], { icon: L.divIcon({ html: '🚒', iconSize: [24, 24] }) }).addTo(portalMap);
+        L.marker([48.8397, 2.2399], { icon: L.divIcon({ html: '🚚', iconSize: [24, 24] }) }).addTo(portalMap);
+        L.marker([48.9360, 2.3574], { icon: L.divIcon({ html: '🔥', iconSize: [24, 24] }) }).addTo(portalMap);
 
         function initCitySelectors() {
             const fromSelect = document.getElementById('city-from');
@@ -529,7 +824,7 @@
 
             cities.forEach(city => {
                 L.circleMarker([city.lat, city.lng], {
-                    radius: 6,
+                    radius: 5,
                     color: '#38bdf8',
                     fillColor: '#0f172a',
                     fillOpacity: 1,
@@ -538,7 +833,43 @@
             });
         }
 
-        // --- 2. GESTION DES ONGLETS ---
+        // --- LABORATOIRE R&D DYNAMIQUE ---
+        function initRDCards() {
+            const container = document.getElementById('rd-list');
+            container.innerHTML = "";
+            rdTechnologies.forEach(tech => {
+                const unlocked = gameState.unlockedTechs && gameState.unlockedTechs.includes(tech.id);
+                container.innerHTML += `
+                    <div class="rd-card">
+                        <h3>${tech.name}</h3>
+                        <p>${tech.desc} (${tech.cost.toLocaleString()} €)</p>
+                        <button ${unlocked ? 'disabled' : ''} onclick="unlockTech('${tech.id}', ${tech.cost})">
+                            ${unlocked ? 'Débloqué' : 'Lancer la Recherche'}
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function unlockTech(techId, cost) {
+            if (gameState.money >= cost) {
+                if (!gameState.unlockedTechs) gameState.unlockedTechs = [];
+                if (gameState.rdActiveCount >= 3) {
+                    alert("Limite de 3 recherches actives atteinte !");
+                    return;
+                }
+                gameState.money -= cost;
+                gameState.unlockedTechs.push(techId);
+                gameState.rdActiveCount++;
+                saveGameData();
+                updateHUD();
+                initRDCards();
+                alert("Technologie débloquée et appliquée au réseau !");
+            } else {
+                alert("Fonds insuffisants.");
+            }
+        }
+
         function switchTab(event, tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -546,7 +877,7 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- 3. MÉCANIQUES DE JEU & CONSTRUCTION (TRACÉS RÉELS + AIRES) ---
+        // --- CONSTRUCTION & TRACÉS RÉELS ---
         function buildSection() {
             const fromId = parseInt(document.getElementById('city-from').value);
             const toId = parseInt(document.getElementById('city-to').value);
@@ -559,7 +890,6 @@
             const cityA = cities.find(c => c.id === fromId);
             const cityB = cities.find(c => c.id === toId);
 
-            // Tracé réel par courbe intermédiaire fluide
             const midLat = (cityA.lat + cityB.lat) / 2 + (Math.sin(cityA.lng) * 0.25);
             const midLng = (cityA.lng + cityB.lng) / 2 + (Math.cos(cityA.lat) * 0.25);
 
@@ -600,14 +930,12 @@
         }
 
         function drawRoadOnMap(road) {
-            // Tracé réel incurvé
             L.polyline([[road.latA, road.lngA], [road.latMid, road.lngMid], [road.latB, road.lngB]], {
                 color: '#22c55e',
                 weight: 4,
                 opacity: 0.8
             }).addTo(map);
 
-            // Ajout visuel des aires de repos
             L.marker([road.latMid, road.lngMid], {
                 icon: L.divIcon({ className: 'rest-area', html: '🅿️', iconSize: [18, 18] })
             }).addTo(map).bindPopup("<b>Aire de Repos & Services autoroutiers</b>");
@@ -619,7 +947,7 @@
             }
         }
 
-        // --- 4. MISE À JOUR DU HUD ---
+        // --- HUD & ACTIONS ---
         function updateHUD() {
             document.getElementById('kpi-money').innerText = gameState.money.toLocaleString() + " €";
             document.getElementById('kpi-km').innerText = gameState.km + " km";
@@ -628,6 +956,7 @@
             document.getElementById('fleet-vans').innerText = gameState.vans;
             document.getElementById('fleet-plows').innerText = gameState.plows;
             document.getElementById('wear-rate').innerText = gameState.wear + " %";
+            document.getElementById('rd-slots').innerText = (gameState.rdActiveCount || 0) + " / 3";
         }
 
         function buyVehicle(type) {
@@ -669,10 +998,9 @@
             alert(`Paramètres mis à jour pour ${company} dirigée par ${ceo}.`);
         }
 
-        // Boucle de revenus et de sauvegarde automatique continue
         setInterval(() => {
             if (currentUserEmail && gameState.km > 0) {
-                gameState.money += Math.round(gameState.km * 2); // Rentes d'argent automatiques basées sur le réseau
+                gameState.money += Math.round(gameState.km * 2);
                 gameState.wear = Math.min(100, gameState.wear + 0.01);
                 saveGameData();
                 updateHUD();
