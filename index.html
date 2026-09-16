@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoroute Tycoon - Édition Pro & Sauvegarde Cloud</title>
+    <title>Autoroute Tycoon - Édition Pro & Ultra-Échelle</title>
+    <!-- Leaflet CSS pour la cartographie -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -94,14 +95,15 @@
             display: block;
         }
 
-        /* --- INTERFACE DU JEU --- */
+        /* --- INTERFACE DU JEU (Cachée tant que non connecté) --- */
         #game-container {
             display: none;
             height: 100vh;
             grid-template-rows: 60px 1fr;
-            grid-template-columns: 360px 1fr;
+            grid-template-columns: 320px 1fr;
         }
 
+        /* En-tête HUD Global */
         header {
             grid-column: 1 / -1;
             background-color: var(--bg-panel);
@@ -114,7 +116,7 @@
         }
 
         .logo {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: bold;
             color: var(--accent);
             display: flex;
@@ -124,29 +126,30 @@
 
         .kpi-container {
             display: flex;
-            gap: 15px;
+            gap: 25px;
         }
 
         .kpi-card {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid var(--border);
-            padding: 4px 12px;
+            padding: 6px 15px;
             border-radius: 6px;
             display: flex;
             flex-direction: column;
         }
 
         .kpi-label {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
             text-transform: uppercase;
         }
 
         .kpi-value {
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: bold;
         }
 
+        /* Panneau Latéral (Sidebar) */
         sidebar {
             background-color: var(--bg-panel);
             border-right: 1px solid var(--border);
@@ -159,21 +162,19 @@
             display: flex;
             background: #0b0f19;
             border-bottom: 1px solid var(--border);
-            overflow-x: auto;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 10px 4px;
+            padding: 12px 8px;
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
-            white-space: nowrap;
         }
 
         .tab-btn.active {
@@ -184,7 +185,7 @@
 
         .tab-content {
             flex: 1;
-            padding: 15px;
+            padding: 20px;
             overflow-y: auto;
             display: none;
         }
@@ -194,32 +195,32 @@
         }
 
         h2 {
-            font-size: 0.95rem;
-            margin-bottom: 12px;
+            font-size: 1rem;
+            margin-bottom: 15px;
             color: var(--accent);
             border-bottom: 1px solid var(--border);
-            padding-bottom: 4px;
+            padding-bottom: 5px;
         }
 
         .control-group {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
 
         label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         input, select, button {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text-main);
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
 
         button {
@@ -235,18 +236,14 @@
             opacity: 0.9;
         }
 
-        button:disabled {
-            background: var(--border);
-            color: var(--text-muted);
-            cursor: not-allowed;
-        }
-
+        /* Zone de Carte Principale */
         #map {
             width: 100%;
             height: 100%;
             background-color: #0b0f19;
         }
 
+        /* Style sombre personnalisé pour Leaflet */
         .leaflet-layer, .leaflet-control-zoom-in, .leaflet-control-zoom-out {
             filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
         }
@@ -254,38 +251,8 @@
         .stat-line {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 0.85rem;
-        }
-
-        .rd-card, .bank-card {
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-
-        .rd-card h3, .bank-card h3 {
-            font-size: 0.85rem;
-            color: var(--text-main);
-            margin-bottom: 4px;
-        }
-
-        .rd-card p {
-            font-size: 0.75rem;
-            color: var(--text-muted);
             margin-bottom: 8px;
-        }
-
-        .weather-banner {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid var(--danger);
-            padding: 8px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-            font-size: 0.8rem;
-            display: none;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -294,7 +261,7 @@
     <!-- PAGE DE CONNEXION / CRÉATION DE COMPTE -->
     <div id="auth-overlay">
         <div class="auth-card">
-            <h2>🛣️ Autoroute Tycoon - Portail</h2>
+            <h2>🛣️ Autoroute Tycoon - Connexion</h2>
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchAuthTab('login')">Se connecter</button>
                 <button class="auth-tab" onclick="switchAuthTab('register')">Créer un compte</button>
@@ -309,7 +276,7 @@
                     <label>Mot de passe</label>
                     <input type="password" id="login-password" placeholder="••••••••">
                 </div>
-                <button onclick="handleLogin()">Connexion & Charger</button>
+                <button onclick="handleLogin()">Connexion</button>
             </div>
 
             <div id="register-form" class="auth-form">
@@ -326,15 +293,16 @@
         </div>
     </div>
 
-    <!-- INTERFACE DE JEU -->
+    <!-- INTERFACE PRINCIPALE DU JEU -->
     <div id="game-container">
+        <!-- En-tête HUD -->
         <header>
             <div class="logo">
-                🛣️ AUTOROUTE TYCOON <span style="font-size: 0.65rem; background: var(--accent); color: var(--bg-dark); padding: 2px 5px; border-radius: 4px;">CLOUD SYNC</span>
+                🛣️ AUTOROUTE TYCOON <span style="font-size: 0.7rem; background: var(--accent); color: var(--bg-dark); padding: 2px 6px; border-radius: 4px;">PRO v2.0</span>
             </div>
             <div class="kpi-container">
                 <div class="kpi-card">
-                    <span class="kpi-label">Trésorerie</span>
+                    <span class="kpi-label">Trésorerie Nette</span>
                     <span class="kpi-value" id="kpi-money" style="color: var(--success);">50 000 000 €</span>
                 </div>
                 <div class="kpi-card">
@@ -342,158 +310,108 @@
                     <span class="kpi-value" id="kpi-km">0 km</span>
                 </div>
                 <div class="kpi-card">
-                    <span class="kpi-label">Météo</span>
-                    <span class="kpi-value" id="kpi-weather" style="color: var(--accent);">☀️ Normal</span>
+                    <span class="kpi-label">Satisfaction Usagers</span>
+                    <span class="kpi-value" id="kpi-satisfaction">85 %</span>
                 </div>
                 <div class="kpi-card">
-                    <span class="kpi-label">Revenu /s</span>
-                    <span class="kpi-value" id="kpi-income" style="color: var(--success);">0 €/s</span>
+                    <span class="kpi-label">Flux Journalier</span>
+                    <span class="kpi-value" id="kpi-traffic">0 véh/j</span>
                 </div>
             </div>
         </header>
 
+        <!-- Panneau de Contrôle Latéral -->
         <sidebar>
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab(event, 'network')">Réseau</button>
                 <button class="tab-btn" onclick="switchTab(event, 'fleet')">Flotte</button>
                 <button class="tab-btn" onclick="switchTab(event, 'rd')">R&D</button>
-                <button class="tab-btn" onclick="switchTab(event, 'bank')">Banque</button>
                 <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège</button>
             </div>
 
+            <!-- Onglet Réseau & Construction -->
             <div id="network" class="tab-content active">
-                <div id="weather-alert" class="weather-banner">
-                    <strong>⚠️ ALERTE MÉTÉO :</strong> <span id="weather-desc-text">Tempête en cours !</span>
-                </div>
                 <h2>Planification de Tronçon</h2>
                 <div class="control-group">
                     <label>Ville de Départ</label>
-                    <select id="city-from"></select>
-                </div>
-                <div class="control-group">
-                    <label>Ville d'Arrivée</label>
-                    <select id="city-to"></select>
-                </div>
-                <div class="control-group">
-                    <label>Modèle Économique</label>
-                    <select id="road-model">
-                        <option value="toll">Section à Péage Payant (Revenus, -Satisfaction)</option>
-                        <option value="free">Section Gratuite (+Satisfaction, 0 Revenu)</option>
+                    <select id="city-from">
+                        <option value="">Chargement des localités...</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label>Infrastructures associées</label>
-                    <select id="road-extras">
-                        <option value="rest">Tracé Réel + Aires de Repos intégrées</option>
+                    <label>Ville d'Arrivée</label>
+                    <select id="city-to">
+                        <option value="">Chargement des localités...</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Type d'Infrastructure</label>
+                    <select id="road-type">
+                        <option value="standard">2x2 Voies Standard (1M€ / km)</option>
+                        <option value="smart">2x3 Voies + Portiques Free-Flow (2.5M€ / km)</option>
                     </select>
                 </div>
                 <button onclick="buildSection()">Lancer les travaux (Tracé Réel + Aires)</button>
 
-                <div style="margin-top: 20px;">
-                    <h2>Journal du Réseau</h2>
-                    <div id="construction-list" style="font-size: 0.8rem; color: var(--text-muted);">
-                        Aucun chantier récent.
+                <div style="margin-top: 25px;">
+                    <h2>Chantiers en Cours</h2>
+                    <div id="construction-list" style="font-size: 0.85rem; color: var(--text-muted);">
+                        Aucun chantier en cours.
                     </div>
                 </div>
             </div>
 
+            <!-- Onglet Flotte & Maintenance -->
             <div id="fleet" class="tab-content">
-                <h2>Gestion des Flottes & Urgences</h2>
-                <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">3</strong></div>
-                <div class="stat-line"><span>Chasse-neige :</span> <strong id="fleet-plows">2</strong></div>
+                <h2>Gestion des Flottes</h2>
+                <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">2</strong></div>
+                <div class="stat-line"><span>Chasse-neige (Hiver) :</span> <strong id="fleet-plows">1</strong></div>
                 <button onclick="buyVehicle('van')">Acheter un Fourgon (50 000 €)</button>
                 <button onclick="buyVehicle('plow')">Acheter un Chasse-neige (120 000 €)</button>
-                <button id="deploy-plows-btn" onclick="deployPlows()" style="background: var(--warning); color: var(--bg-dark); display: none;">❄️ Déployer les Chasse-neige</button>
 
-                <h2 style="margin-top: 20px;">État des Chaussées</h2>
+                <h2 style="margin-top: 25px;">État des Chaussées</h2>
                 <div class="stat-line"><span>Usure Globale :</span> <strong style="color: var(--success);" id="wear-rate">0 %</strong></div>
-                <button onclick="triggerMaintenance()">Campagne de Réfection (150 000 €)</button>
+                <button onclick="triggerMaintenance()">Lancer une Campagne de Réfection</button>
             </div>
 
+            <!-- Onglet Recherche & Développement -->
             <div id="rd" class="tab-content">
-                <h2>Laboratoire R&D</h2>
-                <div class="stat-line"><span>Slots Actifs :</span> <strong id="rd-slots">0 / 3</strong></div>
-                <div id="rd-tree-container" style="margin-top: 10px;"></div>
-            </div>
-
-            <div id="bank" class="tab-content">
-                <h2>Banque Centrale & Crédits</h2>
-                <div class="bank-card">
-                    <h3>Emprunt Bancaire</h3>
-                    <p>Obtenez des liquidités immédiates remboursables via prélèvement automatique.</p>
-                    <button onclick="takeLoan(2000000)">Emprunter 2 000 000 € (4.5%)</button>
+                <h2>Laboratoire R&D (Max 3 actifs)</h2>
+                <div class="stat-line"><span>Recherches Actives :</span> <strong id="rd-slots">0 / 3</strong></div>
+                <div id="rd-list" style="margin-top: 15px;">
+                    <!-- Technologies dynamiques -->
                 </div>
             </div>
 
+            <!-- Onglet Siège Social & Admin -->
             <div id="admin" class="tab-content">
-                <h2>Direction & Sauvegarde</h2>
+                <h2>Direction & Finances</h2>
                 <div class="control-group">
                     <label>Nom de la Concession</label>
-                    <input type="text" id="company-name" value="APRR & Associés">
+                    <input type="text" id="company-name" value="Autoroutes de France">
                 </div>
-                <button onclick="saveGameManually()" style="background: var(--success); color: white;">💾 Sauvegarder la Partie</button>
-                <button onclick="logoutGame()" style="background: var(--danger); color: white; margin-top: 10px;">🚪 Déconnexion</button>
+                <div class="control-group">
+                    <label>Nom du PDG</label>
+                    <input type="text" id="ceo-name" value="Directeur Général">
+                </div>
+                <button onclick="saveCompanyInfo()">Mettre à jour</button>
+
+                <h2 style="margin-top: 25px;">Trésorerie & Emprunts</h2>
+                <button onclick="takeLoan()" style="background: var(--danger); color: white;">Emprunter 1 000 000 € (Taux 5%)</button>
+                <button onclick="logoutGame()" style="background: var(--warning); color: #0f172a; margin-top: 15px;">Déconnexion & Sauvegarde</button>
             </div>
         </sidebar>
 
+        <!-- Carte Interactive Leaflet -->
         <div id="map"></div>
     </div>
 
+    <!-- Scripts JS (Leaflet + Logique du Jeu) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let currentUserEmail = null;
 
-        let gameState = {
-            money: 50000000,
-            km: 0,
-            satisfaction: 85,
-            incomePerSec: 0,
-            baseIncomePerSec: 0,
-            vans: 3,
-            plows: 2,
-            wear: 0,
-            staffMoral: 90,
-            rdActiveCount: 0,
-            unlockedTechs: [],
-            builtRoads: [] // Sauvegarde des routes et aires construites
-        };
-
-        const cities = [
-            { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 }, { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
-            { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 }, { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
-            { id: 5, name: "Lille", lat: 50.6292, lng: 3.0573 }, { id: 6, name: "Strasbourg", lat: 48.5734, lng: 7.7521 },
-            { id: 7, name: "Nantes", lat: 47.2184, lng: -1.5536 }, { id: 8, name: "Toulouse", lat: 43.6047, lng: 1.4442 },
-            { id: 9, name: "Nice", lat: 43.7102, lng: 7.2620 }, { id: 10, name: "Rennes", lat: 48.1173, lng: -1.6778 },
-            { id: 11, name: "Montpellier", lat: 43.6108, lng: 3.8767 }, { id: 12, name: "Grenoble", lat: 45.1885, lng: 5.7245 },
-            { id: 13, name: "Rouen", lat: 49.4432, lng: 1.0999 }, { id: 14, name: "Toulon", lat: 43.1242, lng: 5.928 },
-            { id: 15, name: "Douai", lat: 50.3667, lng: 3.0833 }, { id: 16, name: "Reims", lat: 49.2583, lng: 4.0317 }
-        ];
-
-        const rdTechnologies = [
-            { id: 'infra_1', name: 'Enrobés Phoniques', cost: 500000, desc: 'Réduit usure et bruit.' },
-            { id: 'toll_1', name: 'Portiques Free-Flow', cost: 800000, desc: 'Augmente la vitesse de passage.' },
-            { id: 'ai_1', name: 'Radars Intelligents', cost: 600000, desc: 'Baisse des accidents.' }
-        ];
-
-        const map = L.map('map', { zoomControl: false }).setView([46.603354, 1.888334], 6);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, minZoom: 5 }).addTo(map);
-
-        function initCitySelectors() {
-            const fromSelect = document.getElementById('city-from');
-            const toSelect = document.getElementById('city-to');
-            fromSelect.innerHTML = "";
-            toSelect.innerHTML = "";
-            cities.forEach(city => {
-                fromSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
-                toSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
-            });
-            cities.forEach(city => {
-                L.circleMarker([city.lat, city.lng], { radius: 5, color: '#38bdf8', fillColor: '#0f172a', fillOpacity: 1, weight: 2 }).addTo(map).bindPopup(`<b>${city.name}</b>`);
-            });
-        }
-
-        // --- GESTION DES COMPTES & SAUVEGARDE AUTOMATIQUE ---
+        // --- 0. GESTION DU PORTAIL DE CONNEXION ---
         function switchAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
@@ -509,7 +427,7 @@
         function handleRegister() {
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
-            if(!email || !password) { alert("Remplissez tous les champs."); return; }
+            if(!email || !password) { alert("Veuillez remplir tous les champs."); return; }
             localStorage.setItem('tycoon_user_' + email, password);
             currentUserEmail = email;
             alert("Compte créé avec succès !");
@@ -536,7 +454,6 @@
             setTimeout(() => {
                 map.invalidateSize();
                 initCitySelectors();
-                initRDCards();
                 redrawSavedRoads();
                 updateHUD();
             }, 200);
@@ -555,11 +472,6 @@
             }
         }
 
-        function saveGameManually() {
-            saveGameData();
-            alert("Partie sauvegardée avec succès !");
-        }
-
         function logoutGame() {
             saveGameData();
             currentUserEmail = null;
@@ -567,65 +479,137 @@
             document.getElementById('game-container').style.display = 'none';
         }
 
-        // --- CONSTRUCTION (TRACÉS RÉELS + AIRES DE REPOS) ---
+        // --- 1. INITIALISATION DE LA CARTE & DONNÉES DE VILLES ---
+        const map = L.map('map', {
+            zoomControl: false
+        }).setView([46.603354, 1.888334], 6);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 14,
+            minZoom: 5,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        const cities = [
+            { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 },
+            { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
+            { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 },
+            { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
+            { id: 5, name: "Lille", lat: 50.6292, lng: 3.0573 },
+            { id: 6, name: "Strasbourg", lat: 48.5734, lng: 7.7521 },
+            { id: 7, name: "Nantes", lat: 47.2184, lng: -1.5536 },
+            { id: 8, name: "Toulouse", lat: 43.6047, lng: 1.4442 },
+            { id: 9, name: "Nice", lat: 43.7102, lng: 7.2620 },
+            { id: 10, name: "Rennes", lat: 48.1173, lng: -1.6778 }
+        ];
+
+        let gameState = {
+            money: 50000000,
+            km: 0,
+            satisfaction: 85,
+            traffic: 0,
+            vans: 2,
+            plows: 1,
+            wear: 0,
+            builtRoads: []
+        };
+
+        function initCitySelectors() {
+            const fromSelect = document.getElementById('city-from');
+            const toSelect = document.getElementById('city-to');
+            fromSelect.innerHTML = "";
+            toSelect.innerHTML = "";
+
+            cities.forEach(city => {
+                fromSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
+                toSelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
+            });
+
+            cities.forEach(city => {
+                L.circleMarker([city.lat, city.lng], {
+                    radius: 6,
+                    color: '#38bdf8',
+                    fillColor: '#0f172a',
+                    fillOpacity: 1,
+                    weight: 2
+                }).addTo(map).bindPopup(`<b>${city.name}</b><br>Pôle Régional`);
+            });
+        }
+
+        // --- 2. GESTION DES ONGLETS ---
+        function switchTab(event, tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- 3. MÉCANIQUES DE JEU & CONSTRUCTION (TRACÉS RÉELS + AIRES) ---
         function buildSection() {
             const fromId = parseInt(document.getElementById('city-from').value);
             const toId = parseInt(document.getElementById('city-to').value);
-            const model = document.getElementById('road-model').value;
 
-            if (fromId === toId) { alert("Sélectionnez deux villes différentes !"); return; }
+            if (fromId === toId) {
+                alert("Veuillez sélectionner deux villes différentes !");
+                return;
+            }
 
             const cityA = cities.find(c => c.id === fromId);
             const cityB = cities.find(c => c.id === toId);
 
             // Tracé réel par courbe intermédiaire fluide
-            const midLat = (cityA.lat + cityB.lat) / 2 + (Math.sin(cityA.lng) * 0.3);
-            const midLng = (cityA.lng + cityB.lng) / 2 + (Math.cos(cityA.lat) * 0.3);
+            const midLat = (cityA.lat + cityB.lat) / 2 + (Math.sin(cityA.lng) * 0.25);
+            const midLng = (cityA.lng + cityB.lng) / 2 + (Math.cos(cityA.lat) * 0.25);
 
-            const distance = Math.round(Math.hypot(cityA.lat - cityB.lat, cityA.lng - cityB.lng) * 111);
-            const cost = distance * (model === 'toll' ? 1000000 : 800000);
+            const R = 6371;
+            const dLat = (cityB.lat - cityA.lat) * Math.PI / 180;
+            const dLon = (cityB.lng - cityA.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(cityA.lat * Math.PI / 180) * Math.cos(cityB.lat * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distance = Math.round(R * c);
+            const cost = distance * 1000000;
 
             if (gameState.money < cost) {
-                alert(`Fonds insuffisants ! Coût : ${cost.toLocaleString()} € (Trésorerie actuelle : ${gameState.money.toLocaleString()} €)`);
+                alert(`Fonds insuffisants ! Coût estimé : ${cost.toLocaleString()} € (Solde : ${gameState.money.toLocaleString()} €)`);
                 return;
             }
 
-            // Dépense effective immédiate
             gameState.money -= cost;
 
             const roadData = {
                 latA: cityA.lat, lngA: cityA.lng,
                 latMid: midLat, lngMid: midLng,
                 latB: cityB.lat, lngB: cityB.lng,
-                model: model, distance: distance
+                distance: distance
             };
 
             gameState.builtRoads.push(roadData);
             drawRoadOnMap(roadData);
 
             gameState.km += distance;
-            if (model === 'toll') {
-                gameState.baseIncomePerSec += distance * 15;
-            } else {
-                gameState.satisfaction = Math.min(100, gameState.satisfaction + 5);
-            }
-            gameState.incomePerSec = gameState.baseIncomePerSec;
+            gameState.traffic += distance * 120;
 
             saveGameData();
             updateHUD();
-            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} ➔ ${cityB.name} (${distance} km) avec aires de repos construite !`;
+
+            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} - ${cityB.name} (${distance} km) avec aires de repos construite !`;
         }
 
         function drawRoadOnMap(road) {
-            const color = road.model === 'toll' ? '#22c55e' : '#38bdf8';
             // Tracé réel incurvé
             L.polyline([[road.latA, road.lngA], [road.latMid, road.lngMid], [road.latB, road.lngB]], {
-                color: color, weight: 4, opacity: 0.8
+                color: '#22c55e',
+                weight: 4,
+                opacity: 0.8
             }).addTo(map);
 
-            // Ajout visuel des Aires de Repos au milieu du tracé
+            // Ajout visuel des aires de repos
             L.marker([road.latMid, road.lngMid], {
-                icon: L.divIcon({ className: 'rest-area-icon', html: '🅿️', iconSize: [20, 20] })
+                icon: L.divIcon({ className: 'rest-area', html: '🅿️', iconSize: [18, 18] })
             }).addTo(map).bindPopup("<b>Aire de Repos & Services autoroutiers</b>");
         }
 
@@ -635,82 +619,62 @@
             }
         }
 
-        function initRDCards() {
-            const container = document.getElementById('rd-tree-container');
-            container.innerHTML = "";
-            rdTechnologies.forEach(tech => {
-                const unlocked = gameState.unlockedTechs.includes(tech.id);
-                container.innerHTML += `
-                    <div class="rd-card">
-                        <h3>${tech.name}</h3>
-                        <p>${tech.desc} (${tech.cost.toLocaleString()} €)</p>
-                        <button ${unlocked ? 'disabled' : ''} onclick="unlockTech('${tech.id}', ${tech.cost})">
-                            ${unlocked ? 'Débloqué' : 'Rechercher'}
-                        </button>
-                    </div>
-                `;
-            });
-        }
-
-        function unlockTech(techId, cost) {
-            if (gameState.money >= cost) {
-                if (gameState.rdActiveCount >= 3) { alert("Limite de 3 recherches atteinte !"); return; }
-                gameState.money -= cost;
-                gameState.unlockedTechs.push(techId);
-                gameState.rdActiveCount++;
-                saveGameData();
-                updateHUD();
-                initRDCards();
-            } else {
-                alert("Fonds insuffisants.");
-            }
-        }
-
-        function takeLoan(amount) {
-            gameState.money += amount;
-            gameState.baseIncomePerSec -= Math.round(amount * 0.002);
-            gameState.incomePerSec = gameState.baseIncomePerSec;
-            saveGameData();
-            updateHUD();
-            alert(`Emprunt de ${amount.toLocaleString()} € validé.`);
-        }
-
-        function buyVehicle(type) {
-            if (type === 'van' && gameState.money >= 50000) { gameState.money -= 50000; gameState.vans++; }
-            else if (type === 'plow' && gameState.money >= 120000) { gameState.money -= 120000; gameState.plows++; }
-            else { alert("Fonds insuffisants !"); }
-            saveGameData();
-            updateHUD();
-        }
-
-        function triggerMaintenance() {
-            if (gameState.money >= 150000) { gameState.money -= 150000; gameState.wear = 0; saveGameData(); updateHUD(); alert("Chaussées rénovées !"); }
-            else { alert("Fonds insuffisants."); }
-        }
-
+        // --- 4. MISE À JOUR DU HUD ---
         function updateHUD() {
             document.getElementById('kpi-money').innerText = gameState.money.toLocaleString() + " €";
             document.getElementById('kpi-km').innerText = gameState.km + " km";
-            document.getElementById('kpi-income').innerText = gameState.incomePerSec.toLocaleString() + " €/s";
+            document.getElementById('kpi-satisfaction').innerText = gameState.satisfaction + " %";
+            document.getElementById('kpi-traffic').innerText = gameState.traffic.toLocaleString() + " véh/j";
             document.getElementById('fleet-vans').innerText = gameState.vans;
             document.getElementById('fleet-plows').innerText = gameState.plows;
             document.getElementById('wear-rate').innerText = gameState.wear + " %";
-            document.getElementById('rd-slots').innerText = gameState.rdActiveCount + " / 3";
         }
 
-        function switchTab(event, tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+        function buyVehicle(type) {
+            if (type === 'van' && gameState.money >= 50000) {
+                gameState.money -= 50000;
+                gameState.vans++;
+            } else if (type === 'plow' && gameState.money >= 120000) {
+                gameState.money -= 120000;
+                gameState.plows++;
+            } else {
+                alert("Fonds insuffisants !");
+            }
+            saveGameData();
+            updateHUD();
         }
 
-        // Boucle financière & sauvegarde automatique continue
+        function takeLoan() {
+            gameState.money += 1000000;
+            saveGameData();
+            updateHUD();
+            alert("Emprunt de 1 000 000 € accordé par la Banque Centrale.");
+        }
+
+        function triggerMaintenance() {
+            if (gameState.money >= 150000) {
+                gameState.money -= 150000;
+                gameState.wear = 0;
+                saveGameData();
+                updateHUD();
+                alert("Campagne de réfection des chaussées menée à bien !");
+            } else {
+                alert("Fonds insuffisants pour la maintenance.");
+            }
+        }
+
+        function saveCompanyInfo() {
+            const company = document.getElementById('company-name').value;
+            const ceo = document.getElementById('ceo-name').value;
+            alert(`Paramètres mis à jour pour ${company} dirigée par ${ceo}.`);
+        }
+
+        // Boucle de revenus et de sauvegarde automatique continue
         setInterval(() => {
-            if (currentUserEmail && gameState.incomePerSec !== 0) {
-                gameState.money += gameState.incomePerSec;
-                gameState.wear = Math.min(100, gameState.wear + 0.02);
-                saveGameData(); // Sauvegarde automatique permanente en arrière-plan
+            if (currentUserEmail && gameState.km > 0) {
+                gameState.money += Math.round(gameState.km * 2); // Rentes d'argent automatiques basées sur le réseau
+                gameState.wear = Math.min(100, gameState.wear + 0.01);
+                saveGameData();
                 updateHUD();
             }
         }, 1000);
