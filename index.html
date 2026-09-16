@@ -255,7 +255,7 @@
             display: none;
             height: 100vh;
             grid-template-rows: 60px 1fr;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 340px 1fr;
         }
 
         header {
@@ -319,11 +319,11 @@
 
         .tab-btn {
             flex: 1;
-            padding: 12px 8px;
+            padding: 10px 4px;
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
@@ -406,7 +406,7 @@
             font-size: 0.9rem;
         }
 
-        .rd-card {
+        .rd-card, .ai-card {
             background: rgba(15, 23, 42, 0.7);
             border: 1px solid var(--border);
             padding: 12px;
@@ -414,16 +414,38 @@
             margin-bottom: 12px;
         }
 
-        .rd-card h3 {
+        .rd-card h3, .ai-card h3 {
             font-size: 0.9rem;
             color: var(--accent);
             margin-bottom: 4px;
         }
 
-        .rd-card p {
+        .rd-card p, .ai-card p {
             font-size: 0.8rem;
             color: var(--text-muted);
             margin-bottom: 8px;
+        }
+
+        /* Popups de carte */
+        .leaflet-popup-content-wrapper {
+            background: var(--bg-panel);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .leaflet-popup-tip {
+            background: var(--bg-panel);
+        }
+        .popup-rest-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            width: 100%;
         }
     </style>
 </head>
@@ -539,6 +561,7 @@
         <sidebar>
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab(event, 'network')">Réseau</button>
+                <button class="tab-btn" onclick="switchTab(event, 'competitors')">IA & Rachats</button>
                 <button class="tab-btn" onclick="switchTab(event, 'fleet')">Flotte</button>
                 <button class="tab-btn" onclick="switchTab(event, 'rd')">R&D</button>
                 <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège</button>
@@ -565,13 +588,21 @@
                         <option value="smart">2x3 Voies + Portiques Free-Flow (2.5M€ / km)</option>
                     </select>
                 </div>
-                <button onclick="buildSection()">Lancer les travaux (Tracé Réel + Aires)</button>
+                <button onclick="buildSection()">Lancer les travaux (Tracé Réel + Aire)</button>
 
                 <div style="margin-top: 25px;">
-                    <h2>Chantiers en Cours</h2>
+                    <h2>Chantiers & Liaisons Joueur</h2>
                     <div id="construction-list" style="font-size: 0.85rem; color: var(--text-muted);">
-                        Aucun chantier en cours.
+                        Aucune liaison construite.
                     </div>
+                </div>
+            </div>
+
+            <!-- ONGLET CONCURRENCE IA & RACHATS -->
+            <div id="competitors" class="tab-content">
+                <h2>Concessionnaires Concurrents (IA)</h2>
+                <div id="ai-competitors-list">
+                    <!-- Généré dynamiquement -->
                 </div>
             </div>
 
@@ -620,8 +651,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let currentUserEmail = null;
+        let restAreaMarkers = {};
+        let aiPolylines = {};
 
-        // --- 100 VILLES FRANÇAISES COMPLÈTES ---
+        // --- 100 VILLES FRANÇAISES ---
         const cities = [
             { id: 1, name: "Paris", lat: 48.8566, lng: 2.3522 }, { id: 2, name: "Lyon", lat: 45.7640, lng: 4.8357 },
             { id: 3, name: "Marseille", lat: 43.2965, lng: 5.3698 }, { id: 4, name: "Bordeaux", lat: 44.8378, lng: -0.5792 },
@@ -675,7 +708,7 @@
             { id: 99, name: "Évry", lat: 48.6295, lng: 2.4385 }, { id: 100, name: "Châlons-en-Champagne", lat: 48.9566, lng: 4.3638 }
         ];
 
-        // --- CATALOGUE COMPLET R&D ---
+        // --- CATALOGUE R&D ---
         const rdTechnologies = [
             { id: 'infra_1', name: 'Enrobés Phoniques Avancés', cost: 500000, desc: 'Réduit les nuisances sonores et l’usure de 15%.' },
             { id: 'infra_2', name: 'Bétons Auto-cicatrisants', cost: 1200000, desc: 'Diminue la fréquence des réfections de chaussée.' },
@@ -697,10 +730,15 @@
             wear: 0,
             builtRoads: [],
             unlockedTechs: [],
-            rdActiveCount: 0
+            rdActiveCount: 0,
+            aiCompanies: [
+                { id: 'vinci', name: 'Vinci Autoroutes IA', color: '#ef4444', roads: [] },
+                { id: 'aprr', name: 'APRR Group IA', color: '#a855f7', roads: [] },
+                { id: 'sanef', name: 'SANEF Autoroutes IA', color: '#eab308', roads: [] }
+            ]
         };
 
-        // --- GESTION DU PORTAIL DE CONNEXION ---
+        // --- PORTAIL DE CONNEXION ---
         function switchAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
@@ -754,6 +792,7 @@
                 initRDCards();
                 redrawSavedRoads();
                 updateHUD();
+                renderAICompetitorsList();
             }, 200);
         }
 
@@ -766,7 +805,7 @@
             if(!currentUserEmail) return;
             const savedData = localStorage.getItem('tycoon_save_' + currentUserEmail);
             if(savedData) {
-                gameState = JSON.parse(savedData);
+                gameState = Object.assign(gameState, JSON.parse(savedData));
             }
         }
 
@@ -807,7 +846,6 @@
             });
         }
 
-        // --- LABORATOIRE R&D DYNAMIQUE ---
         function initRDCards() {
             const container = document.getElementById('rd-list');
             container.innerHTML = "";
@@ -851,8 +889,8 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- CONSTRUCTION & TRACÉS RÉELS ---
-        function buildSection() {
+        // --- CONSTRUCTION DU JOUEUR & TRACÉS RÉELS ---
+        async function buildSection() {
             const fromId = parseInt(document.getElementById('city-from').value);
             const toId = parseInt(document.getElementById('city-to').value);
 
@@ -864,18 +902,37 @@
             const cityA = cities.find(c => c.id === fromId);
             const cityB = cities.find(c => c.id === toId);
 
-            const midLat = (cityA.lat + cityB.lat) / 2 + (Math.sin(cityA.lng) * 0.25);
-            const midLng = (cityA.lng + cityB.lng) / 2 + (Math.cos(cityA.lat) * 0.25);
+            let routeCoords = [];
+            let distanceKm = 0;
 
-            const R = 6371;
-            const dLat = (cityB.lat - cityA.lat) * Math.PI / 180;
-            const dLon = (cityB.lng - cityA.lng) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(cityA.lat * Math.PI / 180) * Math.cos(cityB.lat * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const distance = Math.round(R * c);
-            const cost = distance * 1000000;
+            try {
+                const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${cityA.lng},${cityA.lat};${cityB.lng},${cityB.lat}?overview=full&geometries=geojson`);
+                const data = await response.json();
+
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    distanceKm = Math.round(route.distance / 1000);
+                    routeCoords = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                }
+            } catch (e) {
+                console.warn("Moteur OSRM indisponible, calcul alternatif.", e);
+            }
+
+            if (!routeCoords.length) {
+                const midLat = (cityA.lat + cityB.lat) / 2 + (Math.sin(cityA.lng) * 0.2);
+                const midLng = (cityA.lng + cityB.lng) / 2 + (Math.cos(cityA.lat) * 0.2);
+                routeCoords = [[cityA.lat, cityA.lng], [midLat, midLng], [cityB.lat, cityB.lng]];
+
+                const R = 6371;
+                const dLat = (cityB.lat - cityA.lat) * Math.PI / 180;
+                const dLon = (cityB.lng - cityA.lng) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(cityA.lat * Math.PI / 180) * Math.cos(cityB.lat * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                distanceKm = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+            }
+
+            const cost = distanceKm * 1000000;
 
             if (gameState.money < cost) {
                 alert(`Fonds insuffisants ! Coût estimé : ${cost.toLocaleString()} € (Solde : ${gameState.money.toLocaleString()} €)`);
@@ -884,44 +941,348 @@
 
             gameState.money -= cost;
 
+            const midIndex = Math.floor(routeCoords.length / 2);
+            const restAreaPos = routeCoords[midIndex] || [cityA.lat, cityA.lng];
+            const roadId = Date.now();
+
             const roadData = {
-                latA: cityA.lat, lngA: cityA.lng,
-                latMid: midLat, lngMid: midLng,
-                latB: cityB.lat, lngB: cityB.lng,
-                distance: distance
+                id: roadId,
+                name: `Liaison ${cityA.name} - ${cityB.name}`,
+                coords: routeCoords,
+                distance: distanceKm,
+                restArea: {
+                    id: 'rest_' + roadId,
+                    roadId: roadId,
+                    pos: restAreaPos,
+                    level: 1,
+                    name: `Aire de ${cityA.name}-${cityB.name}`
+                }
             };
 
             gameState.builtRoads.push(roadData);
             drawRoadOnMap(roadData);
 
-            gameState.km += distance;
-            gameState.traffic += distance * 120;
+            gameState.km += distanceKm;
+            gameState.traffic += distanceKm * 120;
 
             saveGameData();
             updateHUD();
 
-            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} - ${cityB.name} (${distance} km) avec aires de repos construite !`;
+            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} - ${cityB.name} (${distanceKm} km) en service !`;
         }
 
         function drawRoadOnMap(road) {
-            L.polyline([[road.latA, road.lngA], [road.latMid, road.lngMid], [road.latB, road.lngB]], {
+            let polylineCoords = road.coords;
+            if(!polylineCoords && road.latA) {
+                polylineCoords = [[road.latA, road.lngA], [road.latMid, road.lngMid], [road.latB, road.lngB]];
+            }
+
+            L.polyline(polylineCoords, {
                 color: '#22c55e',
                 weight: 4,
-                opacity: 0.8
+                opacity: 0.85
             }).addTo(map);
 
-            L.marker([road.latMid, road.lngMid], {
-                icon: L.divIcon({ className: 'rest-area', html: '🅿️', iconSize: [18, 18] })
-            }).addTo(map).bindPopup("<b>Aire de Repos & Services autoroutiers</b>");
+            if (road.restArea) {
+                renderRestAreaMarker(road);
+            }
+        }
+
+        function renderRestAreaMarker(road) {
+            const rest = road.restArea;
+            if (!rest) return;
+
+            let iconHtml = '🅿️';
+            let levelLabel = 'Niveau 1 : Aire de Repos (+500 €/s)';
+            let upgradeCost = 250000;
+            let nextLevelText = 'Agrandir : Station-Service & Boutique (250 000 €)';
+
+            if (rest.level === 2) {
+                iconHtml = '⛽';
+                levelLabel = 'Niveau 2 : Station-Service & Boutique (+2 500 €/s)';
+                upgradeCost = 750000;
+                nextLevelText = 'Agrandir : Complexe Multi-Services & Chargeurs (750 000 €)';
+            } else if (rest.level >= 3) {
+                iconHtml = '🏪⚡';
+                levelLabel = 'Niveau 3 : Complexe Multi-Services (+7 500 €/s)';
+                nextLevelText = 'Niveau Maximum Atteint';
+            }
+
+            const restIcon = L.divIcon({
+                className: 'rest-area-marker',
+                html: `<div style="font-size: 20px; text-shadow: 0 0 5px black; cursor: pointer;">${iconHtml}</div>`,
+                iconSize: [24, 24]
+            });
+
+            if (restAreaMarkers[rest.id]) {
+                map.removeLayer(restAreaMarkers[rest.id]);
+            }
+
+            const marker = L.marker(rest.pos, { icon: restIcon }).addTo(map);
+
+            let popupContent = `
+                <div style="min-width:200px;">
+                    <b style="color: var(--accent); font-size:0.95rem;">${rest.name}</b><br>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">${levelLabel}</span><br>
+            `;
+
+            if (rest.level < 3) {
+                popupContent += `<button class="popup-rest-btn" onclick="upgradeRestArea(${road.id}, ${upgradeCost})">${nextLevelText}</button>`;
+            } else {
+                popupContent += `<div style="margin-top:8px; color:var(--success); font-weight:bold; font-size:0.8rem;">✨ Aire au Potentiel Maximal</div>`;
+            }
+
+            popupContent += `</div>`;
+            marker.bindPopup(popupContent);
+            restAreaMarkers[rest.id] = marker;
+        }
+
+        function upgradeRestArea(roadId, cost) {
+            const road = gameState.builtRoads.find(r => r.id === roadId);
+            if (!road || !road.restArea) return;
+
+            if (gameState.money >= cost) {
+                gameState.money -= cost;
+                road.restArea.level++;
+                if (road.restArea.level === 3) {
+                    gameState.satisfaction = Math.min(100, gameState.satisfaction + 2);
+                }
+
+                saveGameData();
+                updateHUD();
+                renderRestAreaMarker(road);
+                alert(`Félicitations ! L'${road.restArea.name} a été agrandie au Niveau ${road.restArea.level}.`);
+            } else {
+                alert(`Fonds insuffisants pour l'agrandissement (${cost.toLocaleString()} € requis).`);
+            }
         }
 
         function redrawSavedRoads() {
             if(gameState.builtRoads) {
                 gameState.builtRoads.forEach(road => drawRoadOnMap(road));
             }
+            if(gameState.aiCompanies) {
+                gameState.aiCompanies.forEach(ai => {
+                    if(ai.roads) {
+                        ai.roads.forEach(road => drawAIRoadOnMap(ai, road));
+                    }
+                });
+            }
         }
 
-        // --- HUD & ACTIONS ---
+        // --- CONCURRENCE IA & RACHATS ---
+        function drawAIRoadOnMap(ai, road) {
+            if (aiPolylines[road.id]) {
+                map.removeLayer(aiPolylines[road.id]);
+            }
+
+            const polyline = L.polyline(road.coords, {
+                color: ai.color,
+                weight: 4,
+                opacity: 0.85
+            }).addTo(map);
+
+            const buyCost = road.distance * 1500000;
+            const popupContent = `
+                <div style="min-width:210px;">
+                    <b style="color: ${ai.color}; font-size:0.95rem;">${ai.name}</b><br>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">${road.name} (${road.distance} km)</span><br>
+                    <button class="popup-rest-btn" style="background:var(--warning); color:#0f172a;" onclick="buyOutAISection('${ai.id}', ${road.id})">
+                        Racheter la Concession (${buyCost.toLocaleString()} €)
+                    </button>
+                </div>
+            `;
+            polyline.bindPopup(popupContent);
+            aiPolylines[road.id] = polyline;
+        }
+
+        async function aiBuildLoop() {
+            if (!currentUserEmail) return;
+
+            const randomAiIndex = Math.floor(Math.random() * gameState.aiCompanies.length);
+            const ai = gameState.aiCompanies[randomAiIndex];
+
+            const cityA = cities[Math.floor(Math.random() * cities.length)];
+            const cityB = cities[Math.floor(Math.random() * cities.length)];
+
+            if (cityA.id === cityB.id) return;
+
+            // Vérification si déjà construite
+            const alreadyPlayer = gameState.builtRoads.some(r => r.name.includes(cityA.name) && r.name.includes(cityB.name));
+            const alreadyAi = gameState.aiCompanies.some(a => a.roads.some(r => r.name.includes(cityA.name) && r.name.includes(cityB.name)));
+
+            if (alreadyPlayer || alreadyAi) return;
+
+            let routeCoords = [];
+            let distanceKm = 0;
+
+            try {
+                const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${cityA.lng},${cityA.lat};${cityB.lng},${cityB.lat}?overview=full&geometries=geojson`);
+                const data = await response.json();
+                if (data.routes && data.routes.length > 0) {
+                    distanceKm = Math.round(data.routes[0].distance / 1000);
+                    routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                }
+            } catch (e) {}
+
+            if (!routeCoords.length) {
+                const midLat = (cityA.lat + cityB.lat) / 2 + (Math.sin(cityA.lng) * 0.2);
+                const midLng = (cityA.lng + cityB.lng) / 2 + (Math.cos(cityA.lat) * 0.2);
+                routeCoords = [[cityA.lat, cityA.lng], [midLat, midLng], [cityB.lat, cityB.lng]];
+                distanceKm = Math.round(Math.abs(cityA.lat - cityB.lat) * 100 + 50);
+            }
+
+            const roadId = Date.now() + Math.floor(Math.random() * 1000);
+            const aiRoad = {
+                id: roadId,
+                name: `Liaison ${cityA.name} - ${cityB.name}`,
+                coords: routeCoords,
+                distance: distanceKm
+            };
+
+            ai.roads.push(aiRoad);
+            drawAIRoadOnMap(ai, aiRoad);
+            saveGameData();
+            renderAICompetitorsList();
+        }
+
+        function renderAICompetitorsList() {
+            const container = document.getElementById('ai-competitors-list');
+            if (!container) return;
+            container.innerHTML = "";
+
+            gameState.aiCompanies.forEach(ai => {
+                const totalKm = ai.roads.reduce((acc, r) => acc + r.distance, 0);
+                const companyValue = totalKm * 1800000;
+
+                let html = `
+                    <div class="ai-card" style="border-left: 4px solid ${ai.color};">
+                        <h3><span style="color:${ai.color};">●</span> ${ai.name}</h3>
+                        <p>Réseau sous concession : <strong>${totalKm} km</strong> (${ai.roads.length} tronçons)</p>
+                        <p>Valorisation estimée : <strong>${companyValue.toLocaleString()} €</strong></p>
+                `;
+
+                if (ai.roads.length > 0) {
+                    html += `<button style="background: var(--warning); color: #0f172a;" onclick="buyOutEntireAICompany('${ai.id}', ${companyValue})">
+                        Lancer une OPA Globale (${companyValue.toLocaleString()} €)
+                    </button>`;
+                } else {
+                    html += `<div style="font-size:0.75rem; color:var(--text-muted);">Aucun réseau actif à racheter.</div>`;
+                }
+
+                html += `</div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function buyOutAISection(aiId, roadId) {
+            const ai = gameState.aiCompanies.find(a => a.id === aiId);
+            if (!ai) return;
+
+            const roadIndex = ai.roads.findIndex(r => r.id === roadId);
+            if (roadIndex === -1) return;
+
+            const road = ai.roads[roadIndex];
+            const buyCost = road.distance * 1500000;
+
+            if (gameState.money < buyCost) {
+                alert(`Fonds insuffisants ! Coût de rachat : ${buyCost.toLocaleString()} €`);
+                return;
+            }
+
+            gameState.money -= buyCost;
+
+            // Retrait de la carte IA
+            if (aiPolylines[road.id]) {
+                map.removeLayer(aiPolylines[road.id]);
+                delete aiPolylines[road.id];
+            }
+
+            ai.roads.splice(roadIndex, 1);
+
+            // Conversion en concession Joueur
+            const midIndex = Math.floor(road.coords.length / 2);
+            const restAreaPos = road.coords[midIndex] || road.coords[0];
+
+            const playerRoad = {
+                id: road.id,
+                name: road.name,
+                coords: road.coords,
+                distance: road.distance,
+                restArea: {
+                    id: 'rest_' + road.id,
+                    roadId: road.id,
+                    pos: restAreaPos,
+                    level: 1,
+                    name: `Aire de ${road.name}`
+                }
+            };
+
+            gameState.builtRoads.push(playerRoad);
+            drawRoadOnMap(playerRoad);
+
+            gameState.km += road.distance;
+            gameState.traffic += road.distance * 120;
+
+            saveGameData();
+            updateHUD();
+            renderAICompetitorsList();
+
+            alert(`Vous avez racheté la concession ${road.name} à ${ai.name} !`);
+        }
+
+        function buyOutEntireAICompany(aiId, cost) {
+            const ai = gameState.aiCompanies.find(a => a.id === aiId);
+            if (!ai || ai.roads.length === 0) return;
+
+            if (gameState.money < cost) {
+                alert(`Fonds insuffisants pour lancer l'OPA (${cost.toLocaleString()} € requis).`);
+                return;
+            }
+
+            if (!confirm(`Confirmez-vous le rachat complet de ${ai.name} pour ${cost.toLocaleString()} € ?`)) return;
+
+            gameState.money -= cost;
+
+            ai.roads.forEach(road => {
+                if (aiPolylines[road.id]) {
+                    map.removeLayer(aiPolylines[road.id]);
+                    delete aiPolylines[road.id];
+                }
+
+                const midIndex = Math.floor(road.coords.length / 2);
+                const restAreaPos = road.coords[midIndex] || road.coords[0];
+
+                const playerRoad = {
+                    id: road.id,
+                    name: road.name,
+                    coords: road.coords,
+                    distance: road.distance,
+                    restArea: {
+                        id: 'rest_' + road.id,
+                        roadId: road.id,
+                        pos: restAreaPos,
+                        level: 1,
+                        name: `Aire de ${road.name}`
+                    }
+                };
+
+                gameState.builtRoads.push(playerRoad);
+                drawRoadOnMap(playerRoad);
+                gameState.km += road.distance;
+                gameState.traffic += road.distance * 120;
+            });
+
+            ai.roads = [];
+
+            saveGameData();
+            updateHUD();
+            renderAICompetitorsList();
+
+            alert(`🎉 OPA Réussie ! Vous avez racheté l'intégralité du réseau de ${ai.name} !`);
+        }
+
+        // --- HUD & BOUCLE DE REVENUS PASSIFS ---
         function updateHUD() {
             document.getElementById('kpi-money').innerText = gameState.money.toLocaleString() + " €";
             document.getElementById('kpi-km').innerText = gameState.km + " km";
@@ -929,7 +1290,7 @@
             document.getElementById('kpi-traffic').innerText = gameState.traffic.toLocaleString() + " véh/j";
             document.getElementById('fleet-vans').innerText = gameState.vans;
             document.getElementById('fleet-plows').innerText = gameState.plows;
-            document.getElementById('wear-rate').innerText = gameState.wear + " %";
+            document.getElementById('wear-rate').innerText = gameState.wear.toFixed(1) + " %";
             document.getElementById('rd-slots').innerText = (gameState.rdActiveCount || 0) + " / 3";
         }
 
@@ -972,14 +1333,31 @@
             alert(`Paramètres mis à jour pour ${company} dirigée par ${ceo}.`);
         }
 
+        // Boucle de revenus passifs
         setInterval(() => {
             if (currentUserEmail && gameState.km > 0) {
-                gameState.money += Math.round(gameState.km * 2);
-                gameState.wear = Math.min(100, gameState.wear + 0.01);
+                let roadIncome = Math.round(gameState.km * 2);
+                let restIncome = 0;
+
+                gameState.builtRoads.forEach(road => {
+                    if (road.restArea) {
+                        if (road.restArea.level === 1) restIncome += 500;
+                        else if (road.restArea.level === 2) restIncome += 2500;
+                        else if (road.restArea.level >= 3) restIncome += 7500;
+                    }
+                });
+
+                gameState.money += (roadIncome + restIncome);
+                gameState.wear = Math.min(100, gameState.wear + 0.005);
                 saveGameData();
                 updateHUD();
             }
         }, 1000);
+
+        // Boucle d'expansion automatique des IA concurrentes (toutes les 12 secondes)
+        setInterval(() => {
+            aiBuildLoop();
+        }, 12000);
     </script>
 </body>
 </html>
