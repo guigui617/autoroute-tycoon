@@ -241,25 +241,6 @@
             background: #0b0f19;
         }
 
-        .map-floating-cta {
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--brand-red);
-            color: white;
-            font-size: 1.3rem;
-            font-weight: 900;
-            padding: 18px 30px;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(220, 38, 38, 0.6);
-            z-index: 1000;
-            pointer-events: none;
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
         .portal-footer {
             background: var(--bg-panel);
             border-top: 1px solid var(--border);
@@ -521,9 +502,6 @@
 
             <div class="portal-right">
                 <div id="portal-map-preview"></div>
-                <div class="map-floating-cta">
-                    Inscrivez-vous et<br>jouez maintenant
-                </div>
             </div>
         </div>
 
@@ -806,10 +784,6 @@
 
         const portalMap = L.map('portal-map-preview', { zoomControl: false, dragging: false, touchZoom: false, scrollWheelZoom: false }).setView([48.8566, 2.3522], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14, minZoom: 5 }).addTo(portalMap);
-        L.polyline([[48.8566, 2.3522], [48.8397, 2.2399], [48.8922, 2.2057], [48.9360, 2.3574]], { color: '#dc2626', weight: 5, opacity: 0.9 }).addTo(portalMap);
-        L.marker([48.8566, 2.3522], { icon: L.divIcon({ html: '🚒', iconSize: [24, 24] }) }).addTo(portalMap);
-        L.marker([48.8397, 2.2399], { icon: L.divIcon({ html: '🚚', iconSize: [24, 24] }) }).addTo(portalMap);
-        L.marker([48.9360, 2.3574], { icon: L.divIcon({ html: '🔥', iconSize: [24, 24] }) }).addTo(portalMap);
 
         function initCitySelectors() {
             const fromSelect = document.getElementById('city-from');
