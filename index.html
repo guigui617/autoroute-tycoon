@@ -251,7 +251,8 @@
             display: none;
             height: 100vh;
             grid-template-rows: 65px 1fr;
-            grid-template-columns: 340px 1fr;
+            grid-template-columns: 360px 1fr;
+            position: relative;
         }
 
         header {
@@ -271,28 +272,44 @@
             gap: 10px;
         }
 
+        .event-ticker {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--warning);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 320px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .kpi-container {
             display: flex;
-            gap: 25px;
+            gap: 20px;
         }
 
         .kpi-card {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid var(--border);
-            padding: 6px 15px;
+            padding: 6px 14px;
             border-radius: 6px;
             display: flex;
             flex-direction: column;
         }
 
         .kpi-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
         }
 
         .kpi-value {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
         }
 
@@ -308,19 +325,21 @@
             display: flex;
             background: #0b0f19;
             border-bottom: 1px solid var(--border);
+            overflow-x: auto;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 10px 4px;
+            padding: 10px 6px;
             background: none;
             border: none;
             color: var(--text-muted);
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
+            white-space: nowrap;
         }
 
         .tab-btn.active {
@@ -331,7 +350,7 @@
 
         .tab-content {
             flex: 1;
-            padding: 20px;
+            padding: 18px;
             overflow-y: auto;
             display: none;
         }
@@ -341,32 +360,32 @@
         }
 
         h2 {
-            font-size: 1rem;
-            margin-bottom: 15px;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
             color: var(--accent);
             border-bottom: 1px solid var(--border);
             padding-bottom: 5px;
         }
 
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         input, select, button {
             width: 100%;
-            padding: 10px;
+            padding: 9px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text-main);
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         button {
@@ -382,10 +401,65 @@
             opacity: 0.9;
         }
 
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
         #map {
             width: 100%;
             height: 100%;
             background-color: #0b0f19;
+        }
+
+        /* --- BANDEAU INFO TRAFIC EN BAS DE CARTE --- */
+        #traffic-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            pointer-events: auto;
+        }
+
+        .traffic-badge {
+            background: var(--accent);
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 0.72rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            animation: pulse-warn 2s infinite;
+        }
+
+        @keyframes pulse-warn {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .traffic-text {
+            font-size: 0.85rem;
+            color: var(--text-main);
+            font-weight: 500;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .leaflet-layer, .leaflet-control-zoom-in, .leaflet-control-zoom-out {
@@ -396,10 +470,10 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        .rd-card, .ai-card {
+        .rd-card, .ai-card, .staff-card, .hq-card {
             background: rgba(15, 23, 42, 0.7);
             border: 1px solid var(--border);
             padding: 12px;
@@ -407,14 +481,14 @@
             margin-bottom: 12px;
         }
 
-        .rd-card h3, .ai-card h3 {
-            font-size: 0.9rem;
+        .rd-card h3, .ai-card h3, .staff-card h3, .hq-card h3 {
+            font-size: 0.88rem;
             color: var(--accent);
             margin-bottom: 4px;
         }
 
-        .rd-card p, .ai-card p {
-            font-size: 0.8rem;
+        .rd-card p, .ai-card p, .staff-card p, .hq-card p {
+            font-size: 0.78rem;
             color: var(--text-muted);
             margin-bottom: 8px;
         }
@@ -576,8 +650,7 @@
     <div id="game-container">
         <header>
             <div class="header-logo">
-                <!-- LOGO DE L'EN-TÊTE JEU -->
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 130" width="220" height="45">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 130" width="200" height="42">
                   <defs>
                     <linearGradient id="redOrangeGradHeader" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stop-color="#dc2626"/>
@@ -604,21 +677,27 @@
                   </g>
                 </svg>
             </div>
+
+            <!-- Ticker d'évènement en direct -->
+            <div class="event-ticker" id="event-ticker">
+                📢 En direct: Trafic fluide sur l'ensemble du réseau national.
+            </div>
+
             <div class="kpi-container">
                 <div class="kpi-card">
-                    <span class="kpi-label">Trésorerie Nette</span>
+                    <span class="kpi-label">Trésorerie</span>
                     <span class="kpi-value" id="kpi-money" style="color: var(--success);">50 000 000 €</span>
                 </div>
                 <div class="kpi-card">
-                    <span class="kpi-label">Réseau Actif</span>
+                    <span class="kpi-label">Réseau</span>
                     <span class="kpi-value" id="kpi-km">0 km</span>
                 </div>
                 <div class="kpi-card">
-                    <span class="kpi-label">Satisfaction Usagers</span>
+                    <span class="kpi-label">Usagers</span>
                     <span class="kpi-value" id="kpi-satisfaction">85 %</span>
                 </div>
                 <div class="kpi-card">
-                    <span class="kpi-label">Flux Journalier</span>
+                    <span class="kpi-label">Trafic</span>
                     <span class="kpi-value" id="kpi-traffic">0 véh/j</span>
                 </div>
             </div>
@@ -628,35 +707,48 @@
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab(event, 'network')">Réseau</button>
                 <button class="tab-btn" onclick="switchTab(event, 'competitors')">IA & Rachats</button>
+                <button class="tab-btn" onclick="switchTab(event, 'staff')">RH & Équipes</button>
                 <button class="tab-btn" onclick="switchTab(event, 'fleet')">Flotte</button>
                 <button class="tab-btn" onclick="switchTab(event, 'rd')">R&D</button>
-                <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège</button>
+                <button class="tab-btn" onclick="switchTab(event, 'admin')">Siège & Bilan</button>
             </div>
 
+            <!-- ONGLET RÉSEAU -->
             <div id="network" class="tab-content active">
                 <h2>Planification de Tronçon</h2>
                 <div class="control-group">
                     <label>Ville de Départ</label>
                     <select id="city-from">
-                        <option value="">Chargement des localités...</option>
+                        <option value="">Chargement...</option>
                     </select>
                 </div>
                 <div class="control-group">
                     <label>Ville d'Arrivée</label>
                     <select id="city-to">
-                        <option value="">Chargement des localités...</option>
+                        <option value="">Chargement...</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label>Type d'Infrastructure</label>
-                    <select id="road-type">
-                        <option value="standard">2x2 Voies Standard (1M€ / km)</option>
-                        <option value="smart">2x3 Voies + Portiques Free-Flow (2.5M€ / km)</option>
+                    <label>Modèle Économique du Tronçon</label>
+                    <select id="toll-type">
+                        <option value="payant">Péage Classique (Barrières standards)</option>
+                        <option value="freeflow">Péage Flux Libre / Free-Flow (+25% revenus)</option>
+                        <option value="gratuit">Tronçon Gratuit (+Subvention d'État +50% trafic)</option>
                     </select>
                 </div>
                 <button onclick="buildSection()">Lancer les travaux (Tracé Réel + Aire)</button>
 
-                <div style="margin-top: 25px;">
+                <h2 style="margin-top: 20px;">Politique Tarifaire globale</h2>
+                <div class="control-group">
+                    <label>Tarif au Kilomètre</label>
+                    <select id="tariff-policy" onchange="changeTariffPolicy()">
+                        <option value="low">Péage Modéré (Satisfaction +10%, Trafic +20%)</option>
+                        <option value="normal" selected>Péage Standard (Équilibré)</option>
+                        <option value="high">Péage Élevé / VIP (Revenus +40%, Satisfaction -15%)</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 20px;">
                     <h2>Chantiers & Liaisons Joueur</h2>
                     <div id="construction-list" style="font-size: 0.85rem; color: var(--text-muted);">
                         Aucune liaison construite.
@@ -672,6 +764,41 @@
                 </div>
             </div>
 
+            <!-- ONGLET RH & ÉQUIPES -->
+            <div id="staff" class="tab-content">
+                <h2>Gestion des Ressources Humaines</h2>
+                <div class="stat-line"><span>Masse Salariale Totale :</span> <strong style="color: var(--danger);" id="total-salaries">0 € / s</strong></div>
+                
+                <div class="staff-card">
+                    <h3>🛠️ Ingénieurs Chaussée (<span id="staff-eng-count">1</span>)</h3>
+                    <p>Réduisent l'usure du réseau de 10% et les coûts de construction.</p>
+                    <p>Salaire : <strong>3 000 €/s</strong></p>
+                    <button onclick="hireStaff('engineers')">Recruter un Ingénieur (+3k€/s)</button>
+                </div>
+
+                <div class="staff-card">
+                    <h3>🚔 Patrouilleurs & Sécurité (<span id="staff-safety-count">2</span>)</h3>
+                    <p>Améliorent la satisfaction et sécurisent les zones d'intervention.</p>
+                    <p>Salaire : <strong>1 500 €/s</strong></p>
+                    <button onclick="hireStaff('safety')">Recruter un Patrouilleur (+1.5k€/s)</button>
+                </div>
+
+                <div class="staff-card">
+                    <h3>📈 Chargés de Marketing (<span id="staff-mkt-count">1</span>)</h3>
+                    <p>Génèrent +8% de trafic supplémentaire sur toutes vos voies.</p>
+                    <p>Salaire : <strong>2 500 €/s</strong></p>
+                    <button onclick="hireStaff('marketing')">Recruter un Marketeur (+2.5k€/s)</button>
+                </div>
+
+                <div class="staff-card">
+                    <h3>👔 Directeurs RH (<span id="staff-hr-count">1</span>)</h3>
+                    <p>Réduisent la masse salariale globale de 5% par directeur.</p>
+                    <p>Salaire : <strong>4 000 €/s</strong></p>
+                    <button onclick="hireStaff('hr')">Recruter un Directeur RH (+4k€/s)</button>
+                </div>
+            </div>
+
+            <!-- ONGLET FLOTTE -->
             <div id="fleet" class="tab-content">
                 <h2>Gestion des Flottes</h2>
                 <div class="stat-line"><span>Fourgons d'Intervention :</span> <strong id="fleet-vans">2</strong></div>
@@ -684,16 +811,35 @@
                 <button onclick="triggerMaintenance()">Lancer une Campagne de Réfection</button>
             </div>
 
+            <!-- ONGLET R&D -->
             <div id="rd" class="tab-content">
-                <h2>Laboratoire R&D (Max 3 actifs)</h2>
+                <h2>Laboratoire R&D</h2>
                 <div class="stat-line"><span>Recherches Actives :</span> <strong id="rd-slots">0 / 3</strong></div>
                 <div id="rd-list" style="margin-top: 15px;">
                     <!-- Recherches R&D générées dynamiquement -->
                 </div>
             </div>
 
+            <!-- ONGLET SIÈGE SOCIAL & FINANCES -->
             <div id="admin" class="tab-content">
-                <h2>Direction & Finances</h2>
+                <h2>Siège Social & Expansion</h2>
+                <div class="hq-card">
+                    <h3>🏛️ Niveau du Siège : <span id="hq-title" style="color:var(--accent)">Bureau Régional</span></h3>
+                    <p id="hq-desc">Siège de départ. Capacité d'emprunt limitée.</p>
+                    <div class="stat-line"><span>Bonus Subventions :</span> <strong id="hq-sub-bonus">+0 %</strong></div>
+                    <button id="hq-upgrade-btn" onclick="upgradeHQ()">Agrandir le Siège (5 000 000 €)</button>
+                </div>
+
+                <h2>Bilan Financier (Recettes / Dépenses)</h2>
+                <div class="stat-line"><span>Revenus Péages :</span> <strong style="color:var(--success);" id="rev-tolls">+0 €/s</strong></div>
+                <div class="stat-line"><span>Revenus Aires de Repos :</span> <strong style="color:var(--success);" id="rev-rests">+0 €/s</strong></div>
+                <div class="stat-line"><span>Subventions d'État :</span> <strong style="color:var(--success);" id="rev-subs">+0 €/s</strong></div>
+                <div class="stat-line"><span>Masse Salariale :</span> <strong style="color:var(--danger);" id="exp-salaries">-0 €/s</strong></div>
+                <div class="stat-line" style="border-top:1px dashed var(--border); padding-top:5px; margin-top:5px;">
+                    <span>Profit Net Estimé :</span> <strong id="net-profit" style="color:var(--success);">+0 €/s</strong>
+                </div>
+
+                <h2 style="margin-top: 20px;">Direction & Banques</h2>
                 <div class="control-group">
                     <label>Nom de la Concession</label>
                     <input type="text" id="company-name" value="Autoroutes de France">
@@ -704,12 +850,11 @@
                 </div>
                 <button onclick="saveCompanyInfo()">Mettre à jour</button>
 
-                <h2 style="margin-top: 25px;">Trésorerie & Emprunts</h2>
+                <h2 style="margin-top: 20px;">Trésorerie & Emprunts</h2>
                 <button onclick="takeLoan()" style="background: var(--danger); color: white;">Emprunter 1 000 000 € (Taux 5%)</button>
                 <button onclick="logoutGame()" style="background: var(--warning); color: #0f172a; margin-top: 15px;">Déconnexion & Sauvegarde</button>
 
-                <div style="margin-top: 35px; text-align: center; border-top: 1px solid var(--border); padding-top: 20px;">
-                    <!-- LOGO STUDIO DANS L'ADMIN -->
+                <div style="margin-top: 25px; text-align: center; border-top: 1px solid var(--border); padding-top: 15px;">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 60" width="180" height="35">
                       <g transform="translate(5, 5)">
                         <polygon points="25,2 45,13 45,37 25,48 5,37 5,13" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
@@ -727,7 +872,15 @@
             </div>
         </sidebar>
 
-        <div id="map"></div>
+        <div class="map-wrapper">
+            <div id="map"></div>
+
+            <!-- BANDEAU INFO TRAFIC BAS D'ÉCRAN -->
+            <div id="traffic-bar">
+                <span class="traffic-badge" id="traffic-bar-badge">INFO TRAFIC</span>
+                <span class="traffic-text" id="traffic-bar-text">Aucun tronçon sous concession. Construisez votre première autoroute.</span>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts JS -->
@@ -814,10 +967,18 @@
             builtRoads: [],
             unlockedTechs: [],
             rdActiveCount: 0,
+            tariffPolicy: 'normal',
+            hqLevel: 1,
+            employees: {
+                engineers: 1,
+                safety: 2,
+                marketing: 1,
+                hr: 1
+            },
             aiCompanies: [
-                { id: 'vinci', name: 'Vinci Autoroutes IA', color: '#ef4444', roads: [] },
-                { id: 'aprr', name: 'APRR Group IA', color: '#a855f7', roads: [] },
-                { id: 'sanef', name: 'SANEF Autoroutes IA', color: '#eab308', roads: [] }
+                { id: 'vinci', name: 'Vinci Autoroutes IA', color: '#ef4444', money: 35000000, status: "Observation du marché", roads: [] },
+                { id: 'aprr', name: 'APRR Group IA', color: '#a855f7', money: 25000000, status: "Observation du marché", roads: [] },
+                { id: 'sanef', name: 'SANEF Autoroutes IA', color: '#eab308', money: 20000000, status: "Observation du marché", roads: [] }
             ]
         };
 
@@ -876,6 +1037,9 @@
                 redrawSavedRoads();
                 updateHUD();
                 renderAICompetitorsList();
+                updateStaffDisplay();
+                updateHQDisplay();
+                triggerTrafficIncident();
             }, 200);
         }
 
@@ -888,7 +1052,15 @@
             if(!currentUserEmail) return;
             const savedData = localStorage.getItem('tycoon_save_' + currentUserEmail);
             if(savedData) {
-                gameState = Object.assign(gameState, JSON.parse(savedData));
+                const loaded = JSON.parse(savedData);
+                gameState = Object.assign(gameState, loaded);
+                if (!gameState.employees) gameState.employees = { engineers: 1, safety: 2, marketing: 1, hr: 1 };
+                if (!gameState.hqLevel) gameState.hqLevel = 1;
+                if (!gameState.tariffPolicy) gameState.tariffPolicy = 'normal';
+                gameState.aiCompanies.forEach(ai => {
+                    if (ai.money === undefined) ai.money = 30000000;
+                    if (!ai.status) ai.status = "En activité";
+                });
             }
         }
 
@@ -976,6 +1148,7 @@
         async function buildSection() {
             const fromId = parseInt(document.getElementById('city-from').value);
             const toId = parseInt(document.getElementById('city-to').value);
+            const tollType = document.getElementById('toll-type').value;
 
             if (fromId === toId) {
                 alert("Veuillez sélectionner deux villes différentes !");
@@ -1015,7 +1188,9 @@
                 distanceKm = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
             }
 
-            const cost = distanceKm * 1000000;
+            const engBonus = Math.min(0.4, (gameState.employees.engineers || 0) * 0.05);
+            const baseCostPerKm = tollType === 'freeflow' ? 1400000 : 1000000;
+            const cost = Math.round(distanceKm * baseCostPerKm * (1 - engBonus));
 
             if (gameState.money < cost) {
                 alert(`Fonds insuffisants ! Coût estimé : ${cost.toLocaleString()} € (Solde : ${gameState.money.toLocaleString()} €)`);
@@ -1033,6 +1208,7 @@
                 name: `Liaison ${cityA.name} - ${cityB.name}`,
                 coords: routeCoords,
                 distance: distanceKm,
+                tollType: tollType,
                 restArea: {
                     id: 'rest_' + roadId,
                     roadId: roadId,
@@ -1046,12 +1222,15 @@
             drawRoadOnMap(roadData);
 
             gameState.km += distanceKm;
-            gameState.traffic += distanceKm * 120;
+            const trafficBoost = tollType === 'gratuit' ? 180 : (tollType === 'freeflow' ? 140 : 120);
+            gameState.traffic += distanceKm * trafficBoost;
 
             saveGameData();
             updateHUD();
+            triggerTrafficIncident();
 
-            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} - ${cityB.name} (${distanceKm} km) en service !`;
+            const tollText = tollType === 'gratuit' ? 'Gratuit/Subventionné' : (tollType === 'freeflow' ? 'Free-Flow' : 'Payant');
+            document.getElementById('construction-list').innerHTML = `Liaison ${cityA.name} - ${cityB.name} (${distanceKm} km, ${tollText}) en service !`;
         }
 
         function drawRoadOnMap(road) {
@@ -1060,8 +1239,10 @@
                 polylineCoords = [[road.latA, road.lngA], [road.latMid, road.lngMid], [road.latB, road.lngB]];
             }
 
+            const strokeColor = road.tollType === 'gratuit' ? '#38bdf8' : '#22c55e';
+
             L.polyline(polylineCoords, {
-                color: '#22c55e',
+                color: strokeColor,
                 weight: 4,
                 opacity: 0.85
             }).addTo(map);
@@ -1153,7 +1334,146 @@
             }
         }
 
-        // --- CONCURRENCE IA & RACHATS ---
+        // --- GESTION DU SIÈGE ET RH ---
+        function hireStaff(type) {
+            if (!gameState.employees) gameState.employees = { engineers: 0, safety: 0, marketing: 0, hr: 0 };
+            gameState.employees[type] = (gameState.employees[type] || 0) + 1;
+            saveGameData();
+            updateStaffDisplay();
+            updateHUD();
+        }
+
+        function calculateSalaries() {
+            if (!gameState.employees) return 0;
+            const baseSalaries = (gameState.employees.engineers * 3000) + 
+                                 (gameState.employees.safety * 1500) + 
+                                 (gameState.employees.marketing * 2500) + 
+                                 (gameState.employees.hr * 4000);
+            
+            const hrDiscount = Math.min(0.3, (gameState.employees.hr || 0) * 0.05);
+            return Math.round(baseSalaries * (1 - hrDiscount));
+        }
+
+        function updateStaffDisplay() {
+            if (!gameState.employees) return;
+            document.getElementById('staff-eng-count').innerText = gameState.employees.engineers || 0;
+            document.getElementById('staff-safety-count').innerText = gameState.employees.safety || 0;
+            document.getElementById('staff-mkt-count').innerText = gameState.employees.marketing || 0;
+            document.getElementById('staff-hr-count').innerText = gameState.employees.hr || 0;
+            document.getElementById('total-salaries').innerText = calculateSalaries().toLocaleString() + " € / s";
+        }
+
+        function upgradeHQ() {
+            const hqCosts = [0, 5000000, 20000000, 50000000];
+            const nextLevel = gameState.hqLevel + 1;
+
+            if (nextLevel > 3) {
+                alert("Votre Siège est déjà au niveau maximum !");
+                return;
+            }
+
+            const cost = hqCosts[nextLevel];
+            if (gameState.money >= cost) {
+                gameState.money -= cost;
+                gameState.hqLevel = nextLevel;
+                saveGameData();
+                updateHQDisplay();
+                updateHUD();
+                alert("Siège social agrandi avec succès !");
+            } else {
+                alert(`Fonds insuffisants (${cost.toLocaleString()} € requis).`);
+            }
+        }
+
+        function updateHQDisplay() {
+            const titles = ["", "Bureau Régional", "Siège Métropolitain", "Tour Concessionnaire Internationale"];
+            const descs = [
+                "",
+                "Siège de départ. Capacité d'emprunt standard.",
+                "Siège élargi. Subventions +15% et crédit d'impôt.",
+                "Quartier Général d'Élite. Subventions +35% et prestige maximal."
+            ];
+            const bonuses = ["", "+0 %", "+15 %", "+35 %"];
+
+            document.getElementById('hq-title').innerText = titles[gameState.hqLevel];
+            document.getElementById('hq-desc').innerText = descs[gameState.hqLevel];
+            document.getElementById('hq-sub-bonus').innerText = bonuses[gameState.hqLevel];
+
+            const upgradeBtn = document.getElementById('hq-upgrade-btn');
+            if (gameState.hqLevel >= 3) {
+                upgradeBtn.innerText = "Niveau Maximum Atteint";
+                upgradeBtn.disabled = true;
+            } else {
+                const nextCost = gameState.hqLevel === 1 ? "5 000 000 €" : "20 000 000 €";
+                upgradeBtn.innerText = `Agrandir le Siège (${nextCost})`;
+            }
+        }
+
+        function changeTariffPolicy() {
+            gameState.tariffPolicy = document.getElementById('tariff-policy').value;
+            saveGameData();
+            updateHUD();
+        }
+
+        // --- GÉNÉRATEUR D'INFO TRAFIC SUR LES TRACÉS CONSTRUITS ---
+        function triggerTrafficIncident() {
+            const barBadge = document.getElementById('traffic-bar-badge');
+            const barText = document.getElementById('traffic-bar-text');
+
+            if (!barText || !barBadge) return;
+
+            // Si le joueur n'a encore rien construit
+            if (!gameState.builtRoads || gameState.builtRoads.length === 0) {
+                barBadge.innerText = "INFO TRAFIC";
+                barBadge.style.background = "var(--accent)";
+                barText.innerText = "Aucun tronçon sous concession. Construisez votre première autoroute.";
+                return;
+            }
+
+            // Sélection aléatoire d'un tronçon du joueur
+            const road = gameState.builtRoads[Math.floor(Math.random() * gameState.builtRoads.length)];
+
+            // Types d'événements spécifiques au tracé
+            const incidents = [
+                {
+                    badge: "ACCIDENT",
+                    color: "var(--danger)",
+                    text: `🚨 Accident sur la ${road.name} — Neutralisation de la voie de gauche. Intervention des secours.`
+                },
+                {
+                    badge: "PANNE",
+                    color: "var(--warning)",
+                    text: `⚠️ Véhicule en panne sur la ${road.name} — Baisse de vitesse conseillée sur 3 km.`
+                },
+                {
+                    badge: "TRAVAUX",
+                    color: "var(--warning)",
+                    text: `🚧 Campagne d'inspection de la chaussée sur la ${road.name} — Voie de droite restreinte.`
+                },
+                {
+                    badge: "MÉTÉO",
+                    color: "var(--brand-blue)",
+                    text: `🌧️ Fortes pluies sur la ${road.name} — Risque d'aquaplaning, soyez vigilants.`
+                },
+                {
+                    badge: "BOUCHON",
+                    color: "var(--danger)",
+                    text: `🚘 Trafic au ralenti sur la ${road.name} aux heures de pointe — Retard estimé à 12 min.`
+                },
+                {
+                    badge: "FLUIDE",
+                    color: "var(--success)",
+                    text: `✅ Condition de circulation optimale sur la ${road.name} — Trafic parfaitement fluide.`
+                }
+            ];
+
+            const event = incidents[Math.floor(Math.random() * incidents.length)];
+            barBadge.innerText = event.badge;
+            barBadge.style.background = event.color;
+            barText.innerText = event.text;
+        }
+
+        // --- CONCURRENCE IA RÉALISTE & RACHATS ---
         function drawAIRoadOnMap(ai, road) {
             if (aiPolylines[road.id]) {
                 map.removeLayer(aiPolylines[road.id]);
@@ -1182,18 +1502,36 @@
         async function aiBuildLoop() {
             if (!currentUserEmail) return;
 
-            const randomAiIndex = Math.floor(Math.random() * gameState.aiCompanies.length);
-            const ai = gameState.aiCompanies[randomAiIndex];
+            const ai = gameState.aiCompanies[Math.floor(Math.random() * gameState.aiCompanies.length)];
+            if (!ai) return;
 
-            const cityA = cities[Math.floor(Math.random() * cities.length)];
-            const cityB = cities[Math.floor(Math.random() * cities.length)];
+            if (Math.random() < 0.3) {
+                ai.status = "Constitution de réserves financières";
+                renderAICompetitorsList();
+                return;
+            }
 
+            let cityA, cityB;
+            if (ai.roads.length > 0 && Math.random() < 0.7) {
+                const randomRoad = ai.roads[Math.floor(Math.random() * ai.roads.length)];
+                const parts = randomRoad.name.replace("Liaison ", "").split(" - ");
+                const existingName = parts[Math.floor(Math.random() * parts.length)];
+                cityA = cities.find(c => c.name === existingName) || cities[Math.floor(Math.random() * cities.length)];
+            } else {
+                cityA = cities[Math.floor(Math.random() * cities.length)];
+            }
+
+            cityB = cities[Math.floor(Math.random() * cities.length)];
             if (cityA.id === cityB.id) return;
 
             const alreadyPlayer = gameState.builtRoads.some(r => r.name.includes(cityA.name) && r.name.includes(cityB.name));
             const alreadyAi = gameState.aiCompanies.some(a => a.roads.some(r => r.name.includes(cityA.name) && r.name.includes(cityB.name)));
 
-            if (alreadyPlayer || alreadyAi) return;
+            if (alreadyPlayer || alreadyAi) {
+                ai.status = "Étude de marché & opportunités";
+                renderAICompetitorsList();
+                return;
+            }
 
             let routeCoords = [];
             let distanceKm = 0;
@@ -1214,16 +1552,27 @@
                 distanceKm = Math.round(Math.abs(cityA.lat - cityB.lat) * 100 + 50);
             }
 
-            const roadId = Date.now() + Math.floor(Math.random() * 1000);
-            const aiRoad = {
-                id: roadId,
-                name: `Liaison ${cityA.name} - ${cityB.name}`,
-                coords: routeCoords,
-                distance: distanceKm
-            };
+            const cost = distanceKm * 1000000;
+            const requiredReserve = 5000000;
 
-            ai.roads.push(aiRoad);
-            drawAIRoadOnMap(ai, aiRoad);
+            if (ai.money >= (cost + requiredReserve)) {
+                ai.money -= cost;
+
+                const roadId = Date.now() + Math.floor(Math.random() * 1000);
+                const aiRoad = {
+                    id: roadId,
+                    name: `Liaison ${cityA.name} - ${cityB.name}`,
+                    coords: routeCoords,
+                    distance: distanceKm
+                };
+
+                ai.roads.push(aiRoad);
+                ai.status = `Axe ouvert : ${cityA.name} ↔ ${cityB.name}`;
+                drawAIRoadOnMap(ai, aiRoad);
+            } else {
+                ai.status = `En attente de fonds (${cityA.name}-${cityB.name})`;
+            }
+
             saveGameData();
             renderAICompetitorsList();
         }
@@ -1235,21 +1584,23 @@
 
             gameState.aiCompanies.forEach(ai => {
                 const totalKm = ai.roads.reduce((acc, r) => acc + r.distance, 0);
-                const companyValue = totalKm * 1800000;
+                const companyValue = totalKm * 1800000 + (ai.money * 0.5);
 
                 let html = `
                     <div class="ai-card" style="border-left: 4px solid ${ai.color};">
                         <h3><span style="color:${ai.color};">●</span> ${ai.name}</h3>
-                        <p>Réseau sous concession : <strong>${totalKm} km</strong> (${ai.roads.length} tronçons)</p>
-                        <p>Valorisation estimée : <strong>${companyValue.toLocaleString()} €</strong></p>
+                        <div class="stat-line"><span>Trésorerie :</span> <strong style="color:var(--success);">${Math.round(ai.money).toLocaleString()} €</strong></div>
+                        <div class="stat-line"><span>Réseau actif :</span> <strong>${totalKm} km (${ai.roads.length} tronçons)</strong></div>
+                        <div class="stat-line"><span>Statut :</span> <em style="color:var(--accent); font-size:0.8rem;">${ai.status || "En activité"}</em></div>
+                        <p style="margin-top:6px;">Valorisation : <strong>${Math.round(companyValue).toLocaleString()} €</strong></p>
                 `;
 
                 if (ai.roads.length > 0) {
-                    html += `<button style="background: var(--warning); color: #0f172a;" onclick="buyOutEntireAICompany('${ai.id}', ${companyValue})">
-                        Lancer une OPA Globale (${companyValue.toLocaleString()} €)
+                    html += `<button style="background: var(--warning); color: #0f172a;" onclick="buyOutEntireAICompany('${ai.id}', ${Math.round(companyValue)})">
+                        Lancer une OPA Globale (${Math.round(companyValue).toLocaleString()} €)
                     </button>`;
                 } else {
-                    html += `<div style="font-size:0.75rem; color:var(--text-muted);">Aucun réseau actif à racheter.</div>`;
+                    html += `<div style="font-size:0.75rem; color:var(--text-muted);">Aucune concession active à racheter.</div>`;
                 }
 
                 html += `</div>`;
@@ -1273,6 +1624,7 @@
             }
 
             gameState.money -= buyCost;
+            ai.money += buyCost;
 
             if (aiPolylines[road.id]) {
                 map.removeLayer(aiPolylines[road.id]);
@@ -1289,6 +1641,7 @@
                 name: road.name,
                 coords: road.coords,
                 distance: road.distance,
+                tollType: 'payant',
                 restArea: {
                     id: 'rest_' + road.id,
                     roadId: road.id,
@@ -1307,6 +1660,7 @@
             saveGameData();
             updateHUD();
             renderAICompetitorsList();
+            triggerTrafficIncident();
 
             alert(`Vous avez racheté la concession ${road.name} à ${ai.name} !`);
         }
@@ -1338,6 +1692,7 @@
                     name: road.name,
                     coords: road.coords,
                     distance: road.distance,
+                    tollType: 'payant',
                     restArea: {
                         id: 'rest_' + road.id,
                         roadId: road.id,
@@ -1354,15 +1709,18 @@
             });
 
             ai.roads = [];
+            ai.money += cost;
+            ai.status = "Rachetée par la Concession Joueur";
 
             saveGameData();
             updateHUD();
             renderAICompetitorsList();
+            triggerTrafficIncident();
 
             alert(`🎉 OPA Réussie ! Vous avez racheté l'intégralité du réseau de ${ai.name} !`);
         }
 
-        // --- HUD & BOUCLE DE REVENUS PASSIFS ---
+        // --- HUD & ÉCONOMIE PASSSIVE ---
         function updateHUD() {
             document.getElementById('kpi-money').innerText = gameState.money.toLocaleString() + " €";
             document.getElementById('kpi-km').innerText = gameState.km + " km";
@@ -1413,12 +1771,29 @@
             alert(`Paramètres mis à jour pour ${company} dirigée par ${ceo}.`);
         }
 
+        // --- BOUCLE ÉCONOMIQUE PRINCIPALE ---
         setInterval(() => {
-            if (currentUserEmail && gameState.km > 0) {
-                let roadIncome = Math.round(gameState.km * 2);
+            if (currentUserEmail) {
+                let tollIncome = 0;
                 let restIncome = 0;
+                let subsidyIncome = 0;
+
+                let tariffMult = 1.0;
+                if (gameState.tariffPolicy === 'low') tariffMult = 0.75;
+                if (gameState.tariffPolicy === 'high') tariffMult = 1.40;
+
+                const mktBoost = 1 + ((gameState.employees.marketing || 0) * 0.08);
 
                 gameState.builtRoads.forEach(road => {
+                    if (road.tollType === 'gratuit') {
+                        const hqBonus = gameState.hqLevel === 2 ? 1.15 : (gameState.hqLevel === 3 ? 1.35 : 1.0);
+                        subsidyIncome += Math.round(road.distance * 200 * hqBonus);
+                    } else if (road.tollType === 'freeflow') {
+                        tollIncome += Math.round(road.distance * 2.8 * tariffMult * mktBoost);
+                    } else {
+                        tollIncome += Math.round(road.distance * 2.2 * tariffMult * mktBoost);
+                    }
+
                     if (road.restArea) {
                         if (road.restArea.level === 1) restIncome += 500;
                         else if (road.restArea.level === 2) restIncome += 2500;
@@ -1426,16 +1801,65 @@
                     }
                 });
 
-                gameState.money += (roadIncome + restIncome);
-                gameState.wear = Math.min(100, gameState.wear + 0.005);
+                const salaries = calculateSalaries();
+                const netIncome = (tollIncome + restIncome + subsidyIncome) - salaries;
+
+                gameState.money += netIncome;
+                
+                const engWearReduction = 1 - Math.min(0.5, (gameState.employees.engineers || 0) * 0.1);
+                gameState.wear = Math.min(100, gameState.wear + (0.005 * engWearReduction));
+
+                document.getElementById('rev-tolls').innerText = "+" + tollIncome.toLocaleString() + " €/s";
+                document.getElementById('rev-rests').innerText = "+" + restIncome.toLocaleString() + " €/s";
+                document.getElementById('rev-subs').innerText = "+" + subsidyIncome.toLocaleString() + " €/s";
+                document.getElementById('exp-salaries').innerText = "-" + salaries.toLocaleString() + " €/s";
+                
+                const profitElem = document.getElementById('net-profit');
+                profitElem.innerText = (netIncome >= 0 ? "+" : "") + netIncome.toLocaleString() + " €/s";
+                profitElem.style.color = netIncome >= 0 ? "var(--success)" : "var(--danger)";
+
+                gameState.aiCompanies.forEach(ai => {
+                    const aiKm = ai.roads.reduce((acc, r) => acc + r.distance, 0);
+                    const aiIncome = Math.round(aiKm * 2.2) + (ai.roads.length * 800);
+                    ai.money += aiIncome;
+                });
+
                 saveGameData();
                 updateHUD();
+                updateStaffDisplay();
             }
         }, 1000);
 
+        // Boucle IA
         setInterval(() => {
             aiBuildLoop();
+        }, 15000);
+
+        // Mettre à jour l'info trafic local toutes les 12 secondes
+        setInterval(() => {
+            triggerTrafficIncident();
         }, 12000);
+
+        // Événements globaux aléatoires
+        setInterval(() => {
+            if (!currentUserEmail) return;
+
+            const events = [
+                "🚗 Grand départ en vacances : Le trafic augmente sur les axes majeurs !",
+                "❄️ Vague de froid annoncée : Vos patrouilleurs et chasse-neige sont en alerte.",
+                "🏛️ Ministère des Transports : Bonus versé pour les autoroutes à haute sécurité !",
+                "🎙️ Avis Usagers : Les automobilistes saluent la qualité des aires de repos.",
+                "⛽ Hausse des carburants : Les stations-services génèrent un surplus de ventes."
+            ];
+
+            const randomEvent = events[Math.floor(Math.random() * events.length)];
+            document.getElementById('event-ticker').innerText = "📢 " + randomEvent;
+
+            if (randomEvent.includes("Bonus versé")) {
+                gameState.money += 250000;
+                updateHUD();
+            }
+        }, 22000);
     </script>
 </body>
 </html>
