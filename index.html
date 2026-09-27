@@ -70,6 +70,13 @@
     .speed button.active { background:var(--accent); color:var(--bg-dark); border-color:var(--accent); }
 
     #sidebar { background:var(--bg-panel); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:900; min-height:0; }
+    .tab-groups { display:flex; flex-wrap:wrap; background:#0b0f19; border-bottom:1px solid var(--border); flex:none; }
+    .group-btn { flex:1 1 auto; width:auto; margin:0; padding:9px 6px; background:none; border:none; border-radius:0; color:var(--text-muted); font-size:.66rem; line-height:1.2; white-space:nowrap; border-bottom:2px solid transparent; }
+    .group-btn span { display:block; }
+    .group-btn.active { color:var(--accent); background:var(--bg-panel); border-bottom-color:var(--accent); }
+    #session-footer { flex:none; display:flex; align-items:center; gap:6px; padding:8px 12px; border-top:1px solid var(--border); background:#0b0f19; }
+    #session-footer button { width:auto; margin:0; padding:6px 10px; font-size:.72rem; }
+    #session-footer .muted { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tabs { display:flex; background:#0b0f19; border-bottom:1px solid var(--border); overflow-x:auto; flex:none; }
     .tab-btn { flex:1 0 auto; width:auto; margin:0; padding:10px 9px; background:none; border:none; border-radius:0; color:var(--text-muted); font-size:.7rem; white-space:nowrap; }
     .tab-btn.active { color:var(--accent); background:var(--bg-panel); border-bottom:2px solid var(--accent); }
@@ -247,15 +254,32 @@
     </header>
 
     <aside id="sidebar">
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="network">Réseau</button>
-            <button class="tab-btn" data-tab="pc_security">PC Sécurité</button>
-            <button class="tab-btn" data-tab="competitors">IA Concurrence</button>
-            <button class="tab-btn" data-tab="staff">RH</button>
-            <button class="tab-btn" data-tab="fleet">Flotte</button>
-            <button class="tab-btn" data-tab="rest_areas">Tycoon Aires</button>
+        <div class="tab-groups">
+            <button class="group-btn active" data-group="reseau">🏗️ <span>Réseau &amp; Chantiers</span></button>
+            <button class="group-btn" data-group="rh">👥 <span>Personnel &amp; RH</span></button>
+            <button class="group-btn" data-group="finance">💰 <span>Banque &amp; Finances</span></button>
+            <button class="group-btn" data-group="aires">⛽ <span>Aires de Services</span></button>
+            <button class="group-btn" data-group="politique">🏛️ <span>Politique &amp; Législation</span></button>
+        </div>
+
+        <div class="tabs" id="subtabs-reseau">
+            <button class="tab-btn active" data-tab="network">Construction</button>
             <button class="tab-btn" data-tab="rd">R&amp;D</button>
-            <button class="tab-btn" data-tab="admin">Siège &amp; Offres</button>
+        </div>
+        <div class="tabs" id="subtabs-rh" style="display:none">
+            <button class="tab-btn active" data-tab="staff">Équipes</button>
+            <button class="tab-btn" data-tab="fleet">Flotte &amp; PC Sécurité</button>
+        </div>
+        <div class="tabs" id="subtabs-finance" style="display:none">
+            <button class="tab-btn active" data-tab="bilan">Bilan</button>
+            <button class="tab-btn" data-tab="banque">Banque &amp; Obligations</button>
+        </div>
+        <div class="tabs" id="subtabs-aires" style="display:none">
+            <button class="tab-btn active" data-tab="rest_areas">Aires de service</button>
+        </div>
+        <div class="tabs" id="subtabs-politique" style="display:none">
+            <button class="tab-btn active" data-tab="tenders">Contrats d'État</button>
+            <button class="tab-btn" data-tab="competitors">Concurrence IA</button>
         </div>
 
         <!-- RÉSEAU -->
@@ -293,24 +317,6 @@
             <div id="road-list"></div>
         </div>
 
-        <!-- PC SÉCURITÉ -->
-        <div id="pc_security" class="tab-content">
-            <h2>Poste de commandement</h2>
-            <div class="stat-line"><span>Fourgons disponibles</span><strong id="pc-vans-avail" style="color:var(--accent)">2</strong></div>
-            <div class="stat-line"><span>Panneaux PMV</span><strong id="pc-pmv-status">En veille</strong></div>
-            <div class="stat-line"><span>Incidents résolus</span><strong id="pc-resolved">0</strong></div>
-            <div class="control-group" style="margin-top:8px"><label><input type="checkbox" id="auto-dispatch" onchange="toggleAutoDispatch(this.checked)">Dispatch automatique des fourgons (requiert « Régulation dynamique PMV »)</label></div>
-            <h2>Incidents en direct</h2>
-            <div id="incidents-list"></div>
-        </div>
-
-        <!-- CONCURRENCE -->
-        <div id="competitors" class="tab-content">
-            <h2>Concessionnaires concurrents (IA)</h2>
-            <p class="muted small" style="margin-bottom:10px">Les concurrents investissent sur les liaisons les plus rentables. Si vous exploitez la même liaison qu'eux, le trafic est partagé. Vous pouvez racheter leur réseau.</p>
-            <div id="ai-competitors-list"></div>
-        </div>
-
         <!-- RH -->
         <div id="staff" class="tab-content">
             <h2>Équipes &amp; RH</h2>
@@ -318,7 +324,7 @@
             <div id="staff-list"></div>
         </div>
 
-        <!-- FLOTTE -->
+        <!-- FLOTTE & PC SÉCURITÉ (fusionnés) -->
         <div id="fleet" class="tab-content">
             <h2>Flotte d'intervention</h2>
             <div id="fleet-box"></div>
@@ -327,6 +333,21 @@
             <div class="stat-line"><span>Coût d'une réfection globale</span><strong id="repair-all-cost">0 €</strong></div>
             <button onclick="repairAll()">Réfection globale (usure &gt; 15 %)</button>
             <div class="control-group" style="margin-top:8px"><label><input type="checkbox" id="auto-repair" onchange="toggleAutoRepair(this.checked)">Entretien automatique (réfection dès 50 % d'usure)</label></div>
+
+            <h2>Poste de commandement</h2>
+            <div class="stat-line"><span>Fourgons disponibles</span><strong id="pc-vans-avail" style="color:var(--accent)">2</strong></div>
+            <div class="stat-line"><span>Panneaux PMV</span><strong id="pc-pmv-status">En veille</strong></div>
+            <div class="stat-line"><span>Incidents résolus</span><strong id="pc-resolved">0</strong></div>
+            <div class="control-group" style="margin-top:8px"><label><input type="checkbox" id="auto-dispatch" onchange="toggleAutoDispatch(this.checked)">Dispatch automatique des fourgons (requiert « Régulation dynamique PMV »)</label></div>
+
+            <h2>Postes de commandement régionaux</h2>
+            <p class="muted small">Le temps d'intervention dépend de la distance au PC le plus proche. Étendez votre couverture à mesure que le réseau grandit.</p>
+            <div id="pcs-list"></div>
+            <div class="control-group"><label for="pc-city">Nouveau PC près de</label><select id="pc-city"></select></div>
+            <button onclick="buildPC()" id="btn-pc">Construire un PC (2 000 000 €)</button>
+
+            <h2>Incidents en direct</h2>
+            <div id="incidents-list"></div>
         </div>
 
         <!-- AIRES -->
@@ -343,17 +364,14 @@
             <div id="rd-list" style="margin-top:10px"></div>
         </div>
 
-        <!-- SIÈGE -->
-        <div id="admin" class="tab-content">
+        <!-- BILAN (Banque & Finances) -->
+        <div id="bilan" class="tab-content">
             <h2>Siège social &amp; prestige</h2>
             <div class="card">
                 <h3>🏛️ <span id="hq-title">Bureau Régional</span></h3>
                 <p id="hq-desc"></p>
                 <button id="hq-upgrade-btn" onclick="upgradeHQ()"></button>
             </div>
-
-            <h2>Contrats &amp; appels d'offres d'État</h2>
-            <div id="state-tenders-list"></div>
 
             <h2>Bilan financier (dernier jour)</h2>
             <div class="stat-line"><span>Péages</span><strong style="color:var(--success)" id="rev-tolls">0 €/j</strong></div>
@@ -369,6 +387,18 @@
 
             <h2>Satisfaction des usagers</h2>
             <div id="sat-breakdown" class="kv-list"></div>
+        </div>
+
+        <!-- BANQUE & OBLIGATIONS (Banque & Finances) -->
+        <div id="banque" class="tab-content">
+            <h2>Notation de crédit &amp; obligations</h2>
+            <div class="stat-line"><span>Note de crédit</span><strong id="credit-score">700</strong></div>
+            <div class="bar"><i id="credit-bar" style="width:70%"></i></div>
+            <div class="muted small" id="credit-info" style="margin-bottom:8px"></div>
+            <div class="stat-line"><span>Taux d'émission actuel</span><strong id="bond-rate">—</strong></div>
+            <div class="stat-line"><span>Plafond d'obligations (siège)</span><strong id="bond-cap">—</strong></div>
+            <div class="row"><button class="btn-danger" onclick="issueBond(10e6)">+10 M€</button><button class="btn-danger" onclick="issueBond(30e6)">+30 M€</button><button class="btn-danger" onclick="issueBond(60e6)">+60 M€</button></div>
+            <div id="bonds-list" class="kv-list" style="margin-top:6px"></div>
 
             <h2>Banque</h2>
             <div class="stat-line"><span>Dette</span><strong id="bank-debt">0 €</strong></div>
@@ -376,10 +406,30 @@
             <div class="muted small">Taux : 5 % par an, intérêts prélevés chaque jour.</div>
             <div class="row"><button class="btn-danger" onclick="takeLoan(1e6)">+1 M€</button><button class="btn-danger" onclick="takeLoan(5e6)">+5 M€</button><button class="btn-danger" onclick="takeLoan(20e6)">+20 M€</button></div>
             <div class="row"><button class="btn-ghost" onclick="repayLoan(1e6)">Rembourser 1 M€</button><button class="btn-ghost" onclick="repayLoan(Infinity)">Tout rembourser</button></div>
+        </div>
 
-            <h2>Partie</h2>
-            <div class="muted small" style="margin-bottom:6px">Connecté : <b id="user-label">—</b>. Sauvegarde automatique sur cet appareil.</div>
-            <button class="btn-warn" onclick="logoutGame()">Sauvegarder et se déconnecter</button>
+        <!-- CONTRATS D'ÉTAT (Politique & Législation) -->
+        <div id="tenders" class="tab-content">
+            <h2>Contrats &amp; appels d'offres d'État</h2>
+            <div id="state-tenders-list"></div>
+
+            <h2>Fiscalité &amp; quotas d'État</h2>
+            <div class="stat-line"><span>Quota CO2 (Éco-Score ≥ 60)</span><strong id="quota-co2">—</strong></div>
+            <div class="stat-line"><span>Quota sécurité</span><strong id="quota-safe">—</strong></div>
+            <div class="muted small" id="quota-warn"></div>
+        </div>
+
+        <!-- CONCURRENCE (Politique & Législation) -->
+        <div id="competitors" class="tab-content">
+            <h2>Concessionnaires concurrents (IA)</h2>
+            <p class="muted small" style="margin-bottom:10px">Les concurrents investissent sur les liaisons les plus rentables. Si vous exploitez la même liaison qu'eux, le trafic est partagé. Vous pouvez racheter leur réseau.</p>
+            <div id="ai-competitors-list"></div>
+        </div>
+
+        <!-- PARTIE (footer persistant) -->
+        <div id="session-footer">
+            <span class="muted small">Connecté : <b id="user-label">—</b></span>
+            <button class="btn-warn" onclick="logoutGame()">Déconnexion</button>
             <button class="btn-danger" onclick="newGame()">Nouvelle partie</button>
         </div>
     </aside>
@@ -504,11 +554,27 @@ const HOUR_SHARE = (() => {
 })();
 
 const STAFF = {
-    engineers: { name: 'Ingénieurs Chaussée', icon: '🛠️', monthly: 60000, desc: 'Chaque équipe réduit l\'usure de 10 % (max 50 %) et le coût de construction de 5 % (max 40 %).' },
-    safety:    { name: 'Patrouilleurs Sécurité', icon: '🚔', monthly: 40000, desc: 'Chaque équipe accélère le dégagement des incidents (−12,5 % de durée, max −65 %).' },
-    marketing: { name: 'Chargés de Marketing', icon: '📈', monthly: 55000, desc: 'Chaque équipe attire +8 % de trafic sur tout le réseau (max +40 %).' },
-    hr:        { name: 'Directeurs RH', icon: '👔', monthly: 70000, desc: 'Chaque directeur réduit la masse salariale de 5 % (max 30 %).' }
+    engineers:  { name: 'Ingénieurs Chaussée', icon: '🛠️', monthly: 60000, desc: 'Chaque équipe réduit l\'usure de 10 % (max 50 %) et le coût de construction de 5 % (max 40 %).', fatigueSrc: 'km' },
+    safety:     { name: 'Patrouilleurs Sécurité', icon: '🚔', monthly: 40000, desc: 'Chaque équipe accélère le dégagement des incidents (−12,5 % de durée, max −65 %).', fatigueSrc: 'inc' },
+    marketing:  { name: 'Chargés de Marketing', icon: '📈', monthly: 55000, desc: 'Chaque équipe attire +8 % de trafic sur tout le réseau (max +40 %).', fatigueSrc: 'km' },
+    hr:         { name: 'Directeurs RH', icon: '👔', monthly: 70000, desc: 'Chaque directeur réduit la masse salariale de 5 % (max 30 %).', fatigueSrc: 'flat' },
+    tollAgents: { name: 'Agents de Péage', icon: '🎫', monthly: 35000, desc: 'Chaque équipe réduit la perte de capacité aux barrières classiques (+5 % de débit, max +25 %).', fatigueSrc: 'km' }
 };
+// Niveaux de compétence (formation) : multiplicateur appliqué au bonus de chaque catégorie RH
+const STAFF_LEVEL_MULT = [1, 1.5, 2];
+const TRAIN_COST = [0, 400000, 900000]; // coût pour atteindre le niveau 2, 3
+const TRAIN_DAYS = 6;
+// Certifications : bonus fixe, permanent, cumulable avec le niveau — une fois par catégorie
+const CERTS = {
+    engineers:  { name: 'Certification Maintenance Lourde',   cost: 700000, desc: 'Réduit encore l\'usure de 10 % et accélère les réfections de 20 %.' },
+    safety:     { name: 'Certification Sécurité Routière',    cost: 600000, desc: 'Réduit la durée des incidents de 10 % supplémentaires.' },
+    marketing:  { name: 'Certification Négociation Commerciale', cost: 650000, desc: 'Réduit de 15 % le coût d\'installation des enseignes sur les aires.' },
+    hr:         { name: 'Certification Gestion Sociale',      cost: 550000, desc: 'Abaisse de 15 points le seuil de fatigue déclenchant une grève.' },
+    tollAgents: { name: 'Certification Péage',                cost: 500000, desc: 'Réduit encore de 10 % la perte de débit aux barrières classiques.' }
+};
+const FATIGUE_STRIKE_TH = 85;   // seuil de fatigue déclenchant un risque de grève
+const STRIKE_DAILY_CHANCE = 0.10;
+const STRIKE_DURATION_H = [18, 42]; // durée min/max d'une grève, en heures
 const TECHS = [
     { id: 'infra_1', name: 'Enrobés Phoniques & Drainants', cost: 500000,  days: 10, desc: 'Moins d\'aquaplaning (−30 % d\'accidents sous la pluie), +2 satisfaction.' },
     { id: 'infra_2', name: 'Bétons Auto-cicatrisants',      cost: 1200000, days: 25, desc: 'Réduit l\'usure des chaussées de 40 %.' },
@@ -517,21 +583,32 @@ const TECHS = [
     { id: 'ai_1',    name: 'Radars de Tronçon Intelligents', cost: 600000, days: 15, desc: 'Baisse les accidents de 40 %.' },
     { id: 'ai_2',    name: 'Régulation Dynamique PMV',      cost: 1500000, days: 25, desc: 'Débloque le dispatch automatique des fourgons, +2 satisfaction.' },
     { id: 'eco_1',   name: 'Ombrières Photovoltaïques',     cost: 1000000, days: 20, desc: 'Permet d\'installer des ombrières sur les aires (+5 000 €/j, Éco-Score +5). Éco-Score +5.' },
-    { id: 'eco_2',   name: 'Stations Hydrogène & Ultra-Fast', cost: 2500000, days: 40, desc: 'Débloque l\'enseigne Ionity Fast sur les aires. Éco-Score +8.' }
+    { id: 'eco_2',   name: 'Stations Hydrogène & Ultra-Fast', cost: 2500000, days: 40, desc: 'Débloque l\'enseigne Ionity Fast sur les aires. Éco-Score +8.' },
+    { id: 'toll_3',  name: 'Péage ANPR (Lecture de Plaques)',  cost: 3000000, days: 30, desc: 'Supprime les barrières physiques : les péages classiques atteignent la capacité du Free-Flow. +2 satisfaction (fin des files d\'attente).' },
+    { id: 'infra_3', name: 'Enrobés Nouvelle Génération',      cost: 2200000, days: 30, desc: 'Réduit encore l\'usure des chaussées (cumulable avec les Bétons Auto-cicatrisants). Bruit quasi nul : +3 satisfaction.' },
+    { id: 'ai_3',    name: 'Drones de Surveillance IA',        cost: 2800000, days: 30, desc: 'Détection instantanée des incidents (fini le délai de signalement) et accidents encore plus rares.' },
+    { id: 'eco_3',   name: 'Bornes Ultra-Rapides Premium',     cost: 3200000, days: 35, desc: 'Débloque l\'enseigne de recharge premium (clientèle plus aisée, revenu par véhicule élevé). Éco-Score +6.' }
 ];
+const INC_DETECT_DELAY_H = 2; // délai avant qu'un incident soit visible/dépêchable sans les drones (ai_3)
 const PARTNERS = {
     fuel:  { name: 'TotalEnergies', install: 2000000, v: 0.85, unit: 'all', desc: 'Carburant : 0,85 € par véhicule' },
     food:  { name: 'McDonald\'s',   install: 1600000, v: 0.70, unit: 'all', desc: 'Restauration : 0,70 € par véhicule' },
     ev:    { name: 'Ionity Fast',   install: 3000000, v: 1.10, unit: 'all', desc: 'Recharge rapide : 1,10 € par véhicule', req: 'eco_2' },
-    truck: { name: 'Parking Poids Lourds', install: 1200000, v: 4.20, unit: 'pl', desc: 'Parking sécurisé : 4,20 € par poids lourd' }
+    truck: { name: 'Parking Poids Lourds', install: 1200000, v: 4.20, unit: 'pl', desc: 'Parking sécurisé : 4,20 € par poids lourd' },
+    ev_premium: { name: 'Recharge Ultra-Rapide Premium', install: 4500000, v: 2.10, unit: 'all', desc: 'Clientèle aisée : 2,10 € par véhicule', req: 'eco_3' }
 };
 const SOLAR = { install: 1500000, perDay: 5000, req: 'eco_1' };
 const AREA_UP = [0, 2000000, 5000000]; // coût pour passer au niveau 2, 3
 const HQ = [null,
-    { title: 'Bureau Régional',                    desc: 'Emprunt jusqu\'à 10 M€ · 2 laboratoires R&D.', loan: 10e6, slots: 2 },
-    { title: 'Siège Métropolitain',                desc: 'Emprunt jusqu\'à 30 M€ · 3 laboratoires R&D · +3 % de trafic (notoriété).', loan: 30e6, slots: 3, cost: 8e6 },
-    { title: 'Tour Concessionnaire Internationale', desc: 'Emprunt jusqu\'à 100 M€ · 4 laboratoires R&D · +6 % de trafic (notoriété).', loan: 100e6, slots: 4, cost: 30e6 }
+    { title: 'Bureau Régional',                    desc: 'Emprunt jusqu\'à 10 M€ · obligations jusqu\'à 30 M€ · 2 laboratoires R&D · PC de portée 80 km.', loan: 10e6, bondCap: 30e6, slots: 2, pcRadius: 80 },
+    { title: 'Siège Métropolitain',                desc: 'Emprunt jusqu\'à 30 M€ · obligations jusqu\'à 90 M€ · 3 laboratoires R&D · PC de portée 120 km · +3 % de trafic (notoriété).', loan: 30e6, bondCap: 90e6, slots: 3, cost: 8e6, pcRadius: 120 },
+    { title: 'Tour Concessionnaire Internationale', desc: 'Emprunt jusqu\'à 100 M€ · obligations jusqu\'à 300 M€ · 4 laboratoires R&D · PC de portée 200 km · +6 % de trafic (notoriété).', loan: 100e6, bondCap: 300e6, slots: 4, cost: 30e6, pcRadius: 200 }
 ];
+const BOND_TERM_DAYS = 365, BOND_RATE_MIN = 0.03, BOND_RATE_MAX = 0.10, BOND_PENALTY_RATE = 0.03;
+const PC_COST = 2000000;
+const CRANE_COST = 220000, DRONE_COST = 350000;
+const CRANE_ACC_BONUS = 0.10, CRANE_ACC_MAX = 0.40; // -10%/grue sur la durée des accidents, plafonné à -40%
+const CREDIT_BUYOUT_TH = 380, CREDIT_BUYOUT_NEGDAYS = 10;
 const TENDERS = [
     { id: 'eco',  title: '🌿 Subvention Transition Écologique', desc: 'Éco-Score ≥ 75', reward: 'Prime unique de 3 M€',
       check: () => S.eco >= 75, prog: () => `Éco-Score : ${Math.round(S.eco)} / 75`, claim: () => { S.money += 3e6; } },
@@ -552,6 +629,9 @@ const START_MS = Date.UTC(2026, 8, 1); // 1er septembre 2026
 const newLedger = () => ({ tolls: 0, rests: 0, subs: 0, opex: 0, salaries: 0, plows: 0, interest: 0, incidents: 0 });
 const newStat = d => ({ aadt: d, dayFlow: 0, dayRev: 0, hourFlow: 0, cong: 0, peak: 0, dayPeak: 0, rev: 0 });
 
+function defaultStaffMeta() {
+    const m = {}; for (const k in STAFF) m[k] = { level: 1, fatigue: 0, cert: false }; return m;
+}
 function defaultState() {
     return {
         v: 1, t: 8, seq: 1000,
@@ -559,8 +639,10 @@ function defaultState() {
         tariff: { vl: 0.10, ut: 0.16, pl: 0.30 },
         weather: { type: 'sun', until: 20 }, event: null,
         roads: [], incidents: [],
-        vans: 2, plows: 1,
-        staff: { engineers: 1, safety: 2, marketing: 1, hr: 1 },
+        vans: 2, plows: 1, cranes: 0, drones: 0,
+        staff: { engineers: 1, safety: 2, marketing: 1, hr: 1, tollAgents: 1 },
+        staffMeta: defaultStaffMeta(), training: [], strikes: [],
+        pcs: [{ id: 1, cityId: 1, lat: 48.8566, lng: 2.3522 }],
         hq: 1, rd: { done: [], queue: [] },
         tenders: {}, permSubsidy: 0,
         autoDispatch: false, autoRepair: false,
@@ -571,8 +653,9 @@ function defaultState() {
         ],
         ledger: newLedger(), last: newLedger(),
         month: { profit: 0 }, taxLast: null, negDays: 0,
-        stats: { resolved: 0, built: 0 },
-        won: false, over: false
+        stats: { resolved: 0, built: 0, accidentsMonth: 0 }, badMonths: 0,
+        credit: 700, bonds: [],
+        won: false, over: false, boughtOutBy: null
     };
 }
 
@@ -688,18 +771,36 @@ function fallbackRoute(a, b) {
     }
     return { coords: pts, km, estimated: true };
 }
-async function fetchRoute(a, b) {
-    const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 9000);
+// Plusieurs serveurs OSRM publics essayés dans l'ordre : la démo officielle peut être
+// lente ou temporairement saturée, ce second serveur (infrastructure OSM/FOSSGIS)
+// utilise le même moteur et sert de repli avant la courbe estimée en dernier recours.
+const OSRM_SERVERS = [
+    'https://router.project-osrm.org',
+    'https://routing.openstreetmap.de/routed-car'
+];
+async function tryOsrmServer(base, a, b, timeoutMs) {
+    const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
-        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`, { signal: ctrl.signal });
+        const url = `${base}/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
+        const res = await fetch(url, { signal: ctrl.signal });
+        if (!res.ok) return null;
         const d = await res.json();
         if (d.code === 'NoRoute') return { error: 'noroute' };
-        if (d.routes && d.routes[0]) {
+        if (d.code && d.code !== 'Ok') return null;
+        if (d.routes && d.routes[0] && d.routes[0].geometry && d.routes[0].geometry.coordinates && d.routes[0].geometry.coordinates.length > 1) {
             const rt = d.routes[0];
             return { coords: simplify(rt.geometry.coordinates.map(c => [c[1], c[0]])), km: Math.max(1, Math.round(rt.distance / 1000)), estimated: false };
         }
-    } catch (e) { /* réseau indisponible : repli */ } finally { clearTimeout(to); }
-    return fallbackRoute(a, b);
+        return null;
+    } catch (e) { return null; }
+    finally { clearTimeout(to); }
+}
+async function fetchRoute(a, b) {
+    for (const base of OSRM_SERVERS) {
+        const r = await tryOsrmServer(base, a, b, 14000);
+        if (r) return r; // route réelle trouvée, ou "pas d'itinéraire routier" confirmé par un vrai serveur
+    }
+    return fallbackRoute(a, b); // tous les serveurs sont injoignables : dernier recours
 }
 
 /* =====================================================================
@@ -766,9 +867,15 @@ function loadState(user) {
         s.rd = Object.assign({ done: [], queue: [] }, o.rd || {});
         s.ledger = Object.assign(newLedger(), o.ledger || {});
         s.last = Object.assign(newLedger(), o.last || {});
-        s.stats = Object.assign({ resolved: 0, built: 0 }, o.stats || {});
+        s.stats = Object.assign({ resolved: 0, built: 0, accidentsMonth: 0 }, o.stats || {});
         s.month = Object.assign({ profit: 0 }, o.month || {});
         s.tenders = o.tenders || {};
+        s.staffMeta = Object.assign(defaultStaffMeta(), o.staffMeta || {});
+        for (const k in STAFF) s.staffMeta[k] = Object.assign({ level: 1, fatigue: 0 }, (o.staffMeta || {})[k] || {});
+        s.training = o.training || []; s.strikes = o.strikes || [];
+        s.pcs = (o.pcs && o.pcs.length) ? o.pcs : defaultState().pcs;
+        s.bonds = o.bonds || []; s.credit = (typeof o.credit === 'number') ? o.credit : 700;
+        s.badMonths = o.badMonths || 0; s.boughtOutBy = o.boughtOutBy || null;
         s.roads.forEach(r => { r.stat = Object.assign(newStat(r.demand), r.stat || {}); r.rest = Object.assign({ level: 1, partners: [], solar: false }, r.rest || {}); });
         return s;
     } catch (e) { return null; }
@@ -786,7 +893,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14,
 cities.filter(c => c.pop >= 700).forEach(c => L.circleMarker([c.lat, c.lng], { radius: 4, color: '#38bdf8', fillColor: '#0f172a', fillOpacity: 1, weight: 2 }).addTo(portalMap));
 
 const cityLayer = L.layerGroup().addTo(map), roadLayer = L.layerGroup().addTo(map), aiLayer = L.layerGroup().addTo(map),
-      markerLayer = L.layerGroup().addTo(map), incLayer = L.layerGroup().addTo(map);
+      markerLayer = L.layerGroup().addTo(map), incLayer = L.layerGroup().addTo(map), pcLayer = L.layerGroup().addTo(map);
 const roadViz = new Map(), aiViz = new Map();
 const emo = (e, size = 22) => L.divIcon({ className: 'emo-icon', html: `<div style="font-size:${size - 6}px;line-height:${size}px;text-align:center;text-shadow:0 0 4px #000">${e}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 
@@ -813,10 +920,23 @@ const isOpen = r => S.t >= r.openAt;
 const openKm = () => S.roads.reduce((a, r) => a + (isOpen(r) ? r.km : 0), 0);
 const roadById = id => S.roads.find(r => r.id === id);
 const pairKey = (a, b) => a < b ? a + '-' + b : b + '-' + a;
-const engBuild = () => Math.min(0.4, S.staff.engineers * 0.05);
-const engWear = () => Math.min(0.5, S.staff.engineers * 0.10);
+const onStrike = type => S.strikes.some(s => s.type === type);
+const staffLevel = type => (S.staffMeta[type] && S.staffMeta[type].level) || 1;
+const staffMult = type => STAFF_LEVEL_MULT[staffLevel(type) - 1] || 1;
+const hasCert = type => !!(S.staffMeta[type] && S.staffMeta[type].cert);
+const engBuild = () => onStrike('engineers') ? 0 : Math.min(0.4, S.staff.engineers * 0.05 * staffMult('engineers'));
+const engWear = () => { if (onStrike('engineers')) return 0; let v = Math.min(0.5, S.staff.engineers * 0.10 * staffMult('engineers')); if (hasCert('engineers')) v = Math.min(0.6, v + 0.10); return v; };
+const tollAgentBoost = () => { if (onStrike('tollAgents')) return 0; let v = Math.min(0.25, S.staff.tollAgents * 0.05 * staffMult('tollAgents')); if (hasCert('tollAgents')) v = Math.min(0.28, v + 0.03); return v; };
+const strikeThreshold = () => FATIGUE_STRIKE_TH - (hasCert('hr') ? 15 : 0);
 const freeVans = () => S.vans - S.incidents.filter(i => i.handled).length;
 const snowCover = () => Math.min(1, S.plows / Math.max(1, Math.ceil(openKm() / 200)));
+const droneCoverage = () => hasTech('ai_3') ? Math.min(1, S.drones / Math.max(1, Math.ceil(openKm() / 150))) : 0;
+function nearestPC(lat, lng) {
+    let best = null, bestD = Infinity;
+    for (const pc of S.pcs) { const d = haversine({ lat, lng }, pc); if (d < bestD) { bestD = d; best = pc; } }
+    return { pc: best, dist: bestD };
+}
+const pcRadius = () => HQ[S.hq].pcRadius;
 
 function tariffFactors() {
     const f = {}; let idx = 0;
@@ -828,7 +948,8 @@ function tariffFactors() {
 }
 function salaryMonthly() {
     let b = 0; for (const k in STAFF) b += (S.staff[k] || 0) * STAFF[k].monthly;
-    return b * (1 - Math.min(0.3, S.staff.hr * 0.05));
+    const hrCut = onStrike('hr') ? 0 : Math.min(0.3, S.staff.hr * 0.05 * staffMult('hr'));
+    return b * (1 - hrCut);
 }
 function competitionMap() {
     const m = new Map();
@@ -843,10 +964,12 @@ function simulateHour() {
     stepWeather(month);
     const w = WEATHER[S.weather.type], snow = S.weather.type === 'snow', cover = snowCover();
     const tf = tariffFactors(), comp = competitionMap();
-    const mkt = 1 + Math.min(0.4, S.staff.marketing * 0.08), hqB = 1 + (S.hq - 1) * 0.03;
+    const mkt = 1 + (onStrike('marketing') ? 0 : Math.min(0.4, S.staff.marketing * 0.08 * staffMult('marketing'))), hqB = 1 + (S.hq - 1) * 0.03;
     const satB = 1 + (S.satisfaction - 75) / 250, season = (month === 6 || month === 7) ? 1.08 : 1;
     const ev = S.event ? EVENTS[S.event.type].traffic : 1;
-    const eng = engWear(), rad = hasTech('ai_1'), infra1 = hasTech('infra_1'), infra2 = hasTech('infra_2'), t1 = hasTech('toll_1'), t2 = hasTech('toll_2');
+    const eng = engWear(), rad = hasTech('ai_1'), drones = hasTech('ai_3'), infra1 = hasTech('infra_1'), infra2 = hasTech('infra_2'), infra3 = hasTech('infra_3'), t1 = hasTech('toll_1'), t2 = hasTech('toll_2'), anpr = hasTech('toll_3');
+    const wearMult = (infra2 ? 0.6 : 1) * (infra3 ? 0.5 : 1);
+    const tollStrike = onStrike('tollAgents');
     const wTraffic = snow ? 0.45 + 0.30 * cover : w.traffic;
     const wAcc = snow ? w.acc * (1 + (1 - cover) * 0.6) : w.acc;
     const incByRoad = {};
@@ -859,7 +982,8 @@ function simulateHour() {
         let incMult = 1, capMod = 1;
         for (const i of (incByRoad[r.id] || [])) { const m = i.type === 'accident' ? 0.6 : 0.85; incMult *= m; capMod *= m; }
         const share = 1 / (1 + (comp.get(pairKey(r.a, r.b)) || 0));
-        const capH = C.capHour[r.lanes] * (r.tollType === 'payant' && !t1 ? 0.9 : 1) * (snow && cover < 1 ? 0.7 + 0.3 * cover : 1) * (r.wear > 80 ? 0.85 : 1) * capMod;
+        const barrierPenalty = (r.tollType === 'payant' && !anpr) ? (0.9 + tollAgentBoost() * 0.4) : 1;
+        const capH = C.capHour[r.lanes] * Math.min(1, barrierPenalty) * (snow && cover < 1 ? 0.7 + 0.3 * cover : 1) * (r.wear > 80 ? 0.85 : 1) * capMod;
         const m0 = wTraffic * ev * satB * mkt * hqB * season * (r.tollType === 'gratuit' ? 1.35 : 1) * (r.wear > 80 ? 0.9 : 1) * incMult * share;
         const base = r.demand * HOUR_SHARE[h] * m0;
         const fl = { vl: base * C.mix.vl * tf.f.vl, ut: base * C.mix.ut * tf.f.ut, pl: base * C.mix.pl * tf.f.pl };
@@ -871,6 +995,7 @@ function simulateHour() {
         else {
             toll = (sv.vl * S.tariff.vl + sv.ut * S.tariff.ut + sv.pl * S.tariff.pl) * trip;
             if (r.tollType === 'freeflow') toll *= 1.25 * (1 - (t2 ? 0 : (t1 ? 0.035 : 0.07)));
+            else if (r.tollType === 'payant' && !anpr) toll *= (1 - tollAgentBoost() * 0.15) * (tollStrike ? 0.2 : 1);
         }
         let rest = 0; const a = r.rest;
         if (a) {
@@ -883,12 +1008,12 @@ function simulateHour() {
 
         st.hourFlow = served; st.cong = cong; st.dayFlow += served; st.dayRev += toll + sub + rest; st.dayPeak = Math.max(st.dayPeak, cong);
         r._spd = clamp(w.spd / Math.max(1, cong), 0.25, 1);
-        r.wear = Math.min(100, r.wear + (0.02 + 0.03 * Math.min(3, (st.aadt || r.demand) / 15000)) / 24 * w.wear * (1 - eng) * (infra2 ? 0.6 : 1));
+        r.wear = Math.min(100, r.wear + (0.02 + 0.03 * Math.min(3, (st.aadt || r.demand) / 15000)) / 24 * w.wear * (1 - eng) * wearMult);
 
         // Accidents : dépendent de la météo, de l'usure, du trafic et de la congestion
         let accW = wAcc;
         if (S.weather.type === 'rain') accW = 1 + (wAcc - 1) * (1 - Math.min(0.85, (r.drainant ? 0.6 : 0) + (infra1 ? 0.3 : 0)));
-        const p = 0.0025 * (r.km / 100) * accW * (1 + r.wear / 60) * (rad ? 0.6 : 1) * (0.5 + Math.min(2, served / 800)) * (1 + Math.max(0, cong - 0.8));
+        const p = 0.0025 * (r.km / 100) * accW * (1 + r.wear / 60) * (rad ? 0.6 : 1) * (drones ? 0.85 : 1) * (0.5 + Math.min(2, served / 800)) * (1 + Math.max(0, cong - 0.8));
         if (Math.random() < p) spawnIncident(r);
     }
     const sal = salaryMonthly() / 720, plowCost = snow ? S.plows * 450 : 0, led = S.ledger;
@@ -928,25 +1053,46 @@ function onWeatherChange(type) {
 /* ---------- Incidents ---------- */
 function spawnIncident(r) {
     const roll = Math.random(), type = roll < 0.4 ? 'accident' : roll < 0.75 ? 'panne' : 'obstacle', T = INC_TYPES[type];
-    const inc = { id: S.seq++, roadId: r.id, type, pos: 0.15 + Math.random() * 0.7, remaining: T.dur, handled: false };
+    const cov = droneCoverage(), detectIn = cov >= 1 ? 0 : Math.max(0, Math.round(INC_DETECT_DELAY_H * (1 - cov)));
+    const inc = { id: S.seq++, roadId: r.id, type, pos: 0.15 + Math.random() * 0.7, remaining: T.dur, handled: false, detectIn };
     S.incidents.push(inc);
-    if (type === 'accident') { const c = Math.round(8000 + Math.random() * 17000); S.money -= c; S.ledger.incidents += c; S.month.profit -= c; }
+    if (type === 'accident') { const c = Math.round(8000 + Math.random() * 17000); S.money -= c; S.ledger.incidents += c; S.month.profit -= c; S.stats.accidentsMonth++; }
     S.satisfaction = Math.max(0, S.satisfaction - T.sat * 0.3);
-    setTraffic(type.toUpperCase(), `${T.title} sur ${r.name} — intervention du PC Sécurité requise.`, T.color);
-    toast(`${T.icon} ${T.title} — ${r.name}`, type === 'accident' ? 'danger' : 'warn');
+    if (detectIn <= 0) announceIncident(inc, r, T); else refreshIncMap();
+    if (S.autoDispatch && hasTech('ai_2') && detectIn <= 0) dispatchVan(inc.id);
+}
+function announceIncident(i, r, T) {
+    setTraffic(i.type.toUpperCase(), `${T.title} sur ${r.name} — intervention du PC Sécurité requise.`, T.color);
+    toast(`${T.icon} ${T.title} — ${r.name}`, i.type === 'accident' ? 'danger' : 'warn');
     refreshIncMap(); mark('incidents', 'markers', 'fleet');
-    if (S.autoDispatch && hasTech('ai_2')) dispatchVan(inc.id);
+}
+function pcCoverage(i) {
+    const r = roadById(i.roadId); if (!r) return { covered: true, dist: 0 };
+    const [lat, lng] = pointAt(r, i.pos), { dist } = nearestPC(lat, lng);
+    return { covered: dist <= pcRadius(), dist };
 }
 function dispatchVan(id) {
-    const i = S.incidents.find(x => x.id === id); if (!i || i.handled) return;
+    const i = S.incidents.find(x => x.id === id); if (!i || i.handled || i.detectIn > 0) return;
     if (freeVans() <= 0) { toast('Aucun fourgon disponible : achetez-en dans l\'onglet Flotte.', 'warn'); return; }
-    i.handled = true;
-    i.remaining = Math.max(1, Math.ceil(INC_BASE_FIX * Math.max(0.35, 1 - 0.125 * S.staff.safety)));
+    const cov = pcCoverage(i);
+    i.handled = true; i.covered = cov.covered;
+    let safetyBonus = onStrike('safety') ? 0 : 0.125 * S.staff.safety * staffMult('safety');
+    if (hasCert('safety')) safetyBonus += 0.10;
+    let fix = INC_BASE_FIX * Math.max(0.30, 1 - safetyBonus);
+    if (i.type === 'accident' && S.cranes > 0) fix *= Math.max(1 - CRANE_ACC_MAX, 1 - CRANE_ACC_BONUS * S.cranes);
+    if (!cov.covered) fix *= 2.5;
+    i.remaining = Math.max(1, Math.ceil(fix));
+    if (!cov.covered) toast(`📍 Incident hors de portée d'un PC (${Math.round(cov.dist)} km) : intervention ralentie.`, 'warn');
     mark('incidents', 'markers', 'fleet');
 }
 function stepIncidents() {
     let changed = false;
     for (const i of S.incidents.slice()) {
+        if (i.detectIn > 0) {
+            i.detectIn--;
+            if (i.detectIn <= 0) { const r = roadById(i.roadId); if (r) announceIncident(i, r, INC_TYPES[i.type]); changed = true; }
+            continue;
+        }
         i.remaining--;
         if (i.remaining <= 0) {
             S.incidents = S.incidents.filter(x => x !== i); changed = true;
@@ -955,7 +1101,7 @@ function stepIncidents() {
             else { S.satisfaction = Math.max(0, S.satisfaction - 1); if (r) setTraffic('DÉGAGÉ', `Incident dégagé sans intervention sur ${r.name} : usagers mécontents.`, 'var(--warning)'); }
         }
     }
-    if (S.autoDispatch && hasTech('ai_2')) for (const i of S.incidents) if (!i.handled && freeVans() > 0) { dispatchVan(i.id); changed = true; }
+    if (S.autoDispatch && hasTech('ai_2')) for (const i of S.incidents) if (!i.handled && i.detectIn <= 0 && freeVans() > 0) { dispatchVan(i.id); changed = true; }
     if (changed) { refreshIncMap(); mark('incidents', 'markers', 'fleet'); }
 }
 function refreshIncMap() {
@@ -963,10 +1109,79 @@ function refreshIncMap() {
     for (const i of S.incidents) { const r = roadById(i.roadId); if (r) (r._inc = r._inc || []).push(i.pos); }
 }
 
+/* ---------- RH avancée : fatigue, grèves, formations ---------- */
+function updateStaffDaily() {
+    for (const t of S.training.slice()) {
+        t.left--;
+        if (t.left <= 0) {
+            S.training = S.training.filter(x => x !== t);
+            S.staffMeta[t.type].level = Math.min(3, S.staffMeta[t.type].level + 1);
+            S.staffMeta[t.type].fatigue = 0;
+            toast(`🎓 Formation terminée : ${STAFF[t.type].name} passent au niveau ${S.staffMeta[t.type].level}.`, 'ok'); mark('staff');
+        }
+    }
+    const km = openKm();
+    for (const k in STAFF) {
+        const count = Math.max(1, S.staff[k] || 0), meta = S.staffMeta[k];
+        const cap = STAFF[k].fatigueSrc === 'inc' ? count * 3 : count * 90;
+        const load = STAFF[k].fatigueSrc === 'inc' ? S.incidents.length : km;
+        const ratio = load / Math.max(1, cap);
+        meta.fatigue = clamp(meta.fatigue + (ratio > 1 ? (ratio - 1) * 10 : -4), 0, 100);
+        if (meta.fatigue >= strikeThreshold() && !onStrike(k) && !S.training.some(t => t.type === k) && Math.random() < STRIKE_DAILY_CHANCE) {
+            const dur = Math.round(STRIKE_DURATION_H[0] + Math.random() * (STRIKE_DURATION_H[1] - STRIKE_DURATION_H[0]));
+            S.strikes.push({ type: k, until: S.t + dur }); meta.fatigue = 55;
+            toast(`✊ Grève : les ${STAFF[k].name.toLowerCase()} cessent le travail (${dur} h, fatigue trop élevée).`, 'danger');
+            news(`Mouvement social : grève des ${STAFF[k].name.toLowerCase()}.`);
+        }
+    }
+    const before = S.strikes.length;
+    S.strikes = S.strikes.filter(s => S.t < s.until);
+    if (S.strikes.length < before) toast('✅ Une grève a pris fin, l\'activité reprend normalement.', 'ok');
+    mark('staff');
+}
+
+/* ---------- Finance avancée : crédit & obligations ---------- */
+function computeCredit() {
+    const nw = Math.max(1, netWorth()), totalDebt = S.debt + S.bonds.reduce((a, b) => a + b.amount, 0);
+    const c = 750 - (totalDebt / nw) * 350 - S.negDays * 12 + (S.satisfaction - 70) * 0.6 - S.badMonths * 20;
+    return clamp(Math.round(c), 300, 850);
+}
+const currentBondRate = () => clamp(BOND_RATE_MIN + (850 - S.credit) / 550 * (BOND_RATE_MAX - BOND_RATE_MIN), BOND_RATE_MIN, 0.18);
+function processBonds() {
+    let interest = 0;
+    for (const b of S.bonds.slice()) {
+        interest += b.amount * b.rate / 365;
+        if (S.t >= b.dueAt) {
+            if (S.money >= b.amount) { S.money -= b.amount; S.bonds = S.bonds.filter(x => x !== b); toast(`💰 Obligation remboursée à échéance : ${eur(b.amount)}.`, 'ok'); }
+            else {
+                b.rate = Math.min(0.18, b.rate + BOND_PENALTY_RATE); b.dueAt = S.t + 180 * 24; S.credit = clamp(S.credit - 40, 300, 850);
+                toast(`⚠️ Obligation non remboursable à échéance : refinancée à ${(b.rate * 100).toFixed(1)} % (crédit dégradé).`, 'danger');
+            }
+        }
+    }
+    S.money -= interest; S.ledger.interest += interest; S.month.profit -= interest;
+}
+function buyoutByAI() {
+    const richest = S.ai.slice().sort((a, b) => b.money - a.money)[0];
+    S.over = true; S.boughtOutBy = richest ? richest.name : 'un concurrent';
+    saveState();
+    showModal('🏦 Rachat forcé', `Votre note de crédit s'est effondrée et votre trésorerie reste dans le rouge : <b>${esc(S.boughtOutBy)}</b> rachète votre concession à prix cassé. Vous pouvez recommencer une nouvelle partie.`,
+        [{ label: 'Nouvelle partie', fn: () => resetGame() }, { label: 'Se déconnecter', cls: 'btn-ghost', fn: () => logoutGame() }]);
+}
+function nationalise() {
+    const open = S.roads.filter(isOpen); if (!open.length) { S.badMonths = 0; return; }
+    const worst = open.slice().sort((a, b) => (a.stat.rev - a.km * C.opexKmDay) - (b.stat.rev - b.km * C.opexKmDay))[0];
+    const indemnity = Math.round(worst.km * C.costPerKm * 0.3);
+    S.money += indemnity; removeRoadViz(worst.id); S.roads = S.roads.filter(r => r !== worst); S.badMonths = 0;
+    toast(`🏛️ Nationalisation : l'État reprend ${worst.name} (indemnité de ${eur(indemnity)}).`, 'danger');
+    news(`L'État nationalise ${worst.name} pour non-conformité répétée.`); mark('roads');
+}
+
 /* ---------- Passage de jour ---------- */
 function newDay() {
     const month = gameDate().getUTCMonth();
     if (S.debt > 0) { const it = S.debt * C.loanRate / 365; S.money -= it; S.ledger.interest += it; S.month.profit -= it; }
+    processBonds(); updateStaffDaily(); S.credit = computeCredit();
     advanceResearch();
     stepAI();
     for (const r of S.roads) {
@@ -986,6 +1201,7 @@ function newDay() {
     if (S.money < 0) {
         S.negDays++;
         if (S.negDays === 1) toast('💸 Trésorerie négative ! Empruntez ou réduisez vos dépenses avant 20 jours.', 'danger');
+        if (S.credit <= CREDIT_BUYOUT_TH && S.negDays >= CREDIT_BUYOUT_NEGDAYS) return buyoutByAI();
         if (S.negDays >= 20) return gameOver();
     } else S.negDays = 0;
     if (!S.won && netWorth() >= 1e9 && openKm() >= 1000) victory();
@@ -996,6 +1212,19 @@ function monthEnd() {
     const tax = Math.max(0, S.month.profit) * C.taxRate;
     S.money -= tax; S.taxLast = tax;
     if (tax > 0) toast(`🏛️ Impôt sur les sociétés du mois : −${eur(tax)}`, 'warn');
+    if (S.roads.length) {
+        const km = openKm(), ecoOK = S.eco >= 60, safeOK = S.stats.accidentsMonth <= Math.max(2, Math.round(km / 60));
+        if (ecoOK && safeOK) {
+            const bonus = Math.round(km * 150); S.money += bonus; S.badMonths = 0;
+            toast(`🏛️ Quotas de concession respectés : subvention de ${eur(bonus)}.`, 'ok');
+        } else {
+            const fine = Math.round(km * 300); S.money -= fine; S.badMonths++;
+            const why = !ecoOK && !safeOK ? 'CO2 et sécurité' : !ecoOK ? 'CO2' : 'sécurité';
+            toast(`⚠️ Quotas d'État non respectés (${why}) : amende de ${eur(fine)}.`, 'danger');
+            if (S.badMonths >= 3) nationalise();
+        }
+    }
+    S.stats.accidentsMonth = 0;
     S.month = { profit: 0 };
 }
 function gameOver() {
@@ -1256,7 +1485,7 @@ function mark(...n) { n.forEach(x => dirty.add(x)); }
 const RENDERERS = {
     roads: renderRoadList, incidents: renderIncidents, markers: refreshIncMap,
     ai: renderAIList, staff: renderStaff, fleet: renderFleet, areas: renderRestAreas,
-    rd: renderRD, hq: renderHQ, network: previewCost, tenders: renderStateTenders
+    rd: renderRD, hq: renderHQ, network: previewCost, tenders: renderStateTenders, pcs: renderPCs
 };
 function flushDirty() {
     if (!dirty.size) return;
@@ -1265,10 +1494,28 @@ function flushDirty() {
 }
 const renderAll = () => Object.keys(RENDERERS).forEach(n => RENDERERS[n]());
 
-function goTab(id) {
+const TAB_GROUP = {
+    network: 'reseau', rd: 'reseau',
+    staff: 'rh', fleet: 'rh',
+    bilan: 'finance', banque: 'finance',
+    rest_areas: 'aires',
+    tenders: 'politique', competitors: 'politique'
+};
+function goGroup(group) {
+    document.querySelectorAll('.group-btn').forEach(el => el.classList.toggle('active', el.dataset.group === group));
+    document.querySelectorAll('.tabs[id^="subtabs-"]').forEach(el => el.style.display = (el.id === 'subtabs-' + group) ? 'flex' : 'none');
+    const bar = $('subtabs-' + group), first = bar && bar.querySelector('.tab-btn');
+    if (first) goTab(first.dataset.tab, false);
+}
+function goTab(id, switchGroup = true) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === id));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === id));
-    if (id === 'admin') renderStateTenders();
+    const group = TAB_GROUP[id];
+    document.querySelectorAll('.tabs[id^="subtabs-"] .tab-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === id));
+    if (switchGroup && group) {
+        document.querySelectorAll('.group-btn').forEach(el => el.classList.toggle('active', el.dataset.group === group));
+        document.querySelectorAll('.tabs[id^="subtabs-"]').forEach(el => el.style.display = (el.id === 'subtabs-' + group) ? 'flex' : 'none');
+    }
+    if (id === 'tenders') renderStateTenders();
 }
 function setSpeed(n) {
     gameSpeed = n;
@@ -1331,7 +1578,7 @@ function renderRoadList() {
         </div>`;
     }).join('');
 }
-function repairCost(r) { return r.km * 22000 * (r.wear / 100); }
+function repairCost(r) { return r.km * 22000 * (r.wear / 100) * (hasCert('engineers') ? 0.8 : 1); }
 function payMaintenance(cost) { S.money -= cost; S.ledger.opex += cost; }
 function repairRoad(id) {
     const r = roadById(id); if (!r) return;
@@ -1372,12 +1619,15 @@ function renderIncidents() {
     setText('pc-resolved', String(S.stats.resolved));
     const ad = $('auto-dispatch'); if (ad) { ad.checked = S.autoDispatch; ad.disabled = !hasTech('ai_2'); }
     const box = $('incidents-list'); if (!box) return;
-    if (!S.incidents.length) { box.innerHTML = '<p class="muted small">Aucun incident en cours sur votre r\u00e9seau.</p>'; return; }
-    box.innerHTML = S.incidents.map(i => {
+    const detected = S.incidents.filter(i => i.detectIn <= 0), pending = S.incidents.length - detected.length;
+    const pendingNote = pending ? `<p class="muted small">\ud83d\udd0e ${pending} signalement(s) en cours d'analyse quelque part sur le r\u00e9seau\u2026 ${hasTech('ai_3') ? '' : '(les Drones de Surveillance IA suppriment ce d\u00e9lai)'}</p>` : '';
+    if (!detected.length) { box.innerHTML = pendingNote || '<p class="muted small">Aucun incident en cours sur votre r\u00e9seau.</p>'; return; }
+    box.innerHTML = pendingNote + detected.map(i => {
         const r = roadById(i.roadId), T = INC_TYPES[i.type];
+        const covNote = i.handled ? (i.covered === false ? ' \u00b7 <span style="color:var(--warning)">hors de port\u00e9e d\'un PC</span>' : '') : '';
         return `<div class="card" style="border-left:4px solid ${T.color}">
             <h3>${T.icon} ${T.title} \u2014 ${esc(r ? r.name : '?')}</h3>
-            <p>Statut : <strong>${i.handled ? `Fourgon sur place (\u2248 ${i.remaining} h)` : 'En attente de secours'}</strong></p>
+            <p>Statut : <strong>${i.handled ? `Fourgon sur place (\u2248 ${i.remaining} h)` : 'En attente de secours'}</strong>${covNote}</p>
             <button ${i.handled ? 'disabled' : ''} onclick="dispatchVan(${i.id})">${i.handled ? 'Intervention en cours\u2026' : 'D\u00e9ployer un fourgon'}</button>
         </div>`;
     }).join('');
@@ -1386,30 +1636,113 @@ function renderIncidents() {
 function renderStaff() {
     setText('total-salaries', eurFull(Math.round(salaryMonthly())) + ' / mois');
     const box = $('staff-list'); if (!box) return;
-    box.innerHTML = Object.entries(STAFF).map(([k, s]) => `
-        <div class="card"><h3>${s.icon} ${esc(s.name)} (<span>${S.staff[k] || 0}</span>)</h3><p>${esc(s.desc)}</p>
+    box.innerHTML = Object.entries(STAFF).map(([k, s]) => {
+        const meta = S.staffMeta[k] || { level: 1, fatigue: 0, cert: false }, strike = onStrike(k), training = S.training.find(t => t.type === k);
+        const fatigueColor = meta.fatigue >= strikeThreshold() ? 'var(--danger)' : meta.fatigue >= 55 ? 'var(--warning)' : 'var(--success)';
+        const strikeLeft = strike ? Math.max(0, S.strikes.find(x => x.type === k).until - S.t) : 0;
+        const cert = CERTS[k];
+        return `<div class="card"><h3>${s.icon} ${esc(s.name)} (<span>${S.staff[k] || 0}</span>) \u00b7 Niveau ${meta.level}${meta.cert ? ' \ud83c\udf96\ufe0f' : ''}${strike ? ' \u2014 \u270a EN GR\u00c8VE' : ''}</h3><p>${esc(s.desc)}</p>
+            <div class="stat-line"><span>Fatigue</span><strong style="color:${fatigueColor}">${Math.round(meta.fatigue)} %</strong></div>
+            <div class="bar"><i style="width:${meta.fatigue}%;background:${fatigueColor}"></i></div>
+            ${strike ? `<p class="muted small">Grève en cours \u2014 reprise dans \u2248 ${strikeLeft} h.</p>` : ''}
             <div class="row"><button onclick="hire('${k}')">Recruter (+${eurFull(s.monthly)}/mois)</button>${S.staff[k] > 0 ? `<button class="btn-ghost" onclick="fire('${k}')">Licencier</button>` : ''}</div>
-        </div>`).join('');
+            ${meta.level < 3 ? `<button class="btn-eco" ${training ? 'disabled' : ''} onclick="train('${k}')">${training ? `Formation en cours (\u2248 ${training.left} j)` : `Former au niveau ${meta.level + 1} (${eurFull(TRAIN_COST[meta.level])} \u00b7 ${TRAIN_DAYS} j)`}</button>` : '<p class="muted small">Niveau maximum atteint.</p>'}
+            ${cert ? `<button ${meta.cert ? 'disabled' : ''} style="margin-top:4px" onclick="certify('${k}')" title="${esc(cert.desc)}">${meta.cert ? `\ud83c\udf96\ufe0f ${esc(cert.name)} obtenue` : `${esc(cert.name)} (${eurFull(cert.cost)})`}</button>` : ''}
+        </div>`;
+    }).join('');
 }
 function hire(k) { S.staff[k] = (S.staff[k] || 0) + 1; saveState(); mark('staff'); updateHUD(); }
 function fire(k) { if (S.staff[k] > 0) { S.staff[k]--; saveState(); mark('staff'); updateHUD(); } }
+
+function drawPCs() {
+    pcLayer.clearLayers();
+    for (const pc of S.pcs) {
+        L.circleMarker([pc.lat, pc.lng], { radius: 7, color: '#f59e0b', weight: 2, fillColor: '#0f172a', fillOpacity: 1 }).addTo(pcLayer)
+            .bindPopup(`<b>\ud83d\udce1 PC de ${esc(CITY.get(pc.cityId) ? CITY.get(pc.cityId).name : '?')}</b><br>Port\u00e9e d'intervention : ${pcRadius()} km`);
+    }
+}
+function initPCSelect() {
+    const sel = $('pc-city'); if (!sel) return;
+    sel.innerHTML = cities.slice().sort((a, b) => a.name.localeCompare(b.name, 'fr')).map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+}
+function renderPCs() {
+    const box = $('pcs-list'); if (box) {
+        box.innerHTML = S.pcs.map(pc => `<div class="stat-line"><span>\ud83d\udce1 PC de ${esc(CITY.get(pc.cityId) ? CITY.get(pc.cityId).name : '?')}</span><strong>port\u00e9e ${pcRadius()} km</strong></div>`).join('')
+            || '<p class="muted small">Aucun PC construit.</p>';
+    }
+    const btn = $('btn-pc'); if (btn) btn.textContent = `Construire un PC (${eurFull(PC_COST)})`;
+    if (!$('pc-city').options.length) initPCSelect();
+    drawPCs();
+}
+function buildPC() {
+    const cityId = +$('pc-city').value, c = CITY.get(cityId); if (!c) return;
+    if (S.money < PC_COST) return toast('Fonds insuffisants pour construire ce PC.', 'danger');
+    S.money -= PC_COST; S.pcs.push({ id: S.seq++, cityId: c.id, lat: c.lat, lng: c.lng });
+    saveState(); mark('pcs'); updateHUD();
+    toast(`\ud83d\udce1 Nouveau PC construit \u00e0 ${c.name}.`, 'ok');
+}
+function train(type) {
+    const meta = S.staffMeta[type]; if (!meta || meta.level >= 3 || S.training.some(t => t.type === type)) return;
+    const cost = TRAIN_COST[meta.level];
+    if (S.money < cost) return toast('Fonds insuffisants pour cette formation.', 'danger');
+    S.money -= cost; S.training.push({ type, left: TRAIN_DAYS, total: TRAIN_DAYS });
+    saveState(); mark('staff'); updateHUD();
+    toast(`\ud83c\udf93 Formation lanc\u00e9e : ${STAFF[type].name}.`, 'ok');
+}
+function certify(type) {
+    const meta = S.staffMeta[type], cert = CERTS[type]; if (!meta || !cert || meta.cert) return;
+    if (S.money < cert.cost) return toast('Fonds insuffisants pour cette certification.', 'danger');
+    S.money -= cert.cost; meta.cert = true; saveState(); mark('staff'); updateHUD();
+    toast(`\ud83c\udf96\ufe0f Certification obtenue : ${cert.name}.`, 'ok');
+}
+
+function renderBonds() {
+    const box = $('bonds-list'); if (!box) return;
+    if (!S.bonds.length) { box.innerHTML = '<p class="muted small">Aucune obligation \u00e9mise.</p>'; return; }
+    box.innerHTML = S.bonds.map(b => {
+        const daysLeft = Math.max(0, Math.ceil((b.dueAt - S.t) / 24));
+        return `<div class="card"><div class="stat-line"><span>${eur(b.amount)} \u00e0 ${(b.rate * 100).toFixed(1)} %</span><strong>\u00e9ch\u00e9ance \u2248 ${daysLeft} j</strong></div>
+            <button class="btn-ghost" onclick="repayBondEarly(${b.id})">Rembourser par anticipation</button></div>`;
+    }).join('');
+}
+function issueBond(amount) {
+    const outstanding = S.bonds.reduce((a, b) => a + b.amount, 0), cap = HQ[S.hq].bondCap;
+    if (outstanding + amount > cap) return toast(`Plafond d'obligations atteint (${eur(cap)}). Agrandissez votre si\u00e8ge ou remboursez.`, 'warn');
+    const rate = currentBondRate();
+    S.bonds.push({ id: S.seq++, amount, rate, dueAt: S.t + BOND_TERM_DAYS * 24 });
+    S.money += amount; saveState(); updateHUD();
+    toast(`\ud83d\udcc4 Obligation \u00e9mise : ${eur(amount)} \u00e0 ${(rate * 100).toFixed(1)} % sur ${BOND_TERM_DAYS} jours.`, 'ok');
+}
+function repayBondEarly(id) {
+    const b = S.bonds.find(x => x.id === id); if (!b) return;
+    if (S.money < b.amount) return toast('Tr\u00e9sorerie insuffisante pour ce remboursement.', 'danger');
+    S.money -= b.amount; S.bonds = S.bonds.filter(x => x !== b); saveState(); updateHUD();
+    toast(`\ud83d\udcb0 Obligation rembours\u00e9e par anticipation : ${eur(b.amount)}.`, 'ok');
+}
 
 function renderFleet() {
     const openR = S.roads.filter(isOpen);
     setText('wear-rate', (openR.length ? Math.round(openR.reduce((a, r) => a + r.wear, 0) / openR.length) : 0) + ' %');
     const need = Math.max(1, Math.ceil(openKm() / 200));
+    const droneNeed = Math.max(1, Math.ceil(openKm() / 150)), dCov = droneCoverage();
     const box = $('fleet-box'); if (box) box.innerHTML = `
         <div class="card"><h3>\ud83d\ude90 Fourgons d'intervention (${S.vans})</h3><p>D\u00e9gagent les incidents. ${Math.max(0, freeVans())} disponible(s) actuellement.</p>
             <button onclick="buyVehicle('van')">Acheter un fourgon (60 000 \u20ac)</button></div>
+        <div class="card"><h3>\ud83c\udfd7\ufe0f Grues de d\u00e9pannage lourd (${S.cranes})</h3><p>Acc\u00e9l\u00e8rent le d\u00e9gagement des poids lourds accident\u00e9s (\u2212${Math.round(Math.min(CRANE_ACC_MAX, CRANE_ACC_BONUS * S.cranes) * 100)} % sur la dur\u00e9e des accidents).</p>
+            <button onclick="buyVehicle('crane')">Acheter une grue (${eurFull(CRANE_COST)})</button></div>
+        <div class="card"><h3>\ud83d\ude81 Drones de surveillance (${S.drones})</h3><p>${hasTech('ai_3') ? `Couverture de d\u00e9tection instantan\u00e9e : ${Math.round(dCov * 100)} % du r\u00e9seau (${droneNeed} drone(s) recommand\u00e9(s)).` : 'Recherchez \u00ab Drones de Surveillance IA \u00bb en R&D pour activer leur effet.'}</p>
+            <div class="bar"><i style="width:${dCov * 100}%;background:${dCov >= 1 ? 'var(--success)' : 'var(--warning)'}"></i></div>
+            <button onclick="buyVehicle('drone')">Acheter un drone (${eurFull(DRONE_COST)})</button></div>
         <div class="card"><h3>\u2744\ufe0f Chasse-neige / saleuses (${S.plows})</h3><p>Couverture hivernale recommand\u00e9e : ${need} pour ${Math.round(openKm())} km de r\u00e9seau.</p>
             <div class="bar"><i style="width:${Math.min(100, S.plows / need * 100)}%;background:${S.plows >= need ? 'var(--success)' : 'var(--warning)'}"></i></div>
             <button onclick="buyVehicle('plow')">Acheter un chasse-neige (140 000 \u20ac)</button></div>`;
     setText('repair-all-cost', eurFull(Math.round(repairAllCost())));
 }
 function buyVehicle(type) {
-    const cost = type === 'van' ? 60000 : 140000;
+    const cost = type === 'van' ? 60000 : type === 'crane' ? CRANE_COST : type === 'drone' ? DRONE_COST : 140000;
     if (S.money < cost) return toast('Fonds insuffisants.', 'danger');
-    S.money -= cost; if (type === 'van') S.vans++; else S.plows++;
+    S.money -= cost;
+    if (type === 'van') S.vans++; else if (type === 'crane') S.cranes++; else if (type === 'drone') S.drones++; else S.plows++;
     saveState(); mark('fleet', 'incidents'); updateHUD();
 }
 
@@ -1422,7 +1755,8 @@ function renderRestAreas() {
         const partnerBtns = Object.entries(PARTNERS).map(([k, p]) => {
             if (p.req && !hasTech(p.req)) return '';
             const has = a.partners.includes(k), full = a.partners.length >= a.level;
-            return `<button style="display:inline-block;width:auto;margin:2px 4px 2px 0;font-size:.72rem;padding:5px 8px" ${has || full ? 'disabled' : ''} onclick="addPartner(${r.id},'${k}')">${has ? '\u2713 ' : ''}${esc(p.name)} (${eurFull(p.install)})</button>`;
+            const cost = Math.round(p.install * (hasCert('marketing') ? 0.85 : 1));
+            return `<button style="display:inline-block;width:auto;margin:2px 4px 2px 0;font-size:.72rem;padding:5px 8px" ${has || full ? 'disabled' : ''} onclick="addPartner(${r.id},'${k}')">${has ? '\u2713 ' : ''}${esc(p.name)} (${eurFull(cost)})</button>`;
         }).join('');
         return `<div class="card"><h3>\ud83c\udd7f\ufe0f Aire de ${esc(r.name)} \u2014 niveau ${a.level}</h3>
             <p>Trafic desservi : ${fmtInt(r.stat.aadt)} v\u00e9h./j</p>
@@ -1437,8 +1771,9 @@ function addPartner(roadId, key) {
     const r = roadById(roadId); if (!r) return; const a = r.rest, p = PARTNERS[key];
     if (p.req && !hasTech(p.req)) return toast(`Recherchez \u00ab ${TECHS.find(t => t.id === p.req).name} \u00bb pour d\u00e9bloquer cette enseigne.`, 'warn');
     if (a.partners.includes(key) || a.partners.length >= a.level) return;
-    if (S.money < p.install) return toast('Fonds insuffisants.', 'danger');
-    S.money -= p.install; a.partners.push(key); saveState(); mark('areas'); updateHUD();
+    const cost = Math.round(p.install * (hasCert('marketing') ? 0.85 : 1));
+    if (S.money < cost) return toast('Fonds insuffisants.', 'danger');
+    S.money -= cost; a.partners.push(key); saveState(); mark('areas'); updateHUD();
     toast(`\ud83e\udd1d Partenariat conclu avec ${p.name} sur l'aire de ${r.name}.`, 'ok');
 }
 function upgradeArea(roadId) {
@@ -1554,6 +1889,24 @@ function updateHUD() {
     setText('tax-last', S.taxLast == null ? '\u2014' : eurFull(Math.round(S.taxLast)));
     setText('net-worth', eur(netWorth())); setText('bank-debt', eurFull(Math.round(S.debt))); setText('bank-cap', eurFull(HQ[S.hq].loan));
     updateTariffLabels();
+
+    // Notation de crédit & obligations
+    setText('credit-score', String(S.credit));
+    const cb = $('credit-bar'); if (cb) {
+        const pct = clamp((S.credit - 300) / 550 * 100, 0, 100), col = S.credit >= 650 ? 'var(--success)' : S.credit >= 450 ? 'var(--warning)' : 'var(--danger)';
+        cb.style.width = pct + '%'; cb.style.background = col;
+    }
+    setText('credit-info', S.credit >= 650 ? 'Bonne note : taux d\u2019obligations avantageux.' : S.credit >= 450 ? 'Note moyenne : surveillez votre endettement.' : '\u26a0\ufe0f Note fragile : risque de rachat forcé si la trésorerie reste négative.');
+    setText('bond-rate', (currentBondRate() * 100).toFixed(1) + ' %');
+    const outstanding = S.bonds.reduce((a, b) => a + b.amount, 0);
+    setText('bond-cap', eurFull(Math.max(0, HQ[S.hq].bondCap - outstanding)) + ' disponible / ' + eurFull(HQ[S.hq].bondCap));
+    renderBonds();
+
+    // Quotas d'État (fiscalité & concession)
+    const kmQ = openKm(), safeTh = Math.max(2, Math.round(kmQ / 60));
+    const ecoQ = $('quota-co2'); if (ecoQ) { ecoQ.textContent = (S.eco >= 60 ? '\u2713 Respecté' : '\u2717 Non respecté') + ` (Éco-Score ${Math.round(S.eco)}/60)`; ecoQ.style.color = S.eco >= 60 ? 'var(--success)' : 'var(--danger)'; }
+    const safeQ = $('quota-safe'); if (safeQ) { const okS = S.stats.accidentsMonth <= safeTh; safeQ.textContent = (okS ? '\u2713 Respecté' : '\u2717 Non respecté') + ` (${S.stats.accidentsMonth}/${safeTh} accidents ce mois)`; safeQ.style.color = okS ? 'var(--success)' : 'var(--danger)'; }
+    setText('quota-warn', S.badMonths > 0 ? `\u26a0\ufe0f ${S.badMonths} mois consécutif(s) de non-conformité \u2014 nationalisation partielle après 3 mois.` : 'Amende si les quotas ne sont pas tenus ; nationalisation partielle après 3 mois consécutifs de non-conformité.');
 }
 /* =====================================================================
    9. CONSTRUCTION & INTERACTIONS DE JEU
@@ -1561,6 +1914,7 @@ function updateHUD() {
 function syncIncidentMarkers() {
     incLayer.clearLayers();
     for (const i of S.incidents) {
+        if (i.detectIn > 0) continue; // pas encore signalé au PC : invisible tant qu'il n'est pas détecté
         const r = roadById(i.roadId); if (!r) continue;
         const T = INC_TYPES[i.type];
         L.marker(pointAt(r, i.pos), { icon: emo(T.icon, 26), zIndexOffset: 800 }).addTo(incLayer)
@@ -1666,6 +2020,7 @@ function frame(ts) {
    ===================================================================== */
 initTabsAndControls();
 function initTabsAndControls() {
+    document.querySelectorAll('.group-btn').forEach(b => b.addEventListener('click', () => goGroup(b.dataset.group)));
     document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => goTab(b.dataset.tab)));
     document.querySelectorAll('#heat-controls button[data-heat]').forEach(b => b.addEventListener('click', () => setHeat(b.dataset.heat)));
     document.querySelectorAll('.speed button[data-speed]').forEach(b => b.addEventListener('click', () => setSpeed(+b.dataset.speed)));
