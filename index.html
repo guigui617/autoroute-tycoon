@@ -279,6 +279,7 @@
         </div>
         <div class="tabs" id="subtabs-politique" style="display:none">
             <button class="tab-btn active" data-tab="tenders">Contrats d'État</button>
+            <button class="tab-btn" data-tab="geopolitique">Frontières &amp; Lobbying</button>
             <button class="tab-btn" data-tab="competitors">Concurrence IA</button>
         </div>
 
@@ -298,9 +299,23 @@
                     <option value="2">2×2 voies (≈ 1 500 véh./h)</option>
                     <option value="3">2×3 voies (≈ 2 400 véh./h, coût +35 %)</option>
                 </select></div>
+            <div class="control-group"><label for="eng-type">Type d'ouvrage</label>
+                <select id="eng-type" onchange="previewCost()">
+                    <option value="">Route classique</option>
+                    <option value="tunnel">🚇 Tunnel (massif montagneux : immunisé météo, risque d'éboulement)</option>
+                    <option value="viaduc">🌉 Viaduc (vallée : immunisé aux inondations)</option>
+                </select></div>
             <div class="control-group"><label><input type="checkbox" id="opt-drainant" onchange="previewCost()">Revêtement drainant (+10 % de coût, −60 % d'accidents sous la pluie)</label></div>
             <div class="control-group"><label><input type="checkbox" id="opt-ecopont" onchange="previewCost()">Écopont / passage à faune (+300 000 €, Éco-Score +8)</label></div>
             <div class="control-group"><label><input type="checkbox" id="opt-soundwall" onchange="previewCost()">Murs anti-bruit (+200 000 €, satisfaction)</label></div>
+            <div class="control-group"><label><input type="checkbox" id="opt-split" onchange="toggleSplitUI()">Découper en segments cessibles (bascule payant/gratuit indépendante)</label></div>
+            <div class="control-group" id="split-step-group" style="display:none"><label for="split-step">Pas de découpage</label>
+                <select id="split-step" onchange="previewCost()">
+                    <option value="10">10 km (très granulaire)</option>
+                    <option value="25">25 km (équilibré)</option>
+                    <option value="50" selected>50 km (simple)</option>
+                </select>
+            </div>
             <div id="build-preview">—</div>
             <button id="btn-build" onclick="buildSection()">Lancer les travaux (tracé routier réel)</button>
 
@@ -400,6 +415,11 @@
             <div class="row"><button class="btn-danger" onclick="issueBond(10e6)">+10 M€</button><button class="btn-danger" onclick="issueBond(30e6)">+30 M€</button><button class="btn-danger" onclick="issueBond(60e6)">+60 M€</button></div>
             <div id="bonds-list" class="kv-list" style="margin-top:6px"></div>
 
+            <h2>Inflation</h2>
+            <div class="stat-line"><span>Indice des prix (construction &amp; entretien)</span><strong id="inflation-idx">+0 %</strong></div>
+            <div class="muted small" id="inflation-info" style="margin-bottom:6px"></div>
+            <button class="btn-ghost" onclick="indexTariffs()" id="btn-index-tariffs">Indexer les péages sur l'inflation</button>
+
             <h2>Banque</h2>
             <div class="stat-line"><span>Dette</span><strong id="bank-debt">0 €</strong></div>
             <div class="stat-line"><span>Plafond d'emprunt (siège)</span><strong id="bank-cap">0 €</strong></div>
@@ -417,6 +437,28 @@
             <div class="stat-line"><span>Quota CO2 (Éco-Score ≥ 60)</span><strong id="quota-co2">—</strong></div>
             <div class="stat-line"><span>Quota sécurité</span><strong id="quota-safe">—</strong></div>
             <div class="muted small" id="quota-warn"></div>
+        </div>
+
+        <!-- FRONTIÈRES & LOBBYING (Politique & Législation) -->
+        <div id="geopolitique" class="tab-content">
+            <h2>Régime en place</h2>
+            <div class="card" id="regime-card"></div>
+
+            <h2>Législation en vigueur</h2>
+            <div id="law-status"></div>
+
+            <h2>Bureau de lobbying</h2>
+            <p class="muted small">Réduit de moitié le risque de nouvelles lois et raccourcit leur durée d'application.</p>
+            <button id="btn-lobby" onclick="toggleLobbyist()"></button>
+
+            <h2>Catastrophe en cours</h2>
+            <div id="disaster-status" class="muted small">Réseau calme, aucun événement majeur.</div>
+
+            <h2>Postes-frontières &amp; corridors européens</h2>
+            <p class="muted small">Un poste-frontière nécessite une liaison ouverte jusqu'à la ville frontalière. Il capte du fret international en échange de droits de douane, mais peut être perturbé par des tensions diplomatiques.</p>
+            <div id="borders-list"></div>
+            <div class="control-group"><label for="border-city">Nouveau poste-frontière</label><select id="border-city"></select></div>
+            <button onclick="buildBorderPost()" id="btn-border">Construire un poste-frontière (4 000 000 €)</button>
         </div>
 
         <!-- CONCURRENCE (Politique & Législation) -->
@@ -595,7 +637,8 @@ const PARTNERS = {
     food:  { name: 'McDonald\'s',   install: 1600000, v: 0.70, unit: 'all', desc: 'Restauration : 0,70 € par véhicule' },
     ev:    { name: 'Ionity Fast',   install: 3000000, v: 1.10, unit: 'all', desc: 'Recharge rapide : 1,10 € par véhicule', req: 'eco_2' },
     truck: { name: 'Parking Poids Lourds', install: 1200000, v: 4.20, unit: 'pl', desc: 'Parking sécurisé : 4,20 € par poids lourd' },
-    ev_premium: { name: 'Recharge Ultra-Rapide Premium', install: 4500000, v: 2.10, unit: 'all', desc: 'Clientèle aisée : 2,10 € par véhicule', req: 'eco_3' }
+    ev_premium: { name: 'Recharge Ultra-Rapide Premium', install: 4500000, v: 2.10, unit: 'all', desc: 'Clientèle aisée : 2,10 € par véhicule', req: 'eco_3' },
+    hotel: { name: 'Hôtel d\'Étape', install: 5500000, caShare: 0.12, unit: 'all', desc: 'Franchise hôtelière : 12 % des recettes de péage du tronçon' }
 };
 const SOLAR = { install: 1500000, perDay: 5000, req: 'eco_1' };
 const AREA_UP = [0, 2000000, 5000000]; // coût pour passer au niveau 2, 3
@@ -608,6 +651,25 @@ const BOND_TERM_DAYS = 365, BOND_RATE_MIN = 0.03, BOND_RATE_MAX = 0.10, BOND_PEN
 const PC_COST = 2000000;
 const CRANE_COST = 220000, DRONE_COST = 350000;
 const CRANE_ACC_BONUS = 0.10, CRANE_ACC_MAX = 0.40; // -10%/grue sur la durée des accidents, plafonné à -40%
+
+// Découpage en micro-segments cessibles (bascule payant/gratuit à la volée)
+const SEGMENT_STEPS = [10, 25, 50]; // km, pas de découpage proposés à la construction
+const SEGMENT_DEFAULT_STEP = 50;
+const SEGMENT_TRANSITION_DAYS = 4; // durée pour que le trafic s'adapte après une bascule payant/gratuit
+const SEGMENT_GANTRY_COST = 150000; // coût d'infrastructure par frontière de segment ajoutée
+const SEGMENT_SELL_AI_FACTOR = 1, SEGMENT_SELL_FUND_FACTOR = 0.70; // le fonds paie moins mais achète toujours
+function makeSegments(km, stepKm, tollType) {
+    const n = Math.max(1, Math.round(km / stepKm));
+    const segs = [];
+    for (let i = 0; i < n; i++) {
+        segs.push({ id: i + 1, startFrac: i / n, endFrac: (i + 1) / n, km: +(km / n).toFixed(1), tollType, freeWeight: tollType === 'gratuit' ? 1 : 0, owner: 'player' });
+    }
+    return segs;
+}
+function segmentValue(seg, road) {
+    const wearFactor = 1 - (road.wear || 0) / 200;
+    return Math.round(seg.km * C.costPerKm * 0.55 * wearFactor);
+}
 const CREDIT_BUYOUT_TH = 380, CREDIT_BUYOUT_NEGDAYS = 10;
 const TENDERS = [
     { id: 'eco',  title: '🌿 Subvention Transition Écologique', desc: 'Éco-Score ≥ 75', reward: 'Prime unique de 3 M€',
@@ -621,6 +683,55 @@ const TENDERS = [
     { id: 'corr', title: '🏗️ Corridor Structurant', desc: 'Réseau ouvert ≥ 500 km', reward: 'Prime de 25 M€ + 25 000 €/jour',
       check: () => openKm() >= 500, prog: () => `${Math.round(openKm())} / 500 km`, claim: () => { S.money += 25e6; S.permSubsidy += 25000; } }
 ];
+
+// ===== MODULE 3 : INFLATION =====
+const INFLATION_MONTHLY_MIN = 0.003, INFLATION_MONTHLY_MAX = 0.010; // +0,3 à 1,0 %/mois selon conjoncture
+
+// ===== MODULE 4 : INGÉNIERIE COMPLEXE (tunnels, viaducs, opposition locale) =====
+const ENGINEERING = {
+    tunnel:  { name: 'Tunnel',  icon: '🚇', costMult: 2.6, daysMult: 2.2, desc: 'Traverse les massifs : immunisé aux intempéries (pluie, neige, vent), mais risque d\'éboulement.' },
+    viaduc:  { name: 'Viaduc',  icon: '🌉', costMult: 2.0, daysMult: 1.8, desc: 'Franchit les vallées : insensible aux inondations, mais plus vulnérable à l\'usure par grand vent.' }
+};
+const COLLAPSE_HOURLY_PROB_PER_KM = 0.00006; // probabilité d'éboulement par heure et par km de tunnel (avant réduction par entretien/tech)
+const COLLAPSE_CLOSE_DAYS = [3, 9], COLLAPSE_COST_PER_KM = 180000;
+const OPPOSITION_CHANCE = 0.22; // chance qu'un chantier suscite une opposition locale
+const OPPOSITION_DELAY_DAYS = [6, 18];
+const OPPOSITION_PAYOFF_PER_DAY = 60000; // coût pour indemniser et accélérer d'1 jour
+
+// ===== MODULE 5 : POLITIQUE, LÉGISLATION & LOBBYING =====
+const LOBBYIST_MONTHLY = 90000;
+const LOBBY_EFFECT = 0.5; // avec un bureau de lobbying : -50% de chance de loi, -40% de durée
+const LAWS = {
+    speed:      { title: 'Limitation de vitesse imposée', icon: '🚓', desc: 'Capacité du réseau réduite le temps de la loi.', capMult: 0.88, days: [8, 20] },
+    weekend_pl: { title: 'Interdiction des poids lourds le week-end', icon: '🚛', desc: 'Trafic poids lourds à l\'arrêt le samedi et le dimanche.', plWeekendMult: 0, days: [15, 35] },
+    carbon_tax: { title: 'Taxe carbone exceptionnelle', icon: '🌍', desc: 'Surcoût d\'exploitation quotidien tant que l\'Éco-Score reste bas.', taxPerKmDay: 25, days: [15, 30] }
+};
+const LAW_DAILY_CHANCE = 0.012;
+const REGIMES = {
+    eco:    { name: 'Majorité écologiste', icon: '🌿', quotaEco: 70, subsidyMult: 1.3, tollCapMult: 0.9 },
+    lib:    { name: 'Majorité libérale',   icon: '💼', quotaEco: 42, subsidyMult: 0.7, tollCapMult: 1.15 },
+    centre: { name: 'Coalition centriste', icon: '⚖️', quotaEco: 58, subsidyMult: 1.0, tollCapMult: 1.0 }
+};
+const REGIME_TERM_DAYS = 480;
+
+// ===== MODULE 6 : FRONTIÈRES (corridors internationaux) =====
+const BORDER_CITIES = { 5: 'Belgique', 6: 'Allemagne', 26: 'Espagne', 9: 'Italie', 64: 'Suisse' };
+const BORDER_POST_COST = 4000000, BORDER_POST_DAYS = 30;
+const BORDER_FREIGHT_BONUS = 0.40; // trafic PL supplémentaire sur les liaisons connectées à un poste-frontière
+const BORDER_TENSION_DAILY_CHANCE = 0.012, BORDER_TENSION_DAYS = [3, 10];
+const DOUANE_RATE = 3.5; // € de droits de douane par poids lourd sur une liaison connectée à un poste-frontière
+
+// ===== MODULE 7 : CATASTROPHES NATURELLES & CRISES =====
+const DISASTERS = {
+    canicule:   { icon: '🥵', label: 'Canicule extrême (bitume ramolli)', wearMult: 5, spdMult: 0.85, days: [3, 7] },
+    inondation: { icon: '🌊', label: 'Inondation d\'un tronçon',          closeDays: [3, 8], repairCostPerKm: 45000 },
+    tempete:    { icon: '🌨️', label: 'Tempête de neige historique',      spdMult: 0.35, accMult: 3.2, days: [2, 5] },
+    vigipirate: { icon: '🚨', label: 'Réquisition Plan Vigipirate',       capMult: 0.65, subsidyPerKmDay: 500, days: [3, 8] }
+};
+const DISASTER_DAILY_CHANCE = 0.010;
+
+// ===== MODULE 8 : AIRES ENRICHIES =====
+// Ajout d'une enseigne haut de gamme à pourcentage du CA péage (plutôt qu'un tarif fixe par véhicule)
 
 /* =====================================================================
    2. ÉTAT DE JEU
@@ -655,6 +766,9 @@ function defaultState() {
         month: { profit: 0 }, taxLast: null, negDays: 0,
         stats: { resolved: 0, built: 0, accidentsMonth: 0 }, badMonths: 0,
         credit: 700, bonds: [],
+        inflation: 1.0, lastIndexTariff: { vl: 0.10, ut: 0.16, pl: 0.30 },
+        lobbyist: false, laws: [], regime: 'centre', regimeUntil: REGIME_TERM_DAYS,
+        borders: [], tensions: [], disaster: null,
         won: false, over: false, boughtOutBy: null
     };
 }
@@ -893,7 +1007,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 14,
 cities.filter(c => c.pop >= 700).forEach(c => L.circleMarker([c.lat, c.lng], { radius: 4, color: '#38bdf8', fillColor: '#0f172a', fillOpacity: 1, weight: 2 }).addTo(portalMap));
 
 const cityLayer = L.layerGroup().addTo(map), roadLayer = L.layerGroup().addTo(map), aiLayer = L.layerGroup().addTo(map),
-      markerLayer = L.layerGroup().addTo(map), incLayer = L.layerGroup().addTo(map), pcLayer = L.layerGroup().addTo(map);
+      markerLayer = L.layerGroup().addTo(map), incLayer = L.layerGroup().addTo(map), pcLayer = L.layerGroup().addTo(map), borderLayer = L.layerGroup().addTo(map);
 const roadViz = new Map(), aiViz = new Map();
 const emo = (e, size = 22) => L.divIcon({ className: 'emo-icon', html: `<div style="font-size:${size - 6}px;line-height:${size}px;text-align:center;text-shadow:0 0 4px #000">${e}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 
@@ -931,6 +1045,15 @@ const strikeThreshold = () => FATIGUE_STRIKE_TH - (hasCert('hr') ? 15 : 0);
 const freeVans = () => S.vans - S.incidents.filter(i => i.handled).length;
 const snowCover = () => Math.min(1, S.plows / Math.max(1, Math.ceil(openKm() / 200)));
 const droneCoverage = () => hasTech('ai_3') ? Math.min(1, S.drones / Math.max(1, Math.ceil(openKm() / 150))) : 0;
+const isClosed = r => r.closedUntil && S.t < r.closedUntil;
+const borderBonusFor = r => {
+    if (!S.borders.length) return 0;
+    const tense = new Set((S.tensions || []).map(t => t.cityId));
+    for (const b of S.borders) { if ((r.a === b.cityId || r.b === b.cityId) && S.t >= b.openAt && !tense.has(b.cityId)) return BORDER_FREIGHT_BONUS; }
+    return 0;
+};
+const activeLaw = () => S.laws.find(l => S.t < l.until) || null;
+const isWeekend = () => { const d = gameDate().getUTCDay(); return d === 0 || d === 6; };
 function nearestPC(lat, lng) {
     let best = null, bestD = Infinity;
     for (const pc of S.pcs) { const d = haversine({ lat, lng }, pc); if (d < bestD) { bestD = d; best = pc; } }
@@ -949,7 +1072,7 @@ function tariffFactors() {
 function salaryMonthly() {
     let b = 0; for (const k in STAFF) b += (S.staff[k] || 0) * STAFF[k].monthly;
     const hrCut = onStrike('hr') ? 0 : Math.min(0.3, S.staff.hr * 0.05 * staffMult('hr'));
-    return b * (1 - hrCut);
+    return b * (1 - hrCut) * S.inflation;
 }
 function competitionMap() {
     const m = new Map();
@@ -974,47 +1097,87 @@ function simulateHour() {
     const wAcc = snow ? w.acc * (1 + (1 - cover) * 0.6) : w.acc;
     const incByRoad = {};
     for (const i of S.incidents) (incByRoad[i.roadId] = incByRoad[i.roadId] || []).push(i);
+    const law = activeLaw(), weekend = isWeekend();
+    const disaster = S.disaster && S.t < S.disaster.until ? S.disaster : null;
+    const infl = S.inflation;
+    const regime = REGIMES[S.regime];
 
-    let tolls = 0, rests = 0, subs = S.permSubsidy / 24, opex = 0;
+    let tolls = 0, rests = 0, subs = S.permSubsidy / 24 * regime.subsidyMult, opex = 0;
     for (const r of S.roads) {
-        if (!isOpen(r)) continue;
+        if (!isOpen(r) || isClosed(r)) continue;
         const st = r.stat;
+        const tunnel = r.engType === 'tunnel', viaduc = r.engType === 'viaduc';
+        const floodedThis = disaster && disaster.type === 'inondation' && disaster.roadId === r.id;
+        if (floodedThis) continue; // route fermée par l'inondation (traitée dans newDay)
         let incMult = 1, capMod = 1;
         for (const i of (incByRoad[r.id] || [])) { const m = i.type === 'accident' ? 0.6 : 0.85; incMult *= m; capMod *= m; }
         const share = 1 / (1 + (comp.get(pairKey(r.a, r.b)) || 0));
-        const barrierPenalty = (r.tollType === 'payant' && !anpr) ? (0.9 + tollAgentBoost() * 0.4) : 1;
-        const capH = C.capHour[r.lanes] * Math.min(1, barrierPenalty) * (snow && cover < 1 ? 0.7 + 0.3 * cover : 1) * (r.wear > 80 ? 0.85 : 1) * capMod;
-        const m0 = wTraffic * ev * satB * mkt * hqB * season * (r.tollType === 'gratuit' ? 1.35 : 1) * (r.wear > 80 ? 0.9 : 1) * incMult * share;
+        let gratuitShare = r.tollType === 'gratuit' ? 1 : 0, anyPayantBarrier = r.tollType === 'payant';
+        if (r.segments) {
+            gratuitShare = 0; anyPayantBarrier = false;
+            for (const s of r.segments) { gratuitShare += s.freeWeight * (s.km / r.km); if (s.tollType === 'payant') anyPayantBarrier = true; }
+        }
+        const barrierPenalty = (anyPayantBarrier && !anpr) ? (0.9 + tollAgentBoost() * 0.4) : 1;
+        const lawCapMult = law && law.type === 'speed' ? LAWS.speed.capMult : 1;
+        const vigiMult = disaster && disaster.type === 'vigipirate' ? DISASTERS.vigipirate.capMult : 1;
+        const snowPenalty = tunnel ? 1 : (snow && cover < 1 ? 0.7 + 0.3 * cover : 1);
+        const capH = C.capHour[r.lanes] * Math.min(1, barrierPenalty) * snowPenalty * (r.wear > 80 ? 0.85 : 1) * capMod * lawCapMult * vigiMult;
+        const wTrafficR = tunnel ? w.traffic : wTraffic; // un tunnel n'est pas ralenti par la météo
+        const m0 = wTrafficR * ev * satB * mkt * hqB * season * (1 + 0.35 * gratuitShare) * (r.wear > 80 ? 0.9 : 1) * incMult * share;
         const base = r.demand * HOUR_SHARE[h] * m0;
-        const fl = { vl: base * C.mix.vl * tf.f.vl, ut: base * C.mix.ut * tf.f.ut, pl: base * C.mix.pl * tf.f.pl };
+        const border = borderBonusFor(r);
+        const plMult = (weekend && law && law.type === 'weekend_pl') ? 0 : (1 + border);
+        const fl = { vl: base * C.mix.vl * tf.f.vl, ut: base * C.mix.ut * tf.f.ut, pl: base * C.mix.pl * tf.f.pl * plMult };
         const flow = fl.vl + fl.ut + fl.pl, cong = flow / capH, sf = cong > 1.1 ? 1.1 / cong : 1;
         const sv = { vl: fl.vl * sf, ut: fl.ut * sf, pl: fl.pl * sf }, served = sv.vl + sv.ut + sv.pl, trip = r.km * C.tripFactor;
 
         let toll = 0, sub = 0;
-        if (r.tollType === 'gratuit') sub = served * trip * C.subsidy;
+        if (r.segments) {
+            for (const s of r.segments) {
+                if (s.owner !== 'player') continue;
+                const segTrip = s.km * C.tripFactor;
+                if (s.tollType === 'gratuit') sub += served * segTrip * C.subsidy;
+                else { let t = (sv.vl * S.tariff.vl + sv.ut * S.tariff.ut + sv.pl * S.tariff.pl) * segTrip; if (!anpr) t *= (1 - tollAgentBoost() * 0.15) * (tollStrike ? 0.2 : 1); toll += t; }
+            }
+        } else if (r.tollType === 'gratuit') sub = served * trip * C.subsidy;
         else {
             toll = (sv.vl * S.tariff.vl + sv.ut * S.tariff.ut + sv.pl * S.tariff.pl) * trip;
             if (r.tollType === 'freeflow') toll *= 1.25 * (1 - (t2 ? 0 : (t1 ? 0.035 : 0.07)));
             else if (r.tollType === 'payant' && !anpr) toll *= (1 - tollAgentBoost() * 0.15) * (tollStrike ? 0.2 : 1);
         }
+        if (border > 0) toll += sv.pl * DOUANE_RATE; // droits de douane sur le fret international
         let rest = 0; const a = r.rest;
         if (a) {
             const lm = [1, 1.3, 1.7][a.level - 1] || 1;
-            for (const p of a.partners) { const P = PARTNERS[p]; if (P) rest += (P.unit === 'pl' ? sv.pl : served) * P.v * lm; }
+            for (const p of a.partners) {
+                const P = PARTNERS[p]; if (!P) continue;
+                rest += P.caShare ? toll * P.caShare : (P.unit === 'pl' ? sv.pl : served) * P.v * lm;
+            }
             if (a.solar) rest += SOLAR.perDay / 24;
         }
         tolls += toll; subs += sub; rests += rest;
-        opex += r.km * C.opexKmDay / 24 * (r.lanes === 3 ? 1.4 : 1) * (r.tollType === 'payant' ? 1 : 0.7);
+        const carbonOpex = (law && law.type === 'carbon_tax') ? r.km * LAWS.carbon_tax.taxPerKmDay / 24 * Math.max(0, (60 - S.eco) / 60) : 0;
+        opex += (r.km * C.opexKmDay / 24 * (r.lanes === 3 ? 1.4 : 1) * (r.segments ? (1 - 0.3 * gratuitShare) : (r.tollType === 'payant' ? 1 : 0.7)) * infl) + carbonOpex;
 
         st.hourFlow = served; st.cong = cong; st.dayFlow += served; st.dayRev += toll + sub + rest; st.dayPeak = Math.max(st.dayPeak, cong);
-        r._spd = clamp(w.spd / Math.max(1, cong), 0.25, 1);
-        r.wear = Math.min(100, r.wear + (0.02 + 0.03 * Math.min(3, (st.aadt || r.demand) / 15000)) / 24 * w.wear * (1 - eng) * wearMult);
+        const disasterSpd = disaster && (disaster.type === 'canicule' || disaster.type === 'tempete') && !(tunnel && disaster.type !== 'tempete') ? DISASTERS[disaster.type].spdMult : 1;
+        r._spd = clamp(w.spd * disasterSpd / Math.max(1, cong), 0.2, 1);
+        const disasterWear = disaster && disaster.type === 'canicule' ? DISASTERS.canicule.wearMult : 1;
+        const wWear = tunnel ? 1 : w.wear;
+        r.wear = Math.min(100, r.wear + (0.02 + 0.03 * Math.min(3, (st.aadt || r.demand) / 15000)) / 24 * wWear * disasterWear * (1 - eng) * wearMult);
 
         // Accidents : dépendent de la météo, de l'usure, du trafic et de la congestion
-        let accW = wAcc;
-        if (S.weather.type === 'rain') accW = 1 + (wAcc - 1) * (1 - Math.min(0.85, (r.drainant ? 0.6 : 0) + (infra1 ? 0.3 : 0)));
+        let accW = tunnel ? 1 : wAcc;
+        if (S.weather.type === 'rain' && !tunnel) accW = 1 + (wAcc - 1) * (1 - Math.min(0.85, (r.drainant ? 0.6 : 0) + (infra1 ? 0.3 : 0)));
+        if (disaster && disaster.type === 'tempete' && !tunnel) accW *= DISASTERS.tempete.accMult;
         const p = 0.0025 * (r.km / 100) * accW * (1 + r.wear / 60) * (rad ? 0.6 : 1) * (drones ? 0.85 : 1) * (0.5 + Math.min(2, served / 800)) * (1 + Math.max(0, cong - 0.8));
         if (Math.random() < p) spawnIncident(r);
+
+        // Risque d'éboulement (tunnels uniquement)
+        if (tunnel) {
+            const collapseP = COLLAPSE_HOURLY_PROB_PER_KM * r.km * (1 + r.wear / 100) * (infra2 ? 0.5 : 1);
+            if (Math.random() < collapseP) triggerCollapse(r);
+        }
     }
     const sal = salaryMonthly() / 720, plowCost = snow ? S.plows * 450 : 0, led = S.ledger;
     led.tolls += tolls; led.rests += rests; led.subs += subs; led.opex += opex; led.salaries += sal; led.plows += plowCost;
@@ -1060,6 +1223,17 @@ function spawnIncident(r) {
     S.satisfaction = Math.max(0, S.satisfaction - T.sat * 0.3);
     if (detectIn <= 0) announceIncident(inc, r, T); else refreshIncMap();
     if (S.autoDispatch && hasTech('ai_2') && detectIn <= 0) dispatchVan(inc.id);
+}
+function triggerCollapse(r) {
+    const days = COLLAPSE_CLOSE_DAYS[0] + Math.floor(Math.random() * (COLLAPSE_CLOSE_DAYS[1] - COLLAPSE_CLOSE_DAYS[0] + 1));
+    r.closedUntil = S.t + days * 24;
+    const cost = Math.round(r.km * COLLAPSE_COST_PER_KM);
+    S.money -= cost; S.ledger.incidents += cost; S.month.profit -= cost;
+    S.satisfaction = Math.max(0, S.satisfaction - 8);
+    setTraffic('ÉBOULEMENT', `🪨 Éboulement dans le tunnel de ${r.name} — fermeture ${days} jours, ${eurFull(cost)} de travaux.`, '#dc2626');
+    toast(`🪨 Éboulement : ${r.name} fermé ${days} jours (${eurFull(cost)}).`, 'danger');
+    news(`Éboulement dans le tunnel de ${r.name} : fermeture temporaire du tronçon.`);
+    mark('roads'); restyleRoads();
 }
 function announceIncident(i, r, T) {
     setTraffic(i.type.toUpperCase(), `${T.title} sur ${r.name} — intervention du PC Sécurité requise.`, T.color);
@@ -1177,6 +1351,71 @@ function nationalise() {
     news(`L'État nationalise ${worst.name} pour non-conformité répétée.`); mark('roads');
 }
 
+/* ---------- Politique, catastrophes, frontières (pas quotidien) ---------- */
+function stepPolitics() {
+    if (S.t >= S.regimeUntil) {
+        const keys = Object.keys(REGIMES), pick = keys[Math.floor(Math.random() * keys.length)];
+        S.regime = pick; S.regimeUntil = S.t + REGIME_TERM_DAYS;
+        toast(`🏛️ Nouvelles élections : ${REGIMES[pick].icon} ${REGIMES[pick].name} au pouvoir.`, 'warn');
+        news(`Changement de majorité : ${REGIMES[pick].name} prend la tête du gouvernement.`);
+    }
+    const law = activeLaw();
+    if (!law) {
+        const chance = LAW_DAILY_CHANCE * (S.lobbyist ? (1 - LOBBY_EFFECT) : 1);
+        if (S.roads.length && Math.random() < chance) {
+            const ids = Object.keys(LAWS), id = ids[Math.floor(Math.random() * ids.length)], L = LAWS[id];
+            let days = L.days[0] + Math.floor(Math.random() * (L.days[1] - L.days[0] + 1));
+            if (S.lobbyist) days = Math.round(days * (1 - LOBBY_EFFECT * 0.8));
+            S.laws.push({ type: id, until: S.t + days * 24 });
+            toast(`${L.icon} Nouvelle loi : ${L.title} (${days} j).`, 'warn');
+            news(`Législation : ${L.title} entre en vigueur pour ${days} jours.`);
+        }
+    } else if (S.t >= law.until) {
+        S.laws = S.laws.filter(l => l !== law);
+        toast(`✅ Fin de la loi : ${LAWS[law.type].title}.`, 'ok');
+    }
+}
+function stepDisasters() {
+    if (S.disaster && S.t >= S.disaster.until) {
+        const d = S.disaster;
+        if (d.type === 'inondation') {
+            const r = roadById(d.roadId);
+            if (r) { const cost = Math.round(r.km * DISASTERS.inondation.repairCostPerKm); S.money -= cost; S.ledger.incidents += cost; S.month.profit -= cost; r.wear = Math.min(100, r.wear + 25); toast(`🌊 Décrue sur ${r.name} : travaux de remise en état, ${eurFull(cost)}.`, 'warn'); }
+        } else toast(`✅ Fin : ${DISASTERS[d.type].label}.`, 'ok');
+        S.disaster = null; mark('roads'); restyleRoads();
+    }
+    if (!S.disaster && S.roads.length && Math.random() < DISASTER_DAILY_CHANCE) {
+        const month = gameDate().getUTCMonth(), summer = month >= 5 && month <= 7, winter = month === 11 || month <= 1;
+        const pool = summer ? ['canicule', 'inondation', 'vigipirate'] : winter ? ['tempete', 'inondation', 'vigipirate'] : ['inondation', 'vigipirate'];
+        const type = pool[Math.floor(Math.random() * pool.length)], D = DISASTERS[type];
+        if (type === 'inondation') {
+            const candidates = S.roads.filter(r => isOpen(r) && !isClosed(r) && r.engType !== 'viaduc');
+            if (!candidates.length) return;
+            const r = candidates[Math.floor(Math.random() * candidates.length)];
+            const days = D.closeDays[0] + Math.floor(Math.random() * (D.closeDays[1] - D.closeDays[0] + 1));
+            r.closedUntil = S.t + days * 24;
+            S.disaster = { type, until: S.t + days * 24, roadId: r.id };
+            toast(`${D.icon} ${D.label} : ${r.name} fermé ${days} jours.`, 'danger'); news(`${D.label} sur ${r.name}.`); mark('roads'); restyleRoads();
+        } else {
+            const days = D.days[0] + Math.floor(Math.random() * (D.days[1] - D.days[0] + 1));
+            S.disaster = { type, until: S.t + days * 24 };
+            toast(`${D.icon} ${D.label} sur tout le réseau (${days} j).`, 'danger'); news(`${D.label} touche l'ensemble du réseau.`);
+        }
+    }
+}
+function stepBorders() {
+    S.tensions = (S.tensions || []).filter(t => { if (S.t >= t.until) { toast(`✅ Frontière rouverte : ${BORDER_CITIES[t.cityId]}.`, 'ok'); return false; } return true; });
+    if (S.borders.length && Math.random() < BORDER_TENSION_DAILY_CHANCE) {
+        const open = S.borders.filter(b => S.t >= b.openAt && !S.tensions.some(t => t.cityId === b.cityId));
+        if (open.length) {
+            const b = open[Math.floor(Math.random() * open.length)], days = BORDER_TENSION_DAYS[0] + Math.floor(Math.random() * (BORDER_TENSION_DAYS[1] - BORDER_TENSION_DAYS[0] + 1));
+            S.tensions.push({ cityId: b.cityId, until: S.t + days * 24 });
+            toast(`🌍 Tensions diplomatiques : frontière avec ${BORDER_CITIES[b.cityId]} perturbée (${days} j).`, 'danger');
+            news(`Tensions frontalières avec ${BORDER_CITIES[b.cityId]} : ralentissement du fret international.`);
+        }
+    }
+}
+
 /* ---------- Passage de jour ---------- */
 function newDay() {
     const month = gameDate().getUTCMonth();
@@ -1188,8 +1427,13 @@ function newDay() {
         const st = r.stat;
         if (isOpen(r) && st.dayFlow > 0) { st.aadt = st.dayFlow; st.rev = st.dayRev; st.peak = st.dayPeak; }
         st.dayFlow = 0; st.dayRev = 0; st.dayPeak = 0;
+        if (r.segments) {
+            const step = 1 / SEGMENT_TRANSITION_DAYS;
+            for (const s of r.segments) { const target = s.tollType === 'gratuit' ? 1 : 0; s.freeWeight = clamp(s.freeWeight + clamp(target - s.freeWeight, -step, step), 0, 1); }
+        }
     }
     if (S.autoRepair) autoRepair();
+    stepPolitics(); stepDisasters(); stepBorders();
     if (!S.event && (month === 6 || month === 7 || month === 11) && Math.random() < 0.10 && S.roads.length) {
         S.event = { type: 'depart', until: S.t + 24 + Math.floor(Math.random() * 24) };
         news('🚗 Grand départ en vacances : trafic +60 % sur le réseau.');
@@ -1205,15 +1449,18 @@ function newDay() {
         if (S.negDays >= 20) return gameOver();
     } else S.negDays = 0;
     if (!S.won && netWorth() >= 1e9 && openKm() >= 1000) victory();
-    refreshTrafficBar(); restyleRoads(); mark('roads', 'ai', 'areas', 'fleet', 'hq');
+    refreshTrafficBar(); restyleRoads(); mark('roads', 'ai', 'areas', 'fleet', 'hq', 'politics');
     saveState();
 }
 function monthEnd() {
     const tax = Math.max(0, S.month.profit) * C.taxRate;
     S.money -= tax; S.taxLast = tax;
     if (tax > 0) toast(`🏛️ Impôt sur les sociétés du mois : −${eur(tax)}`, 'warn');
+    const infRate = INFLATION_MONTHLY_MIN + Math.random() * (INFLATION_MONTHLY_MAX - INFLATION_MONTHLY_MIN);
+    S.inflation *= (1 + infRate);
+    if (S.lobbyist) { const up = LOBBYIST_MONTHLY; S.money -= up; S.ledger.salaries += up; S.month.profit -= up; }
     if (S.roads.length) {
-        const km = openKm(), ecoOK = S.eco >= 60, safeOK = S.stats.accidentsMonth <= Math.max(2, Math.round(km / 60));
+        const km = openKm(), quotaEco = REGIMES[S.regime].quotaEco, ecoOK = S.eco >= quotaEco, safeOK = S.stats.accidentsMonth <= Math.max(2, Math.round(km / 60));
         if (ecoOK && safeOK) {
             const bonus = Math.round(km * 150); S.money += bonus; S.badMonths = 0;
             toast(`🏛️ Quotas de concession respectés : subvention de ${eur(bonus)}.`, 'ok');
@@ -1430,23 +1677,43 @@ function restIcon(rest) {
 }
 function removeRoadViz(id) {
     const v = roadViz.get(id); if (!v) return;
-    roadLayer.removeLayer(v.line); if (v.rest) markerLayer.removeLayer(v.rest);
+    v.lines.forEach(l => roadLayer.removeLayer(l)); if (v.rest) markerLayer.removeLayer(v.rest);
     (v.marks || []).forEach(m => markerLayer.removeLayer(m));
     roadViz.delete(id);
 }
+function sliceCoords(r, f0, f1) {
+    if (!r._cum) prepGeom(r);
+    const c = r.coords, cum = r._cum, pts = [pointAt(r, f0)];
+    for (let i = 0; i < cum.length; i++) if (cum[i] > f0 && cum[i] < f1) pts.push(c[i]);
+    pts.push(pointAt(r, f1));
+    return pts;
+}
+function segColor(r, s) {
+    if (s.owner !== 'player') return '#a855f7';
+    return s.tollType === 'gratuit' ? TOLL_COLOR.gratuit : TOLL_COLOR.payant;
+}
 function drawRoad(r) {
     removeRoadViz(r.id); prepGeom(r);
-    const line = L.polyline(r.coords, { color: roadColor(r), weight: isOpen(r) ? 5 : 3, opacity: isOpen(r) ? 0.9 : 0.55, dashArray: isOpen(r) ? null : '2,8' })
-        .bindPopup(() => roadPopup(r.id), { minWidth: 220 }).addTo(roadLayer);
+    const open = isOpen(r), style = { weight: open ? 5 : 3, opacity: open ? 0.9 : 0.55, dashArray: open ? null : '2,8' };
+    const lines = [];
+    if (r.segments) {
+        r.segments.forEach(s => {
+            lines.push(L.polyline(sliceCoords(r, s.startFrac, s.endFrac), Object.assign({ color: segColor(r, s) }, style))
+                .bindPopup(() => segmentPopupHTML(r, s), { minWidth: 220 }).addTo(roadLayer));
+        });
+    } else {
+        lines.push(L.polyline(r.coords, Object.assign({ color: roadColor(r) }, style)).bindPopup(() => roadPopup(r.id), { minWidth: 220 }).addTo(roadLayer));
+    }
     const marks = [];
-    if (isOpen(r) && r.tollType !== 'gratuit') {
+    if (open && !r.segments && r.tollType !== 'gratuit') {
         const e = r.tollType === 'freeflow' ? '\ud83d\udce1' : '\ud83d\udea7';
         marks.push(L.marker(pointAt(r, 0.12), { icon: emo(e, 18) }).bindPopup(() => roadPopup(r.id)).addTo(markerLayer));
         marks.push(L.marker(pointAt(r, 0.88), { icon: emo(e, 18) }).bindPopup(() => roadPopup(r.id)).addTo(markerLayer));
     }
+    if (open && r.engType) marks.push(L.marker(pointAt(r, 0.5), { icon: emo(ENGINEERING[r.engType].icon, 22) }).bindPopup(() => roadPopup(r.id)).addTo(markerLayer));
     let rest = null;
-    if (r.rest) rest = L.marker(pointAt(r, 0.5), { icon: emo(restIcon(r.rest), 24) }).bindPopup(() => restPopup(r.id)).addTo(markerLayer);
-    roadViz.set(r.id, { line, marks, rest });
+    if (r.rest) rest = L.marker(pointAt(r, r.engType ? 0.65 : 0.5), { icon: emo(restIcon(r.rest), 24) }).bindPopup(() => restPopup(r.id)).addTo(markerLayer);
+    roadViz.set(r.id, { lines, marks, rest });
 }
 function drawAIRoad(ai, r) {
     const old = aiViz.get(r.id); if (old) aiLayer.removeLayer(old);
@@ -1456,7 +1723,12 @@ function drawAIRoad(ai, r) {
         .addTo(aiLayer));
 }
 function restyleRoads() {
-    for (const r of S.roads) { const v = roadViz.get(r.id); if (v) v.line.setStyle({ color: roadColor(r), weight: isOpen(r) ? 5 : 3, opacity: isOpen(r) ? 0.9 : 0.55, dashArray: isOpen(r) ? null : '2,8' }); }
+    for (const r of S.roads) {
+        const v = roadViz.get(r.id); if (!v) continue;
+        const open = isOpen(r), style = { weight: open ? 5 : 3, opacity: open ? 0.9 : 0.55, dashArray: open ? null : '2,8' };
+        if (r.segments) v.lines.forEach((l, i) => l.setStyle(Object.assign({ color: segColor(r, r.segments[i]) }, style)));
+        else v.lines.forEach(l => l.setStyle(Object.assign({ color: roadColor(r) }, style)));
+    }
 }
 function redrawAllRoads() {
     roadLayer.clearLayers(); markerLayer.clearLayers(); aiLayer.clearLayers(); roadViz.clear(); aiViz.clear();
@@ -1469,6 +1741,12 @@ function roadPopup(id) {
     return `<b>${esc(r.name)}</b><br>${r.km} km \u00b7 ${TOLL_LABEL[r.tollType]} \u00b7 ${r.lanes}\u00d7${r.lanes} voies${r.estimated ? ' \u00b7 <i>trac\u00e9 estim\u00e9</i>' : ''}<br>
         Trafic (hier) : ${fmtInt(st.aadt)} v\u00e9h./j \u00b7 Pointe : ${Math.round((st.peak || 0) * 100)} %<br>
         Recettes (hier) : ${eurFull(st.rev)} \u00b7 Usure : ${Math.round(r.wear)} %`;
+}
+function segmentPopupHTML(r, s) {
+    if (!isOpen(r)) return `<b>${esc(r.name)}</b><br>\ud83d\udea7 En chantier \u2014 ouverture dans ${Math.max(0, r.openAt - S.t)} h`;
+    const idx = r.segments.indexOf(s) + 1, ownerLabel = s.owner === 'player' ? 'Vous' : (s.owner === 'fund' ? 'Fonds d\u2019investissement' : (S.ai.find(a => a.id === s.owner) || {}).name || s.owner);
+    return `<b>${esc(r.name)} \u2014 segment ${idx}/${r.segments.length}</b><br>${s.km} km \u00b7 ${s.tollType === 'gratuit' ? 'Gratuit' : 'Payant'} \u00b7 propri\u00e9taire : ${esc(ownerLabel)}<br>
+        <span class="muted small">G\u00e9rez ce segment depuis la fiche du tron\u00e7on, onglet Construction.</span>`;
 }
 function restPopup(id) {
     const r = roadById(id); if (!r) return '';
@@ -1485,8 +1763,83 @@ function mark(...n) { n.forEach(x => dirty.add(x)); }
 const RENDERERS = {
     roads: renderRoadList, incidents: renderIncidents, markers: refreshIncMap,
     ai: renderAIList, staff: renderStaff, fleet: renderFleet, areas: renderRestAreas,
-    rd: renderRD, hq: renderHQ, network: previewCost, tenders: renderStateTenders, pcs: renderPCs
+    rd: renderRD, hq: renderHQ, network: previewCost, tenders: renderStateTenders, pcs: renderPCs, politics: renderGeopolitics
 };
+const reachesCity = cityId => S.roads.some(r => isOpen(r) && (r.a === cityId || r.b === cityId));
+function initBorderSelect() {
+    const sel = $('border-city'); if (!sel) return;
+    const existing = new Set(S.borders.map(b => b.cityId));
+    const opts = Object.keys(BORDER_CITIES).map(Number).filter(id => !existing.has(id))
+        .map(id => `<option value="${id}" ${reachesCity(id) ? '' : 'disabled'}>${esc(CITY.get(id).name)} \u2014 ${esc(BORDER_CITIES[id])}${reachesCity(id) ? '' : ' (liaison requise)'}</option>`).join('');
+    sel.innerHTML = opts || '<option value="">Toutes les fronti\u00e8res sont d\u00e9j\u00e0 \u00e9quip\u00e9es</option>';
+}
+function drawBorders() {
+    borderLayer.clearLayers();
+    for (const b of S.borders) {
+        const c = CITY.get(b.cityId); if (!c) continue;
+        const open = S.t >= b.openAt, tense = S.tensions.some(t => t.cityId === b.cityId);
+        L.circleMarker([c.lat, c.lng], { radius: 8, color: tense ? '#ef4444' : open ? '#22c55e' : '#f59e0b', weight: 2, fillColor: '#0f172a', fillOpacity: 1 }).addTo(borderLayer)
+            .bindPopup(`<b>\ud83c\udf0d Poste-fronti\u00e8re de ${esc(c.name)}</b><br>${esc(BORDER_CITIES[b.cityId])}<br><span class="muted small">${!open ? 'En construction' : tense ? 'Tensions diplomatiques' : 'Op\u00e9rationnel'}</span>`);
+    }
+}
+function renderGeopolitics() {
+    const reg = REGIMES[S.regime], card = $('regime-card');
+    if (card) card.innerHTML = `<h3>${reg.icon} ${esc(reg.name)}</h3><p class="muted small">Quota Éco-Score exigé : ${reg.quotaEco} \u00b7 Subventions \u00d7${reg.subsidyMult} \u00b7 Marge tarifaire \u00d7${reg.tollCapMult}</p>`;
+
+    const law = activeLaw(), lawBox = $('law-status');
+    if (lawBox) {
+        if (law) {
+            const L = LAWS[law.type], daysLeft = Math.max(0, Math.ceil((law.until - S.t) / 24));
+            lawBox.innerHTML = `<div class="card" style="border-left:4px solid var(--warning)"><h3>${L.icon} ${esc(L.title)}</h3><p>${esc(L.desc)}</p><p class="muted small">Fin dans \u2248 ${daysLeft} j</p></div>`;
+        } else lawBox.innerHTML = '<p class="muted small">Aucune loi contraignante en vigueur.</p>';
+    }
+
+    const btn = $('btn-lobby');
+    if (btn) { btn.textContent = S.lobbyist ? `Fermer le bureau (\u00e9conomise ${eurFull(LOBBYIST_MONTHLY)}/mois)` : `Ouvrir un bureau de lobbying (${eurFull(LOBBYIST_MONTHLY)}/mois)`; btn.className = S.lobbyist ? 'btn-ghost' : ''; }
+
+    const dis = $('disaster-status');
+    if (dis) {
+        if (S.disaster && S.t < S.disaster.until) {
+            const D = DISASTERS[S.disaster.type], daysLeft = Math.max(0, Math.ceil((S.disaster.until - S.t) / 24));
+            dis.innerHTML = `<div class="card" style="border-left:4px solid var(--danger)"><h3>${D.icon} ${esc(D.label)}</h3><p class="muted small">Fin dans \u2248 ${daysLeft} j</p></div>`;
+        } else dis.textContent = 'Réseau calme, aucun événement majeur.';
+    }
+
+    const list = $('borders-list');
+    if (list) {
+        list.innerHTML = S.borders.map(b => {
+            const open = S.t >= b.openAt, tense = S.tensions.find(t => t.cityId === b.cityId), c = CITY.get(b.cityId);
+            const status = !open ? `En construction \u2014 ouverture dans \u2248 ${Math.ceil((b.openAt - S.t) / 24)} j`
+                : tense ? `\u26a0\ufe0f Tensions diplomatiques \u2014 reprise dans \u2248 ${Math.ceil((tense.until - S.t) / 24)} j`
+                : `Op\u00e9rationnel \u00b7 +${Math.round(BORDER_FREIGHT_BONUS * 100)} % de fret PL \u00b7 ${DOUANE_RATE} \u20ac de douane/PL`;
+            return `<div class="card"><h3>\ud83c\udf0d ${esc(c ? c.name : '?')} \u2014 ${esc(BORDER_CITIES[b.cityId])}</h3><p class="muted small">${status}</p></div>`;
+        }).join('') || '<p class="muted small">Aucun poste-fronti\u00e8re construit.</p>';
+    }
+    initBorderSelect(); drawBorders();
+}
+function buildBorderPost() {
+    const cityId = +$('border-city').value; if (!cityId || !BORDER_CITIES[cityId]) return;
+    if (!reachesCity(cityId)) return toast('Il faut une liaison ouverte jusqu\u2019\u00e0 cette ville fronti\u00e8re.', 'warn');
+    if (S.borders.some(b => b.cityId === cityId)) return toast('Poste-fronti\u00e8re d\u00e9j\u00e0 construit ici.', 'warn');
+    if (S.money < BORDER_POST_COST) return toast('Fonds insuffisants.', 'danger');
+    S.money -= BORDER_POST_COST; S.borders.push({ cityId, openAt: S.t + BORDER_POST_DAYS * 24 });
+    saveState(); mark('politics'); updateHUD();
+    toast(`\ud83c\udf0d Poste-fronti\u00e8re en chantier \u00e0 ${CITY.get(cityId).name} (${BORDER_CITIES[cityId]}) \u2014 ${BORDER_POST_DAYS} jours.`, 'ok');
+}
+function toggleLobbyist() {
+    S.lobbyist = !S.lobbyist; saveState(); mark('politics'); updateHUD();
+    toast(S.lobbyist ? `\ud83e\udd1d Bureau de lobbying ouvert (${eurFull(LOBBYIST_MONTHLY)}/mois).` : 'Bureau de lobbying ferm\u00e9.', 'ok');
+}
+function indexTariffs() {
+    S.tariff.vl = clamp(C.ref.vl * S.inflation, 0.05, 0.20);
+    S.tariff.ut = clamp(C.ref.ut * S.inflation, 0.08, 0.32);
+    S.tariff.pl = clamp(C.ref.pl * S.inflation, 0.15, 0.60);
+    S.lastIndexTariff = { ...S.tariff };
+    const vl = $('tr-vl'), ut = $('tr-ut'), pl = $('tr-pl');
+    if (vl) { vl.value = S.tariff.vl; ut.value = S.tariff.ut; pl.value = S.tariff.pl; }
+    saveState(); updateTariffLabels(); updateHUD();
+    toast(`\ud83d\udcc8 P\u00e9ages index\u00e9s sur l'inflation (+${Math.round((S.inflation - 1) * 100)} % depuis le lancement).`, 'ok');
+}
 function flushDirty() {
     if (!dirty.size) return;
     const names = [...dirty]; dirty.clear();
@@ -1499,7 +1852,7 @@ const TAB_GROUP = {
     staff: 'rh', fleet: 'rh',
     bilan: 'finance', banque: 'finance',
     rest_areas: 'aires',
-    tenders: 'politique', competitors: 'politique'
+    tenders: 'politique', geopolitique: 'politique', competitors: 'politique'
 };
 function goGroup(group) {
     document.querySelectorAll('.group-btn').forEach(el => el.classList.toggle('active', el.dataset.group === group));
@@ -1531,22 +1884,35 @@ function initSelects() {
     const f = $('city-from'), t = $('city-to'), pf = f.value, pt = t.value;
     f.innerHTML = opts; t.innerHTML = opts; f.value = pf || '2'; t.value = pt || '17';
 }
+function toggleSplitUI() {
+    $('split-step-group').style.display = $('opt-split').checked ? 'block' : 'none';
+    previewCost();
+}
 function readOpts() {
-    return { tollType: $('toll-type').value, lanes: +$('lanes').value, drainant: $('opt-drainant').checked, ecopont: $('opt-ecopont').checked, soundwall: $('opt-soundwall').checked };
+    return { tollType: $('toll-type').value, lanes: +$('lanes').value, drainant: $('opt-drainant').checked, ecopont: $('opt-ecopont').checked, soundwall: $('opt-soundwall').checked, split: $('opt-split').checked, splitStep: +$('split-step').value, engType: $('eng-type').value || null };
+}
+function buildDaysFor(km, o) {
+    let days = Math.max(3, Math.ceil(km / 12));
+    if (o.engType) days = Math.ceil(days * ENGINEERING[o.engType].daysMult);
+    return days;
 }
 function buildCostFor(km, o) {
     let tm = C.tollMult[o.tollType]; if (o.tollType === 'freeflow' && hasTech('toll_1')) tm *= 0.8;
-    const perKm = C.costPerKm * C.laneMult[o.lanes] * tm * (o.drainant ? 1.1 : 1);
-    return Math.round(km * perKm * (1 - engBuild()) + (o.ecopont ? C.ecopont : 0) + (o.soundwall ? C.sound : 0));
+    let perKm = C.costPerKm * C.laneMult[o.lanes] * tm * (o.drainant ? 1.1 : 1);
+    if (o.engType) perKm *= ENGINEERING[o.engType].costMult;
+    let cost = km * perKm * (1 - engBuild()) + (o.ecopont ? C.ecopont : 0) + (o.soundwall ? C.sound : 0);
+    if (o.split) { const n = Math.max(1, Math.round(km / o.splitStep)); cost += (n - 1) * SEGMENT_GANTRY_COST; }
+    return Math.round(cost * S.inflation);
 }
 function previewCost() {
     const a = CITY.get(+$('city-from').value), b = CITY.get(+$('city-to').value), el = $('build-preview'), btn = $('btn-build');
     if (!a || !b || a === b) { el.textContent = 'Choisissez deux villes diff\u00e9rentes.'; btn.disabled = true; return; }
     if (isCorsica(a) !== isCorsica(b)) { el.textContent = 'Liaison impossible : la Corse n\u2019est pas reli\u00e9e au continent par autoroute.'; btn.disabled = true; return; }
     if (S.roads.some(r => pairKey(r.a, r.b) === pairKey(a.id, b.id))) { el.textContent = 'Cette liaison existe d\u00e9j\u00e0 dans votre r\u00e9seau.'; btn.disabled = true; return; }
-    const km = Math.round(haversine(a, b) * 1.25), cost = buildCostFor(km, readOpts());
-    el.innerHTML = `\u2248 ${km} km \u00e0 vol d'oiseau \u00b7 co\u00fbt estim\u00e9 <b>${eurFull(cost)}</b> \u00b7 travaux \u2248 ${Math.max(3, Math.ceil(km / 12))} j<br>
-        Trafic potentiel \u2248 ${fmtInt(baseDemand(a, b, km))} v\u00e9h./j <span class="muted">(distance r\u00e9elle calcul\u00e9e au lancement des travaux)</span>`;
+    const km = Math.round(haversine(a, b) * 1.25), opts = readOpts(), cost = buildCostFor(km, opts), days = buildDaysFor(km, opts);
+    const n = opts.split ? Math.max(1, Math.round(km / opts.splitStep)) : 1;
+    el.innerHTML = `\u2248 ${km} km \u00e0 vol d'oiseau \u00b7 co\u00fbt estim\u00e9 <b>${eurFull(cost)}</b> \u00b7 travaux \u2248 ${days} j${opts.split ? ` \u00b7 ${n} segment(s) cessible(s)` : ''}${opts.engType ? ` \u00b7 ${ENGINEERING[opts.engType].icon} ${ENGINEERING[opts.engType].name}` : ''}<br>
+        Trafic potentiel \u2248 ${fmtInt(baseDemand(a, b, km))} v\u00e9h./j \u00b7 <span class="muted">risque d'opposition locale \u2248 ${Math.round(OPPOSITION_CHANCE * 100)} % (retard possible)</span></div>`;
     btn.disabled = S.money < cost * 0.5;
 }
 function setTariff(k, v) { S.tariff[k] = +v; updateTariffLabels(); }
@@ -1562,10 +1928,13 @@ function renderRoadList() {
     const box = $('road-list'); if (!box) return;
     if (!S.roads.length) { box.innerHTML = '<p class="muted small">Aucune liaison construite pour l\u2019instant.</p>'; return; }
     box.innerHTML = S.roads.slice().reverse().map(r => {
-        const open = isOpen(r);
+        const open = isOpen(r), closed = isClosed(r), eng = r.engType ? ENGINEERING[r.engType] : null;
         return `<div class="card">
-            <h3>${esc(r.name)}</h3>
-            <p>${r.km} km \u00b7 ${TOLL_LABEL[r.tollType]} \u00b7 ${r.lanes}\u00d7${r.lanes} voies${r.estimated ? ' \u00b7 <span title="Service cartographique indisponible \u00e0 la construction">trac\u00e9 estim\u00e9</span>' : ''}</p>
+            <h3>${eng ? eng.icon + ' ' : ''}${esc(r.name)}</h3>
+            <p>${r.km} km \u00b7 ${r.segments ? `${r.segments.length} segments cessibles` : TOLL_LABEL[r.tollType]} \u00b7 ${r.lanes}\u00d7${r.lanes} voies${eng ? ' \u00b7 ' + eng.name : ''}${r.estimated ? ' \u00b7 <span title="Service cartographique indisponible \u00e0 la construction">trac\u00e9 estim\u00e9</span>' : ''}</p>
+            ${closed ? `<p style="color:var(--danger)">\ud83c\udf0a Ferm\u00e9 pour inondation \u2014 r\u00e9ouverture dans \u2248 ${Math.max(0, r.closedUntil - S.t)} h</p>` : ''}
+            ${(!open && r.opposition) ? `<p style="color:var(--warning)">\u270a Chantier retard\u00e9 par une opposition locale (+${Math.round(r.opposition.extraHours / 24)} j)</p>
+                <button class="btn-warn" onclick="payOpposition(${r.id})">Indemniser pour lever le blocage (${eurFull(Math.round(r.opposition.extraHours / 24 * OPPOSITION_PAYOFF_PER_DAY))})</button>` : ''}
             ${open ? `<div class="stat-line"><span>Trafic (hier)</span><strong>${fmtInt(r.stat.aadt)} v\u00e9h./j</strong></div>
                 <div class="stat-line"><span>Recettes (hier)</span><strong style="color:var(--success)">${eurFull(r.stat.rev)}</strong></div>
                 <div class="stat-line"><span>Usure</span><strong>${Math.round(r.wear)} %</strong></div>
@@ -1573,12 +1942,33 @@ function renderRoadList() {
                 <div class="row">
                     ${r.wear > 15 ? `<button onclick="repairRoad(${r.id})">R\u00e9fection (${eurFull(Math.round(repairCost(r)))})</button>` : `<button onclick="focusRoad(${r.id})">Localiser</button>`}
                     ${r.lanes === 2 ? `<button class="btn-ghost" onclick="widenRoad(${r.id})">\u00c9largir 2\u00d73</button>` : ''}
-                </div>`
-                : `<p class="muted">\ud83d\udea7 Chantier en cours \u2014 ouverture dans ${Math.max(0, r.openAt - S.t)} h</p>`}
+                </div>
+                ${r.segments ? segmentListHTML(r) : ''}`
+                : (closed ? '' : `<p class="muted">\ud83d\udea7 Chantier en cours \u2014 ouverture dans ${Math.max(0, r.openAt - S.t)} h${r.segments ? ` (${r.segments.length} segments pr\u00e9vus)` : ''}</p>`)}
         </div>`;
     }).join('');
 }
-function repairCost(r) { return r.km * 22000 * (r.wear / 100) * (hasCert('engineers') ? 0.8 : 1); }
+function segmentListHTML(r) {
+    const solventAI = S.ai.filter(a => a.money >= 0);
+    return `<div style="margin-top:8px;border-top:1px dashed var(--border);padding-top:6px">
+        <p class="small muted" style="margin-bottom:4px">D\u00e9tail des segments :</p>
+        ${r.segments.map(s => {
+            const owned = s.owner === 'player';
+            const ownerLabel = owned ? '' : (s.owner === 'fund' ? ' \u00b7 c\u00e9d\u00e9 (fonds)' : ` \u00b7 c\u00e9d\u00e9 (${esc((S.ai.find(a => a.id === s.owner) || {}).name || s.owner)})`);
+            if (!owned) return `<div class="stat-line"><span>Segment ${s.id} \u00b7 ${s.km} km${ownerLabel}</span><span class="muted">\u2014</span></div>`;
+            const val = segmentValue(s, r);
+            const sellOpts = [`<option value="fund">Fonds d'investissement (${eurFull(Math.round(val * SEGMENT_SELL_FUND_FACTOR))})</option>`]
+                .concat(S.ai.map(a => `<option value="${a.id}">${esc(a.name)} (${eurFull(Math.round(val * SEGMENT_SELL_AI_FACTOR))})${a.money < val * SEGMENT_SELL_AI_FACTOR ? ' \u2014 insolvable' : ''}</option>`)).join('');
+            return `<div class="stat-line"><span>Segment ${s.id} \u00b7 ${s.km} km \u00b7 ${s.tollType === 'gratuit' ? 'Gratuit' : 'Payant'}</span>
+                <button style="width:auto;padding:3px 8px;font-size:.7rem;margin:0" onclick="toggleSegmentToll(${r.id},${s.id})">Basculer</button></div>
+                <div class="row" style="margin-bottom:6px">
+                    <select style="width:auto;flex:1" id="sell-${r.id}-${s.id}">${sellOpts}</select>
+                    <button class="btn-danger" style="width:auto" onclick="sellSegment(${r.id},${s.id},$('sell-${r.id}-${s.id}').value)">C\u00e9der</button>
+                </div>`;
+        }).join('')}
+    </div>`;
+}
+function repairCost(r) { return r.km * 22000 * (r.wear / 100) * (hasCert('engineers') ? 0.8 : 1) * S.inflation; }
 function payMaintenance(cost) { S.money -= cost; S.ledger.opex += cost; }
 function repairRoad(id) {
     const r = roadById(id); if (!r) return;
@@ -1877,6 +2267,8 @@ function updateHUD() {
     setText('kpi-money', eur(S.money)); const km = $('kpi-money'); if (km) km.style.color = S.money >= 0 ? 'var(--success)' : 'var(--danger)';
     setText('kpi-debt', eur(S.debt)); setText('kpi-km', Math.round(openKm()) + ' km');
     setText('kpi-satisfaction', Math.round(S.satisfaction) + ' %'); setText('kpi-eco', Math.round(S.eco) + ' / 100');
+    setText('inflation-idx', (S.inflation >= 1 ? '+' : '') + Math.round((S.inflation - 1) * 100) + ' %');
+    setText('inflation-info', `Co\u00fbts de construction, d'entretien et masse salariale index\u00e9s automatiquement. P\u00e9ages \u00e0 indexer manuellement.`);
     setText('clock', dateStr());
     const wb = $('weather-badge'), w = WEATHER[S.weather.type];
     if (wb) wb.textContent = `${w.icon} ${w.label}${S.event ? ' \u00b7 ' + EVENTS[S.event.type].icon + ' ' + EVENTS[S.event.type].label : ''}`;
@@ -1943,21 +2335,64 @@ async function buildSection() {
     if (S.money < cost) { toast(`Fonds insuffisants : ${eurFull(cost)} requis (solde : ${eurFull(S.money)}).`, 'danger'); previewCost(); return; }
 
     S.money -= cost;
-    const days = Math.max(3, Math.ceil(km / 12));
+    const days = buildDaysFor(km, opts);
     const road = {
         id: S.seq++, name: `Axe ${a.name} \u2013 ${b.name}`, a: a.id, b: b.id, km, coords: route.coords,
         tollType: opts.tollType, lanes: opts.lanes, drainant: opts.drainant, ecopont: opts.ecopont, soundwall: opts.soundwall,
+        engType: opts.engType || null,
         wear: 0, openAt: S.t + days * 24, estimated: route.estimated,
         demand: baseDemand(a, b, km), stat: newStat(baseDemand(a, b, km)),
-        rest: { level: 1, partners: [], solar: false }
+        rest: { level: 1, partners: [], solar: false },
+        segments: opts.split ? makeSegments(km, opts.splitStep, opts.tollType) : null
     };
     if (opts.ecopont) S.eco = Math.min(100, S.eco + 8);
     if (opts.soundwall) S.satisfaction = Math.min(100, S.satisfaction + 2);
+    let oppositionNote = '';
+    if (Math.random() < OPPOSITION_CHANCE) {
+        const delayDays = OPPOSITION_DELAY_DAYS[0] + Math.floor(Math.random() * (OPPOSITION_DELAY_DAYS[1] - OPPOSITION_DELAY_DAYS[0] + 1));
+        const extraHours = delayDays * 24;
+        road.openAt += extraHours;
+        road.opposition = { extraHours };
+        oppositionNote = ` \u2014 \u270a opposition locale : chantier retard\u00e9 de ${delayDays} jours (indemnisable pour acc\u00e9l\u00e9rer).`;
+    }
     S.roads.push(road); S.stats.built++;
     drawRoad(road);
-    setTraffic('CHANTIER', `Travaux lanc\u00e9s sur ${road.name} (${km} km) \u2014 ouverture dans ${days} jours.`, 'var(--accent)');
-    toast(`\ud83d\udea7 Chantier lanc\u00e9 : ${road.name} (${km} km, ${eurFull(cost)}).`, 'ok');
+    setTraffic('CHANTIER', `Travaux lanc\u00e9s sur ${road.name} (${km} km) \u2014 ouverture dans ${Math.ceil((road.openAt - S.t) / 24)} jours.`, 'var(--accent)');
+    toast(`\ud83d\udea7 Chantier lanc\u00e9 : ${road.name} (${km} km, ${eurFull(cost)}).${oppositionNote}`, oppositionNote ? 'warn' : 'ok');
+    if (oppositionNote) news(`Opposition locale au chantier de ${road.name}.`);
     saveState(); mark('roads', 'network'); updateHUD();
+}
+function payOpposition(roadId) {
+    const r = roadById(roadId); if (!r || !r.opposition) return;
+    const days = Math.ceil(r.opposition.extraHours / 24), cost = Math.round(days * OPPOSITION_PAYOFF_PER_DAY);
+    if (S.money < cost) return toast('Fonds insuffisants pour lever le blocage.', 'danger');
+    S.money -= cost; r.openAt -= r.opposition.extraHours; delete r.opposition;
+    saveState(); mark('roads'); updateHUD();
+    toast(`\ud83e\udd1d Blocage lev\u00e9 sur ${r.name} : ouverture avanc\u00e9e de ${days} jours.`, 'ok');
+}
+
+function toggleSegmentToll(roadId, segId) {
+    const r = roadById(roadId); if (!r || !r.segments) return;
+    const s = r.segments.find(x => x.id === segId); if (!s || s.owner !== 'player') return;
+    s.tollType = s.tollType === 'gratuit' ? 'payant' : 'gratuit';
+    saveState(); mark('roads'); restyleRoads();
+    toast(`\ud83d\udd00 Segment ${s.id} de ${r.name} bascul\u00e9 en ${s.tollType === 'gratuit' ? 'gratuit' : 'payant'} (effet progressif sur ${SEGMENT_TRANSITION_DAYS} jours).`, 'ok');
+}
+function sellSegment(roadId, segId, buyer) {
+    const r = roadById(roadId); if (!r || !r.segments) return;
+    const s = r.segments.find(x => x.id === segId); if (!s || s.owner !== 'player') return;
+    const base = segmentValue(s, r);
+    if (buyer === 'fund') {
+        const price = Math.round(base * SEGMENT_SELL_FUND_FACTOR);
+        s.owner = 'fund'; S.money += price; saveState(); mark('roads'); restyleRoads(); updateHUD();
+        toast(`\ud83d\udcb0 Segment c\u00e9d\u00e9 au fonds d'investissement : +${eurFull(price)}.`, 'ok');
+        return;
+    }
+    const ai = S.ai.find(a => a.id === buyer); if (!ai) return;
+    const price = Math.round(base * SEGMENT_SELL_AI_FACTOR);
+    if (ai.money < price) return toast(`${ai.name} n'a pas les fonds n\u00e9cessaires (${eurFull(price)} requis). Essayez le fonds d'investissement.`, 'warn');
+    ai.money -= price; s.owner = ai.id; S.money += price; saveState(); mark('roads'); restyleRoads(); updateHUD();
+    toast(`\ud83d\udcb0 Segment vendu \u00e0 ${ai.name} : +${eurFull(price)}.`, 'ok');
 }
 
 function checkRoadOpenings() {
