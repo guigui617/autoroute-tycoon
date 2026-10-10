@@ -273,6 +273,7 @@
         <div class="tabs" id="subtabs-finance" style="display:none">
             <button class="tab-btn active" data-tab="bilan">Bilan</button>
             <button class="tab-btn" data-tab="banque">Banque &amp; Obligations</button>
+            <button class="tab-btn" data-tab="marche">Réputation &amp; Bourse</button>
         </div>
         <div class="tabs" id="subtabs-aires" style="display:none">
             <button class="tab-btn active" data-tab="rest_areas">Aires de service</button>
@@ -318,6 +319,11 @@
             </div>
             <div id="build-preview">—</div>
             <button id="btn-build" onclick="buildSection()">Lancer les travaux (tracé routier réel)</button>
+
+            <h2>Compensation écologique</h2>
+            <div class="stat-line"><span>Écoducs financés</span><strong id="ecoducs-count">0</strong></div>
+            <button class="btn-eco" onclick="fundEcoduc()">Financer un écoduc (1 200 000 €)</button>
+            <p class="muted small">Requis si la loi « Compensation Carbone Obligatoire » est active et que le réseau dépasse la couverture financée.</p>
 
             <h2>Politique tarifaire</h2>
             <div class="control-group"><label>Véhicules légers : <b id="tv-vl"></b> €/km <span class="muted">(réf. 0,100)</span></label>
@@ -395,6 +401,7 @@
             <div class="stat-line"><span>Exploitation &amp; entretien</span><strong style="color:var(--danger)" id="exp-opex">0 €/j</strong></div>
             <div class="stat-line"><span>Masse salariale</span><strong style="color:var(--danger)" id="exp-salaries">0 €/j</strong></div>
             <div class="stat-line"><span>Intérêts, incidents, chasse-neige</span><strong style="color:var(--danger)" id="exp-other">0 €/j</strong></div>
+            <div class="stat-line"><span>Manque à gagner (fraude aux péages)</span><strong style="color:var(--warning)" id="fraud-loss">0 €/j</strong></div>
             <div class="stat-line" style="border-top:1px dashed var(--border);padding-top:4px"><span>Résultat net avant impôt</span><strong id="net-profit">0 €/j</strong></div>
             <div class="stat-line"><span>Impôt sur les sociétés (25 %, mensuel)</span><strong id="tax-last" class="muted">—</strong></div>
             <div class="stat-line"><span>Valeur de l'entreprise</span><strong id="net-worth">0 €</strong></div>
@@ -426,6 +433,17 @@
             <div class="muted small">Taux : 5 % par an, intérêts prélevés chaque jour.</div>
             <div class="row"><button class="btn-danger" onclick="takeLoan(1e6)">+1 M€</button><button class="btn-danger" onclick="takeLoan(5e6)">+5 M€</button><button class="btn-danger" onclick="takeLoan(20e6)">+20 M€</button></div>
             <div class="row"><button class="btn-ghost" onclick="repayLoan(1e6)">Rembourser 1 M€</button><button class="btn-ghost" onclick="repayLoan(Infinity)">Tout rembourser</button></div>
+        </div>
+
+        <!-- RÉPUTATION & BOURSE (Banque & Finances) -->
+        <div id="marche" class="tab-content">
+            <h2>Réputation &amp; médias</h2>
+            <div class="card" id="reputation-card"></div>
+            <h2>Veille médiatique</h2>
+            <div id="scandal-card"></div>
+            <h2>Marché financier</h2>
+            <div class="card" id="market-card"></div>
+            <div id="hostile-bid-card" style="margin-top:8px"></div>
         </div>
 
         <!-- CONTRATS D'ÉTAT (Politique & Législation) -->
@@ -704,7 +722,8 @@ const LOBBY_EFFECT = 0.5; // avec un bureau de lobbying : -50% de chance de loi,
 const LAWS = {
     speed:      { title: 'Limitation de vitesse imposée', icon: '🚓', desc: 'Capacité du réseau réduite le temps de la loi.', capMult: 0.88, days: [8, 20] },
     weekend_pl: { title: 'Interdiction des poids lourds le week-end', icon: '🚛', desc: 'Trafic poids lourds à l\'arrêt le samedi et le dimanche.', plWeekendMult: 0, days: [15, 35] },
-    carbon_tax: { title: 'Taxe carbone exceptionnelle', icon: '🌍', desc: 'Surcoût d\'exploitation quotidien tant que l\'Éco-Score reste bas.', taxPerKmDay: 25, days: [15, 30] }
+    carbon_tax: { title: 'Taxe carbone exceptionnelle', icon: '🌍', desc: 'Surcoût d\'exploitation quotidien tant que l\'Éco-Score reste bas.', taxPerKmDay: 25, days: [15, 30] },
+    eco_comp:   { title: 'Compensation Carbone Obligatoire', icon: '🌳', desc: 'Construction surtaxée tant que les écoducs financés ne couvrent pas tout le réseau.', ecoCompReq: true, days: [30, 60] }
 };
 const LAW_DAILY_CHANCE = 0.012;
 const REGIMES = {
@@ -718,6 +737,50 @@ const REGIME_TERM_DAYS = 480;
 const BORDER_CITIES = { 5: 'Belgique', 6: 'Allemagne', 26: 'Espagne', 9: 'Italie', 64: 'Suisse' };
 const BORDER_POST_COST = 4000000, BORDER_POST_DAYS = 30;
 const BORDER_FREIGHT_BONUS = 0.40; // trafic PL supplémentaire sur les liaisons connectées à un poste-frontière
+
+// ===== MODULE : ÉCONOMIE DU FRET & CONTRATS DE CONCESSION LOGISTIQUE =====
+const FREIGHT_PARTNERS = {
+    amazon: { name: 'Amazon Logistics',   demandBonus: 0.25, discount: 0.12, signCost: 1500000, monthly: 40000 },
+    ups:    { name: 'UPS International',  demandBonus: 0.18, discount: 0.08, signCost: 900000,  monthly: 25000 },
+    geodis: { name: 'GEODIS Fret Europe', demandBonus: 0.30, discount: 0.15, signCost: 2200000, monthly: 55000 }
+};
+const FREIGHT_CONTRACT_DAYS = 180;
+
+// ===== MODULE : FRAUDE AUX PÉAGES & CAMÉRAS ANPR =====
+const FRAUD_BASE_RATE = 0.07;   // part du trafic payant qui resquille sans dispositif ANPR
+const FRAUD_PATROL_CUT = 0.012; // réduction de fraude par patrouilleur (staff sécurité)
+const FRAUD_PATROL_CAP = 0.05;
+
+// ===== MODULE : MÉTÉO LOCALE PAR MICRO-TRONÇON =====
+const LOCAL_WEATHER_DAILY_CHANCE = 0.05; // par segment et par jour, hors ensoleillé
+const LOCAL_WEATHER_DURATION_H = [6, 18];
+
+// ===== MODULE : MÉDIAS, RÉPUTATION & JOURNALISTES D'INVESTIGATION =====
+const SCANDAL_TYPES = {
+    greve:      { title: 'Grève très médiatisée',               icon: '📰', repHit: 14 },
+    accidents:  { title: 'Série noire : accidents à répétition', icon: '🚨', repHit: 10 },
+    corruption: { title: 'Soupçons de corruption (lobbyistes)',  icon: '🕵️', repHit: 18 }
+};
+const SCANDAL_MONTHLY_BASE = 0.05, SCANDAL_DAYS = 20;
+const PR_CAMPAIGN_COST = 2000000, PR_CAMPAIGN_REP_GAIN = 12;
+
+// ===== MODULE : CHANTIERS MAJEURS (réfection/élargissement avec délai contractuel) =====
+const SIGNAGE_PLANS = {
+    basic:      { name: 'Balisage basique',  capMult: 0.55, accMult: 1.8, delayChance: 0.30, costMult: 1 },
+    reinforced: { name: 'Balisage renforcé', capMult: 0.75, accMult: 1.2, delayChance: 0.08, costMult: 1.35 }
+};
+const MAJOR_WORKS_DAYS = 10, MAJOR_WORKS_DELAY_DAYS = [3, 10], MAJOR_WORKS_PENALTY_PER_DAY = 60000;
+const MAJOR_WORKS_COST_PER_KM = 180000;
+
+// ===== MODULE : MARCHÉ FINANCIER (ENTRÉE EN BOURSE & OPA HOSTILE) =====
+const IPO_THRESHOLD = 300000000, IPO_RAISE_SHARE = 0.22;
+const HOSTILE_BID_MONTHLY_CHANCE = 0.12, HOSTILE_DEFENSE_SHARE = 0.18, HOSTILE_BID_DAYS = 5, HOSTILE_CONSOLATION = 0.30;
+
+// ===== MODULE : COMPENSATION ÉCOLOGIQUE (écoducs obligatoires) =====
+const ECODUC_COST = 1200000, ECODUC_KM_COVERAGE = 150, ECO_LAW_SURCHARGE = 1.6;
+
+// ===== MODULE : CONFORMITÉ TUNNELS (ventilation & issues de secours) =====
+const TUNNEL_SAFETY_COST_PER_KM = 180000, TUNNEL_NONCOMPLIANT_MONTHLY_RISK = 0.15, TUNNEL_CLOSURE_DAYS = [5, 15], TUNNEL_FINE = 1500000;
 const BORDER_TENSION_DAILY_CHANCE = 0.012, BORDER_TENSION_DAYS = [3, 10];
 const DOUANE_RATE = 3.5; // € de droits de douane par poids lourd sur une liaison connectée à un poste-frontière
 
@@ -737,7 +800,7 @@ const DISASTER_DAILY_CHANCE = 0.010;
    2. ÉTAT DE JEU
    ===================================================================== */
 const START_MS = Date.UTC(2026, 8, 1); // 1er septembre 2026
-const newLedger = () => ({ tolls: 0, rests: 0, subs: 0, opex: 0, salaries: 0, plows: 0, interest: 0, incidents: 0 });
+const newLedger = () => ({ tolls: 0, rests: 0, subs: 0, opex: 0, salaries: 0, plows: 0, interest: 0, incidents: 0, fraud: 0 });
 const newStat = d => ({ aadt: d, dayFlow: 0, dayRev: 0, hourFlow: 0, cong: 0, peak: 0, dayPeak: 0, rev: 0 });
 
 function defaultStaffMeta() {
@@ -764,11 +827,15 @@ function defaultState() {
         ],
         ledger: newLedger(), last: newLedger(),
         month: { profit: 0 }, taxLast: null, negDays: 0,
-        stats: { resolved: 0, built: 0, accidentsMonth: 0 }, badMonths: 0,
+        stats: { resolved: 0, built: 0, accidentsMonth: 0, strikesMonth: 0 }, badMonths: 0,
         credit: 700, bonds: [],
         inflation: 1.0, lastIndexTariff: { vl: 0.10, ut: 0.16, pl: 0.30 },
         lobbyist: false, laws: [], regime: 'centre', regimeUntil: REGIME_TERM_DAYS,
         borders: [], tensions: [], disaster: null,
+        freightContracts: [],
+        reputation: 72, scandal: null,
+        ecoducs: 0,
+        public: false, shareConfidence: 70, hostileBid: null,
         won: false, over: false, boughtOutBy: null
     };
 }
@@ -981,7 +1048,11 @@ function loadState(user) {
         s.rd = Object.assign({ done: [], queue: [] }, o.rd || {});
         s.ledger = Object.assign(newLedger(), o.ledger || {});
         s.last = Object.assign(newLedger(), o.last || {});
-        s.stats = Object.assign({ resolved: 0, built: 0, accidentsMonth: 0 }, o.stats || {});
+        s.stats = Object.assign({ resolved: 0, built: 0, accidentsMonth: 0, strikesMonth: 0 }, o.stats || {});
+        s.freightContracts = o.freightContracts || []; s.ecoducs = o.ecoducs || 0;
+        s.public = !!o.public; s.shareConfidence = (typeof o.shareConfidence === 'number') ? o.shareConfidence : 70;
+        s.hostileBid = o.hostileBid || null; s.scandal = o.scandal || null;
+        s.reputation = (typeof o.reputation === 'number') ? o.reputation : 72;
         s.month = Object.assign({ profit: 0 }, o.month || {});
         s.tenders = o.tenders || {};
         s.staffMeta = Object.assign(defaultStaffMeta(), o.staffMeta || {});
@@ -1101,6 +1172,9 @@ function simulateHour() {
     const disaster = S.disaster && S.t < S.disaster.until ? S.disaster : null;
     const infl = S.inflation;
     const regime = REGIMES[S.regime];
+    const fraudRate = anpr ? 0 : Math.max(0, FRAUD_BASE_RATE - Math.min(FRAUD_PATROL_CAP, S.staff.safety * FRAUD_PATROL_CUT * staffMult('safety')));
+    const repMult = 0.88 + S.reputation / 100 * 0.12;
+    let fraudLoss = 0;
 
     let tolls = 0, rests = 0, subs = S.permSubsidy / 24 * regime.subsidyMult, opex = 0;
     for (const r of S.roads) {
@@ -1123,10 +1197,13 @@ function simulateHour() {
         const snowPenalty = tunnel ? 1 : (snow && cover < 1 ? 0.7 + 0.3 * cover : 1);
         const capH = C.capHour[r.lanes] * Math.min(1, barrierPenalty) * snowPenalty * (r.wear > 80 ? 0.85 : 1) * capMod * lawCapMult * vigiMult;
         const wTrafficR = tunnel ? w.traffic : wTraffic; // un tunnel n'est pas ralenti par la météo
-        const m0 = wTrafficR * ev * satB * mkt * hqB * season * (1 + 0.35 * gratuitShare) * (r.wear > 80 ? 0.9 : 1) * incMult * share;
+        const m0 = wTrafficR * ev * satB * mkt * hqB * season * repMult * (1 + 0.35 * gratuitShare) * (r.wear > 80 ? 0.9 : 1) * incMult * share;
         const base = r.demand * HOUR_SHARE[h] * m0;
         const border = borderBonusFor(r);
-        const plMult = (weekend && law && law.type === 'weekend_pl') ? 0 : (1 + border);
+        const freightC = S.freightContracts.find(c => c.roadId === r.id && S.t < c.until);
+        const freightP = freightC ? FREIGHT_PARTNERS[freightC.partner] : null;
+        const plMult = (weekend && law && law.type === 'weekend_pl') ? 0 : (1 + border + (freightP ? freightP.demandBonus : 0));
+        const plRate = S.tariff.pl * (freightP ? (1 - freightP.discount) : 1);
         const fl = { vl: base * C.mix.vl * tf.f.vl, ut: base * C.mix.ut * tf.f.ut, pl: base * C.mix.pl * tf.f.pl * plMult };
         const flow = fl.vl + fl.ut + fl.pl, cong = flow / capH, sf = cong > 1.1 ? 1.1 / cong : 1;
         const sv = { vl: fl.vl * sf, ut: fl.ut * sf, pl: fl.pl * sf }, served = sv.vl + sv.ut + sv.pl, trip = r.km * C.tripFactor;
@@ -1137,13 +1214,21 @@ function simulateHour() {
                 if (s.owner !== 'player') continue;
                 const segTrip = s.km * C.tripFactor;
                 if (s.tollType === 'gratuit') sub += served * segTrip * C.subsidy;
-                else { let t = (sv.vl * S.tariff.vl + sv.ut * S.tariff.ut + sv.pl * S.tariff.pl) * segTrip; if (!anpr) t *= (1 - tollAgentBoost() * 0.15) * (tollStrike ? 0.2 : 1); toll += t; }
+                else {
+                    let t = (sv.vl * S.tariff.vl + sv.ut * S.tariff.ut + sv.pl * plRate) * segTrip;
+                    if (!anpr) t *= (1 - tollAgentBoost() * 0.15) * (tollStrike ? 0.2 : 1);
+                    const preF = t; t *= (1 - fraudRate); fraudLoss += preF - t;
+                    toll += t;
+                }
             }
         } else if (r.tollType === 'gratuit') sub = served * trip * C.subsidy;
         else {
-            toll = (sv.vl * S.tariff.vl + sv.ut * S.tariff.ut + sv.pl * S.tariff.pl) * trip;
+            toll = (sv.vl * S.tariff.vl + sv.ut * S.tariff.ut + sv.pl * plRate) * trip;
             if (r.tollType === 'freeflow') toll *= 1.25 * (1 - (t2 ? 0 : (t1 ? 0.035 : 0.07)));
-            else if (r.tollType === 'payant' && !anpr) toll *= (1 - tollAgentBoost() * 0.15) * (tollStrike ? 0.2 : 1);
+            else if (r.tollType === 'payant' && !anpr) {
+                toll *= (1 - tollAgentBoost() * 0.15) * (tollStrike ? 0.2 : 1);
+                const preF = toll; toll *= (1 - fraudRate); fraudLoss += preF - toll;
+            }
         }
         if (border > 0) toll += sv.pl * DOUANE_RATE; // droits de douane sur le fret international
         let rest = 0; const a = r.rest;
@@ -1170,6 +1255,10 @@ function simulateHour() {
         let accW = tunnel ? 1 : wAcc;
         if (S.weather.type === 'rain' && !tunnel) accW = 1 + (wAcc - 1) * (1 - Math.min(0.85, (r.drainant ? 0.6 : 0) + (infra1 ? 0.3 : 0)));
         if (disaster && disaster.type === 'tempete' && !tunnel) accW *= DISASTERS.tempete.accMult;
+        if (r.segments && !tunnel) {
+            const localSevere = r.segments.some(s => s.weather && S.t < s.weather.until && (s.weather.type === 'snow' || s.weather.type === 'rain'));
+            if (localSevere) accW *= 1.3;
+        }
         const p = 0.0025 * (r.km / 100) * accW * (1 + r.wear / 60) * (rad ? 0.6 : 1) * (drones ? 0.85 : 1) * (0.5 + Math.min(2, served / 800)) * (1 + Math.max(0, cong - 0.8));
         if (Math.random() < p) spawnIncident(r);
 
@@ -1180,7 +1269,7 @@ function simulateHour() {
         }
     }
     const sal = salaryMonthly() / 720, plowCost = snow ? S.plows * 450 : 0, led = S.ledger;
-    led.tolls += tolls; led.rests += rests; led.subs += subs; led.opex += opex; led.salaries += sal; led.plows += plowCost;
+    led.tolls += tolls; led.rests += rests; led.subs += subs; led.opex += opex; led.salaries += sal; led.plows += plowCost; led.fraud += fraudLoss;
     const net = tolls + rests + subs - opex - sal - plowCost;
     S.money += net; S.month.profit += net;
 
@@ -1303,7 +1392,7 @@ function updateStaffDaily() {
         meta.fatigue = clamp(meta.fatigue + (ratio > 1 ? (ratio - 1) * 10 : -4), 0, 100);
         if (meta.fatigue >= strikeThreshold() && !onStrike(k) && !S.training.some(t => t.type === k) && Math.random() < STRIKE_DAILY_CHANCE) {
             const dur = Math.round(STRIKE_DURATION_H[0] + Math.random() * (STRIKE_DURATION_H[1] - STRIKE_DURATION_H[0]));
-            S.strikes.push({ type: k, until: S.t + dur }); meta.fatigue = 55;
+            S.strikes.push({ type: k, until: S.t + dur }); meta.fatigue = 55; S.stats.strikesMonth = (S.stats.strikesMonth || 0) + 1;
             toast(`✊ Grève : les ${STAFF[k].name.toLowerCase()} cessent le travail (${dur} h, fatigue trop élevée).`, 'danger');
             news(`Mouvement social : grève des ${STAFF[k].name.toLowerCase()}.`);
         }
@@ -1429,11 +1518,29 @@ function newDay() {
         st.dayFlow = 0; st.dayRev = 0; st.dayPeak = 0;
         if (r.segments) {
             const step = 1 / SEGMENT_TRANSITION_DAYS;
-            for (const s of r.segments) { const target = s.tollType === 'gratuit' ? 1 : 0; s.freeWeight = clamp(s.freeWeight + clamp(target - s.freeWeight, -step, step), 0, 1); }
+            for (const s of r.segments) {
+                const target = s.tollType === 'gratuit' ? 1 : 0; s.freeWeight = clamp(s.freeWeight + clamp(target - s.freeWeight, -step, step), 0, 1);
+                if (s.weather && S.t >= s.weather.until) s.weather = null;
+                else if (!s.weather && isOpen(r) && Math.random() < LOCAL_WEATHER_DAILY_CHANCE) {
+                    const type = ['rain', 'snow', 'fog'][Math.floor(Math.random() * 3)];
+                    const dur = LOCAL_WEATHER_DURATION_H[0] + Math.floor(Math.random() * (LOCAL_WEATHER_DURATION_H[1] - LOCAL_WEATHER_DURATION_H[0] + 1));
+                    s.weather = { type, until: S.t + dur };
+                    toast(`${WEATHER[type].icon} Micro-climat localisé sur un segment de ${r.name} (${WEATHER[type].label.toLowerCase()}).`, 'warn');
+                    mark('roads');
+                }
+            }
         }
+        if (isOpen(r) && r.engType === 'tunnel' && !r.tunnelSafety && Math.random() < TUNNEL_NONCOMPLIANT_MONTHLY_RISK / 30) {
+            const days = TUNNEL_CLOSURE_DAYS[0] + Math.floor(Math.random() * (TUNNEL_CLOSURE_DAYS[1] - TUNNEL_CLOSURE_DAYS[0] + 1));
+            r.closedUntil = S.t + days * 24; S.money -= TUNNEL_FINE;
+            toast(`🚫 Fermeture administrative du tunnel ${r.name} : non-conformité ventilation/sécurité (amende ${eur(TUNNEL_FINE)}).`, 'danger');
+            news(`${r.name} fermé par l'État pour non-conformité.`); mark('roads'); restyleRoads();
+        }
+        if (r.majorWorks) stepMajorWorks(r);
     }
     if (S.autoRepair) autoRepair();
     stepPolitics(); stepDisasters(); stepBorders();
+    updateReputation();
     if (!S.event && (month === 6 || month === 7 || month === 11) && Math.random() < 0.10 && S.roads.length) {
         S.event = { type: 'depart', until: S.t + 24 + Math.floor(Math.random() * 24) };
         news('🚗 Grand départ en vacances : trafic +60 % sur le réseau.');
@@ -1471,8 +1578,87 @@ function monthEnd() {
             if (S.badMonths >= 3) nationalise();
         }
     }
-    S.stats.accidentsMonth = 0;
+    stepMedia();
+    stepMarket();
+    S.stats.accidentsMonth = 0; S.stats.strikesMonth = 0;
     S.month = { profit: 0 };
+}
+/* ---------- Module : Médias, réputation & journalistes ---------- */
+function stepMedia() {
+    let chance = SCANDAL_MONTHLY_BASE;
+    chance += Math.max(0, (50 - S.reputation) / 100);
+    if (S.stats.strikesMonth > 0) chance += 0.08;
+    if (S.stats.accidentsMonth > 5) chance += 0.06;
+    if (!S.scandal && Math.random() < chance) {
+        const pool = ['accidents'];
+        if (S.stats.strikesMonth > 0) pool.push('greve');
+        if (S.lobbyist) pool.push('corruption');
+        const type = pool[Math.floor(Math.random() * pool.length)], T = SCANDAL_TYPES[type];
+        S.scandal = { type, until: S.t + SCANDAL_DAYS * 24 };
+        S.reputation = Math.max(0, S.reputation - T.repHit);
+        if (S.public) S.shareConfidence = Math.max(0, S.shareConfidence - T.repHit);
+        toast(`${T.icon} Scandale médiatique : ${T.title}`, 'danger');
+        news(`Un journaliste d'investigation publie un article sur : ${T.title}.`);
+        mark('politics', 'market');
+    }
+    if (S.scandal && S.t >= S.scandal.until) { S.scandal = null; mark('politics', 'market'); }
+}
+/* ---------- Module : Marché financier (bourse & OPA hostile) ---------- */
+function stepMarket() {
+    if (!S.public) return;
+    const target = clamp(50 + (S.reputation - 50) * 0.6 + (S.month.profit > 0 ? 10 : -10), 0, 100);
+    S.shareConfidence = clamp(S.shareConfidence + clamp(target - S.shareConfidence, -8, 8), 0, 100);
+    if (!S.hostileBid && S.shareConfidence < 40 && Math.random() < HOSTILE_BID_MONTHLY_CHANCE) {
+        const best = S.roads.slice().sort((a, b) => roadValuation(b) - roadValuation(a))[0];
+        if (best) {
+            const val = roadValuation(best), amount = Math.round(val * HOSTILE_DEFENSE_SHARE);
+            S.hostileBid = { roadId: best.id, amount, consolation: Math.round(val * HOSTILE_CONSOLATION), until: S.t + HOSTILE_BID_DAYS * 24 };
+            toast(`📉 OPA hostile en cours sur ${best.name} ! Défendez l'actif ou il sera cédé.`, 'danger');
+            news(`Un fonds vautour tente une OPA hostile sur ${best.name}.`);
+            mark('politics', 'market');
+        }
+    }
+    if (S.hostileBid && S.t >= S.hostileBid.until) resolveHostileBid(false);
+}
+function roadValuation(r) { return r.km * C.costPerKm * 0.7 * (1 - r.wear / 200); }
+function resolveHostileBid(defended) {
+    if (!S.hostileBid) return;
+    if (defended) { toast('🛡️ OPA hostile repoussée.', 'ok'); }
+    else {
+        const r = roadById(S.hostileBid.roadId);
+        if (r) { S.roads = S.roads.filter(x => x !== r); removeRoadViz(r.id); }
+        S.money += S.hostileBid.consolation;
+        toast(`📉 OPA hostile réussie : ${r ? r.name : 'un actif'} perdu (indemnité ${eur(S.hostileBid.consolation)}).`, 'danger');
+        S.shareConfidence = Math.min(100, S.shareConfidence + 15);
+    }
+    S.hostileBid = null; mark('roads', 'politics', 'market'); updateHUD();
+}
+function updateReputation() {
+    const open = S.roads.filter(isOpen);
+    let target = 72;
+    if (open.length) {
+        const wAvg = open.reduce((a, r) => a + r.wear * r.km, 0) / open.reduce((a, r) => a + r.km, 0);
+        target -= Math.max(0, wAvg - 25) * 0.35;
+        target -= clamp((tariffFactors().idx - 1) * 20, -10, 15);
+    }
+    if (S.scandal) target -= SCANDAL_TYPES[S.scandal.type].repHit * 0.5;
+    S.reputation = clamp(S.reputation + clamp(target - S.reputation, -1.5, 1.5), 0, 100);
+}
+/* ---------- Module : Chantiers majeurs (réfection/élargissement chronométrés) ---------- */
+function stepMajorWorks(r) {
+    const mw = r.majorWorks; if (!mw) return;
+    if (!mw.delayed && S.t >= mw.dueAt && Math.random() < SIGNAGE_PLANS[mw.plan].delayChance) {
+        const extra = MAJOR_WORKS_DELAY_DAYS[0] + Math.floor(Math.random() * (MAJOR_WORKS_DELAY_DAYS[1] - MAJOR_WORKS_DELAY_DAYS[0] + 1));
+        mw.dueAt += extra * 24; mw.delayed = true; mw.lateDays = extra;
+        toast(`⚠️ Chantier de ${r.name} retardé de ${extra} jours (balisage insuffisant).`, 'warn');
+    }
+    if (S.t >= mw.dueAt) {
+        if (mw.lateDays) { const penalty = mw.lateDays * MAJOR_WORKS_PENALTY_PER_DAY; S.money -= penalty; toast(`📄 Pénalité de retard sur le chantier de ${r.name} : −${eur(penalty)}.`, 'danger'); }
+        r.wear = 0; if (mw.widen && r.lanes === 2) r.lanes = 3;
+        delete r.majorWorks;
+        toast(`✅ Chantier terminé : ${r.name} remis à neuf${mw.widen ? ' et élargi à 2×3 voies' : ''}.`, 'ok');
+        mark('roads'); restyleRoads();
+    }
 }
 function gameOver() {
     S.over = true; saveState();
@@ -1591,7 +1777,8 @@ function buyOutAI(id) {
     for (const r of ai.roads) {
         const v = aiViz.get(r.id); if (v) { aiLayer.removeLayer(v); aiViz.delete(r.id); }
         const pr = { id: r.id, name: 'Axe ' + r.name, a: r.a, b: r.b, km: r.km, coords: r.coords, tollType: 'payant', lanes: 2, drainant: false, ecopont: false, soundwall: false,
-                     wear: 15 + Math.random() * 20, openAt: S.t, demand: r.demand, estimated: false, rest: { level: 1, partners: [], solar: false }, stat: newStat(r.demand) };
+                     wear: 15 + Math.random() * 20, openAt: S.t, demand: r.demand, estimated: false, rest: { level: 1, partners: [], solar: false }, stat: newStat(r.demand),
+                     segments: makeSegments(r.km, SEGMENT_DEFAULT_STEP, 'payant') };
         S.roads.push(pr); drawRoad(pr);
     }
     toast(`🎉 OPA réussie : ${ai.name} racheté (${ai.roads.length} liaison(s)).`, 'ok');
@@ -1763,7 +1950,7 @@ function mark(...n) { n.forEach(x => dirty.add(x)); }
 const RENDERERS = {
     roads: renderRoadList, incidents: renderIncidents, markers: refreshIncMap,
     ai: renderAIList, staff: renderStaff, fleet: renderFleet, areas: renderRestAreas,
-    rd: renderRD, hq: renderHQ, network: previewCost, tenders: renderStateTenders, pcs: renderPCs, politics: renderGeopolitics
+    rd: renderRD, hq: renderHQ, network: previewCost, tenders: renderStateTenders, pcs: renderPCs, politics: renderGeopolitics, market: renderMarket
 };
 const reachesCity = cityId => S.roads.some(r => isOpen(r) && (r.a === cityId || r.b === cityId));
 function initBorderSelect() {
@@ -1817,6 +2004,41 @@ function renderGeopolitics() {
     }
     initBorderSelect(); drawBorders();
 }
+function renderMarket() {
+    const repBox = $('reputation-card');
+    if (repBox) repBox.innerHTML = `<div class="stat-line"><span>R\u00e9putation (appli communautaire)</span><strong>${Math.round(S.reputation)} / 100</strong></div>
+        <div class="bar"><i style="width:${S.reputation}%;background:${S.reputation >= 60 ? 'var(--success)' : S.reputation >= 35 ? 'var(--warning)' : 'var(--danger)'}"></i></div>
+        <p class="muted small">Chauss\u00e9es d\u00e9grad\u00e9es ou p\u00e9ages jug\u00e9s excessifs font fuir le trafic vers le r\u00e9seau secondaire gratuit.</p>
+        <button onclick="prCampaign()">Campagne de communication (${eurFull(PR_CAMPAIGN_COST)}, +${PR_CAMPAIGN_REP_GAIN} r\u00e9putation)</button>`;
+
+    const scBox = $('scandal-card');
+    if (scBox) {
+        if (S.scandal) { const T = SCANDAL_TYPES[S.scandal.type], daysLeft = Math.max(0, Math.ceil((S.scandal.until - S.t) / 24));
+            scBox.innerHTML = `<div class="card" style="border-left:4px solid var(--danger)"><h3>${T.icon} ${esc(T.title)}</h3><p class="muted small">Retomb\u00e9es encore sensibles pendant \u2248 ${daysLeft} j</p></div>`;
+        } else scBox.innerHTML = '<p class="muted small">Aucun scandale m\u00e9diatique en cours.</p>';
+    }
+
+    const mkBox = $('market-card');
+    if (mkBox) {
+        if (!S.public) {
+            mkBox.innerHTML = `<p class="muted small">Valeur d'entreprise : ${eur(netWorth())} (seuil d'introduction : ${eur(IPO_THRESHOLD)}).</p>
+                <button ${netWorth() < IPO_THRESHOLD ? 'disabled' : ''} onclick="ipo()">Entrer en bourse (l\u00e8ve ${Math.round(IPO_RAISE_SHARE * 100)} % de la valeur)</button>`;
+        } else {
+            mkBox.innerHTML = `<div class="stat-line"><span>Confiance des actionnaires</span><strong>${Math.round(S.shareConfidence)} / 100</strong></div>
+                <div class="bar"><i style="width:${S.shareConfidence}%;background:${S.shareConfidence >= 55 ? 'var(--success)' : S.shareConfidence >= 30 ? 'var(--warning)' : 'var(--danger)'}"></i></div>
+                <p class="muted small">Entreprise cot\u00e9e. Une confiance trop basse expose \u00e0 une OPA hostile sur vos meilleurs actifs.</p>`;
+        }
+    }
+    const bidBox = $('hostile-bid-card');
+    if (bidBox) {
+        if (S.hostileBid) {
+            const r = roadById(S.hostileBid.roadId), daysLeft = Math.max(0, Math.ceil((S.hostileBid.until - S.t) / 24));
+            bidBox.innerHTML = `<div class="card" style="border-left:4px solid var(--danger)"><h3>\ud83d\udcc9 OPA hostile sur ${esc(r ? r.name : '?')}</h3>
+                <p class="muted small">D\u00e9lai restant : \u2248 ${daysLeft} j</p>
+                <button class="btn-danger" onclick="defendHostileBid()">D\u00e9fendre l'actif (${eurFull(S.hostileBid.amount)})</button></div>`;
+        } else bidBox.innerHTML = '';
+    }
+}
 function buildBorderPost() {
     const cityId = +$('border-city').value; if (!cityId || !BORDER_CITIES[cityId]) return;
     if (!reachesCity(cityId)) return toast('Il faut une liaison ouverte jusqu\u2019\u00e0 cette ville fronti\u00e8re.', 'warn');
@@ -1850,7 +2072,7 @@ const renderAll = () => Object.keys(RENDERERS).forEach(n => RENDERERS[n]());
 const TAB_GROUP = {
     network: 'reseau', rd: 'reseau',
     staff: 'rh', fleet: 'rh',
-    bilan: 'finance', banque: 'finance',
+    bilan: 'finance', banque: 'finance', marche: 'finance',
     rest_areas: 'aires',
     tenders: 'politique', geopolitique: 'politique', competitors: 'politique'
 };
@@ -1902,7 +2124,10 @@ function buildCostFor(km, o) {
     if (o.engType) perKm *= ENGINEERING[o.engType].costMult;
     let cost = km * perKm * (1 - engBuild()) + (o.ecopont ? C.ecopont : 0) + (o.soundwall ? C.sound : 0);
     if (o.split) { const n = Math.max(1, Math.round(km / o.splitStep)); cost += (n - 1) * SEGMENT_GANTRY_COST; }
-    return Math.round(cost * S.inflation);
+    cost *= S.inflation;
+    const law = activeLaw();
+    if (law && law.type === 'eco_comp' && S.ecoducs * ECODUC_KM_COVERAGE < openKm()) cost *= ECO_LAW_SURCHARGE;
+    return Math.round(cost);
 }
 function previewCost() {
     const a = CITY.get(+$('city-from').value), b = CITY.get(+$('city-to').value), el = $('build-preview'), btn = $('btn-build');
@@ -1911,8 +2136,9 @@ function previewCost() {
     if (S.roads.some(r => pairKey(r.a, r.b) === pairKey(a.id, b.id))) { el.textContent = 'Cette liaison existe d\u00e9j\u00e0 dans votre r\u00e9seau.'; btn.disabled = true; return; }
     const km = Math.round(haversine(a, b) * 1.25), opts = readOpts(), cost = buildCostFor(km, opts), days = buildDaysFor(km, opts);
     const n = opts.split ? Math.max(1, Math.round(km / opts.splitStep)) : 1;
+    const lawEco = activeLaw(), ecoSurcharge = lawEco && lawEco.type === 'eco_comp' && S.ecoducs * ECODUC_KM_COVERAGE < openKm();
     el.innerHTML = `\u2248 ${km} km \u00e0 vol d'oiseau \u00b7 co\u00fbt estim\u00e9 <b>${eurFull(cost)}</b> \u00b7 travaux \u2248 ${days} j${opts.split ? ` \u00b7 ${n} segment(s) cessible(s)` : ''}${opts.engType ? ` \u00b7 ${ENGINEERING[opts.engType].icon} ${ENGINEERING[opts.engType].name}` : ''}<br>
-        Trafic potentiel \u2248 ${fmtInt(baseDemand(a, b, km))} v\u00e9h./j \u00b7 <span class="muted">risque d'opposition locale \u2248 ${Math.round(OPPOSITION_CHANCE * 100)} % (retard possible)</span></div>`;
+        Trafic potentiel \u2248 ${fmtInt(baseDemand(a, b, km))} v\u00e9h./j \u00b7 <span class="muted">risque d'opposition locale \u2248 ${Math.round(OPPOSITION_CHANCE * 100)} % (retard possible)</span>${ecoSurcharge ? `<br><span style="color:var(--warning)">\ud83c\udf33 Compensation Carbone Obligatoire active : co\u00fbt major\u00e9 de ${Math.round((ECO_LAW_SURCHARGE - 1) * 100)} % tant que les \u00e9coducs financ\u00e9s ne couvrent pas le r\u00e9seau.</span>` : ''}</div>`;
     btn.disabled = S.money < cost * 0.5;
 }
 function setTariff(k, v) { S.tariff[k] = +v; updateTariffLabels(); }
@@ -1943,10 +2169,36 @@ function renderRoadList() {
                     ${r.wear > 15 ? `<button onclick="repairRoad(${r.id})">R\u00e9fection (${eurFull(Math.round(repairCost(r)))})</button>` : `<button onclick="focusRoad(${r.id})">Localiser</button>`}
                     ${r.lanes === 2 ? `<button class="btn-ghost" onclick="widenRoad(${r.id})">\u00c9largir 2\u00d73</button>` : ''}
                 </div>
+                ${roadExtrasHTML(r)}
                 ${r.segments ? segmentListHTML(r) : ''}`
                 : (closed ? '' : `<p class="muted">\ud83d\udea7 Chantier en cours \u2014 ouverture dans ${Math.max(0, r.openAt - S.t)} h${r.segments ? ` (${r.segments.length} segments pr\u00e9vus)` : ''}</p>`)}
         </div>`;
     }).join('');
+}
+function roadExtrasHTML(r) {
+    let html = '';
+    if (r.engType === 'tunnel') {
+        html += r.tunnelSafety
+            ? `<p class="muted small">\u2705 Tunnel aux normes (ventilation, issues de secours).</p>`
+            : `<p style="color:var(--warning)" class="small">\u26a0\ufe0f Mise aux normes requise \u2014 risque de fermeture administrative.</p><button class="btn-warn" onclick="payTunnelSafety(${r.id})">Mettre aux normes (${eurFull(Math.round(r.km * TUNNEL_SAFETY_COST_PER_KM * S.inflation))})</button>`;
+    }
+    if (r.majorWorks) {
+        const mw = r.majorWorks, daysLeft = Math.max(0, Math.ceil((mw.dueAt - S.t) / 24));
+        html += `<p style="color:var(--accent)" class="small">\ud83d\udea7 Chantier majeur en cours (${SIGNAGE_PLANS[mw.plan].name}${mw.widen ? ', \u00e9largissement' : ''}) \u2014 fin dans \u2248 ${daysLeft} j${mw.delayed ? ` <span style="color:var(--warning)">(retard\u00e9 de ${mw.lateDays} j)</span>` : ''}</p>`;
+    } else if (r.wear > 40) {
+        html += `<div class="row">
+            <button class="btn-eco" onclick="startMajorWorks(${r.id},'basic',false)">Chantier majeur basique (${eurFull(Math.round(r.km * MAJOR_WORKS_COST_PER_KM * S.inflation))})</button>
+            <button class="btn-eco" onclick="startMajorWorks(${r.id},'reinforced',true)">Renforc\u00e9 + \u00e9largissement (${eurFull(Math.round(r.km * MAJOR_WORKS_COST_PER_KM * SIGNAGE_PLANS.reinforced.costMult * 1.6 * S.inflation))})</button>
+        </div>`;
+    }
+    const contract = S.freightContracts.find(c => c.roadId === r.id && S.t < c.until);
+    if (contract) {
+        const P = FREIGHT_PARTNERS[contract.partner], daysLeft = Math.ceil((contract.until - S.t) / 24);
+        html += `<p class="muted small">\ud83d\ude9b Contrat fret : ${esc(P.name)} (${daysLeft} j restants, +${Math.round(P.demandBonus * 100)} % trafic PL, -${Math.round(P.discount * 100)} % tarif PL)</p>`;
+    } else {
+        html += `<div>${Object.entries(FREIGHT_PARTNERS).map(([k, P]) => `<button style="display:inline-block;width:auto;margin:2px 4px 2px 0;font-size:.72rem;padding:5px 8px" onclick="signFreightContract(${r.id},'${k}')">${esc(P.name)} (${eurFull(P.signCost)})</button>`).join('')}</div>`;
+    }
+    return html;
 }
 function segmentListHTML(r) {
     const solventAI = S.ai.filter(a => a.money >= 0);
@@ -1959,8 +2211,10 @@ function segmentListHTML(r) {
             const val = segmentValue(s, r);
             const sellOpts = [`<option value="fund">Fonds d'investissement (${eurFull(Math.round(val * SEGMENT_SELL_FUND_FACTOR))})</option>`]
                 .concat(S.ai.map(a => `<option value="${a.id}">${esc(a.name)} (${eurFull(Math.round(val * SEGMENT_SELL_AI_FACTOR))})${a.money < val * SEGMENT_SELL_AI_FACTOR ? ' \u2014 insolvable' : ''}</option>`)).join('');
+            const localW = s.weather && S.t < s.weather.until ? `<p style="color:var(--warning)" class="small">${WEATHER[s.weather.type].icon} Micro-climat local : ${WEATHER[s.weather.type].label.toLowerCase()} (${Math.ceil((s.weather.until - S.t))} h)</p>` : '';
             return `<div class="stat-line"><span>Segment ${s.id} \u00b7 ${s.km} km \u00b7 ${s.tollType === 'gratuit' ? 'Gratuit' : 'Payant'}</span>
                 <button style="width:auto;padding:3px 8px;font-size:.7rem;margin:0" onclick="toggleSegmentToll(${r.id},${s.id})">Basculer</button></div>
+                ${localW}
                 <div class="row" style="margin-bottom:6px">
                     <select style="width:auto;flex:1" id="sell-${r.id}-${s.id}">${sellOpts}</select>
                     <button class="btn-danger" style="width:auto" onclick="sellSegment(${r.id},${s.id},$('sell-${r.id}-${s.id}').value)">C\u00e9der</button>
@@ -1998,6 +2252,69 @@ function widenRoad(id) {
     S.money -= cost; r.lanes = 3; saveState(); toast(`\u2194 ${r.name} passe \u00e0 2\u00d73 voies.`, 'ok'); mark('roads'); updateHUD();
 }
 function toggleAutoRepair(v) { S.autoRepair = v; saveState(); }
+
+/* ---------- Module : Chantiers majeurs ---------- */
+function startMajorWorks(id, plan, widen) {
+    const r = roadById(id); if (!r || r.majorWorks) return;
+    const cost = Math.round(r.km * MAJOR_WORKS_COST_PER_KM * SIGNAGE_PLANS[plan].costMult * (widen ? 1.6 : 1) * S.inflation);
+    if (S.money < cost) return toast('Fonds insuffisants pour ce chantier.', 'danger');
+    if (onStrike('engineers')) return toast('Centre d\u2019entretien bloqu\u00e9 : les ing\u00e9nieurs sont en gr\u00e8ve.', 'warn');
+    S.money -= cost;
+    r.majorWorks = { plan, widen, startAt: S.t, dueAt: S.t + MAJOR_WORKS_DAYS * 24, delayed: false, lateDays: 0 };
+    saveState(); mark('roads'); updateHUD();
+    toast(`\ud83d\udea7 Chantier majeur lanc\u00e9 sur ${r.name} (${SIGNAGE_PLANS[plan].name}${widen ? ', \u00e9largissement 2\u00d73' : ''}).`, 'ok');
+}
+
+/* ---------- Module : Conformit\u00e9 tunnels ---------- */
+function payTunnelSafety(id) {
+    const r = roadById(id); if (!r || r.engType !== 'tunnel' || r.tunnelSafety) return;
+    const cost = Math.round(r.km * TUNNEL_SAFETY_COST_PER_KM * S.inflation);
+    if (S.money < cost) return toast('Fonds insuffisants.', 'danger');
+    S.money -= cost; r.tunnelSafety = true; saveState(); mark('roads'); updateHUD();
+    toast(`\u2705 ${r.name} mis aux normes (ventilation, issues de secours).`, 'ok');
+}
+
+/* ---------- Module : \u00c9conomie du fret ---------- */
+function signFreightContract(roadId, partner) {
+    const r = roadById(roadId), P = FREIGHT_PARTNERS[partner]; if (!r || !P) return;
+    if (S.freightContracts.some(c => c.roadId === roadId && S.t < c.until)) return toast('Un contrat de fret est d\u00e9j\u00e0 actif sur cette liaison.', 'warn');
+    if (S.money < P.signCost) return toast('Fonds insuffisants pour signer ce contrat.', 'danger');
+    S.money -= P.signCost;
+    S.freightContracts = S.freightContracts.filter(c => c.roadId !== roadId);
+    S.freightContracts.push({ id: S.seq++, roadId, partner, until: S.t + FREIGHT_CONTRACT_DAYS * 24 });
+    saveState(); mark('roads'); updateHUD();
+    toast(`\ud83d\ude9b Contrat sign\u00e9 avec ${P.name} sur ${r.name} (${FREIGHT_CONTRACT_DAYS} j).`, 'ok');
+}
+
+/* ---------- Module : Compensation \u00e9cologique ---------- */
+function fundEcoduc() {
+    if (S.money < ECODUC_COST) return toast('Fonds insuffisants.', 'danger');
+    S.money -= ECODUC_COST; S.ecoducs++; S.eco = Math.min(100, S.eco + 3);
+    saveState(); mark('network'); updateHUD();
+    toast(`\ud83c\udf33 \u00c9coduc financ\u00e9 (${S.ecoducs} au total).`, 'ok');
+}
+
+/* ---------- Module : March\u00e9 financier ---------- */
+function ipo() {
+    if (S.public) return;
+    if (netWorth() < IPO_THRESHOLD) return toast(`Valeur d'entreprise insuffisante pour une introduction en bourse (${eurFull(IPO_THRESHOLD)} requis).`, 'warn');
+    const raise = Math.round(netWorth() * IPO_RAISE_SHARE);
+    S.money += raise; S.public = true; S.shareConfidence = 70;
+    saveState(); mark('politics', 'market'); updateHUD();
+    toast(`\ud83d\udcc8 Entr\u00e9e en bourse r\u00e9ussie : ${eur(raise)} lev\u00e9s. Votre capital est d\u00e9sormais expos\u00e9 aux OPA hostiles.`, 'ok');
+}
+function defendHostileBid() {
+    if (!S.hostileBid) return;
+    if (S.money < S.hostileBid.amount) return toast('Fonds insuffisants pour d\u00e9fendre cet actif.', 'danger');
+    S.money -= S.hostileBid.amount; resolveHostileBid(true);
+}
+function prCampaign() {
+    if (S.money < PR_CAMPAIGN_COST) return toast('Fonds insuffisants pour cette campagne.', 'danger');
+    S.money -= PR_CAMPAIGN_COST; S.reputation = Math.min(100, S.reputation + PR_CAMPAIGN_REP_GAIN);
+    if (S.public) S.shareConfidence = Math.min(100, S.shareConfidence + PR_CAMPAIGN_REP_GAIN * 0.6);
+    saveState(); mark('politics', 'market'); updateHUD();
+    toast(`\ud83d\udce3 Campagne de communication lanc\u00e9e : r\u00e9putation +${PR_CAMPAIGN_REP_GAIN}.`, 'ok');
+}
 function toggleAutoDispatch(v) {
     if (v && !hasTech('ai_2')) { $('auto-dispatch').checked = false; return toast('Recherchez \u00ab R\u00e9gulation Dynamique PMV \u00bb pour activer le dispatch automatique.', 'warn'); }
     S.autoDispatch = v; saveState();
@@ -2299,6 +2616,10 @@ function updateHUD() {
     const ecoQ = $('quota-co2'); if (ecoQ) { ecoQ.textContent = (S.eco >= 60 ? '\u2713 Respecté' : '\u2717 Non respecté') + ` (Éco-Score ${Math.round(S.eco)}/60)`; ecoQ.style.color = S.eco >= 60 ? 'var(--success)' : 'var(--danger)'; }
     const safeQ = $('quota-safe'); if (safeQ) { const okS = S.stats.accidentsMonth <= safeTh; safeQ.textContent = (okS ? '\u2713 Respecté' : '\u2717 Non respecté') + ` (${S.stats.accidentsMonth}/${safeTh} accidents ce mois)`; safeQ.style.color = okS ? 'var(--success)' : 'var(--danger)'; }
     setText('quota-warn', S.badMonths > 0 ? `\u26a0\ufe0f ${S.badMonths} mois consécutif(s) de non-conformité \u2014 nationalisation partielle après 3 mois.` : 'Amende si les quotas ne sont pas tenus ; nationalisation partielle après 3 mois consécutifs de non-conformité.');
+
+    setText('fraud-loss', eurFull(Math.round(S.last.fraud)) + '/j');
+    setText('ecoducs-count', String(S.ecoducs) + ` (couvre ${fmtInt(S.ecoducs * ECODUC_KM_COVERAGE)} km)`);
+    renderMarket();
 }
 /* =====================================================================
    9. CONSTRUCTION & INTERACTIONS DE JEU
